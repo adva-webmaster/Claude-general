@@ -8,6 +8,8 @@
   /* ====================================================
      MARLONS STERNENREISE - Lernspiel für Maus & Tastatur
      Alles in einer Datei: HTML + CSS + JavaScript
+     30 Missionen in 6 Welten, Schwierigkeitsgrad wählbar,
+     bereits geschaffte Missionen frei auswählbar.
      ==================================================== */
 
   :root{
@@ -84,68 +86,6 @@
     padding: 12px 16px 32px;
   }
 
-  /* ---------- Fortschritts-Navigation ---------- */
-  .progress-nav{
-    display:flex;
-    gap: clamp(10px, 3vw, 24px);
-    justify-content:center;
-    align-items:center;
-    margin: 10px 0 20px;
-    padding: 10px 16px;
-    background: rgba(255,255,255,.06);
-    border-radius: 999px;
-    backdrop-filter: blur(2px);
-  }
-
-  .nav-dot{
-    width: clamp(46px, 9vw, 60px);
-    height: clamp(46px, 9vw, 60px);
-    border-radius: 50%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size: clamp(20px, 4vw, 26px);
-    background: rgba(255,255,255,.12);
-    border: 3px solid rgba(255,255,255,.25);
-    cursor: not-allowed;
-    opacity: .45;
-    position:relative;
-    transition: transform .2s ease, background .3s ease, border-color .3s ease, opacity .3s ease;
-    user-select:none;
-  }
-  .nav-dot.unlocked{
-    cursor:pointer;
-    opacity: 1;
-    border-color: var(--cyan);
-  }
-  .nav-dot.unlocked:hover{ transform: scale(1.08); }
-  .nav-dot.current{
-    border-color: var(--pink);
-    box-shadow: 0 0 0 4px rgba(255,107,157,.25);
-  }
-  .nav-dot.done{
-    background: var(--gold);
-    border-color: var(--gold);
-    opacity:1;
-    color: var(--navy-deep);
-  }
-  .nav-dot .check{
-    position:absolute;
-    bottom:-6px;
-    right:-6px;
-    background: var(--green);
-    color: var(--navy-deep);
-    border-radius:50%;
-    width:22px;
-    height:22px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:14px;
-    font-weight:bold;
-    border: 2px solid var(--navy-deep);
-  }
-
   /* ---------- Bildschirme ---------- */
   .screen{
     display:none;
@@ -167,8 +107,8 @@
   }
 
   h1{
-    font-size: clamp(1.6rem, 5vw, 2.6rem);
-    margin: 6px 0 6px;
+    font-size: clamp(1.5rem, 4.5vw, 2.4rem);
+    margin: 4px 0 6px;
     text-shadow: 0 0 18px rgba(79,216,255,.6);
   }
   h2{
@@ -177,15 +117,15 @@
     color: var(--gold);
   }
   p.info{
-    font-size: clamp(1rem, 3vw, 1.25rem);
+    font-size: clamp(1rem, 3vw, 1.2rem);
     max-width: 560px;
     line-height:1.5;
-    margin: 6px 0 18px;
+    margin: 4px 0 14px;
   }
 
   .big-emoji{
-    font-size: clamp(60px, 16vw, 110px);
-    margin: 10px 0;
+    font-size: clamp(48px, 12vw, 84px);
+    margin: 4px 0;
     filter: drop-shadow(0 0 20px rgba(255,200,87,.5));
   }
   @media (prefers-reduced-motion: no-preference){
@@ -212,7 +152,7 @@
     cursor:pointer;
     box-shadow: 0 6px 0 #c9942f, 0 10px 20px rgba(0,0,0,.35);
     transition: transform .12s ease, box-shadow .12s ease;
-    margin: 10px 6px;
+    margin: 8px 6px;
     display:inline-flex;
     align-items:center;
     gap:10px;
@@ -229,24 +169,181 @@
   .btn.secondary:active{ box-shadow: 0 3px 0 #2ba7cc, 0 6px 14px rgba(0,0,0,.3); }
   .btn[hidden]{ display:none !important; }
 
+  /* ---------- Schwierigkeitsgrad-Auswahl ---------- */
+  .difficulty-row{
+    display:flex;
+    gap: 10px;
+    justify-content:center;
+    flex-wrap:wrap;
+    margin: 4px 0 14px;
+  }
+  .difficulty-btn{
+    min-height: 56px;
+    padding: 10px 22px;
+    font-size: clamp(.95rem, 2.6vw, 1.1rem);
+    font-family: inherit;
+    font-weight: bold;
+    color: var(--white);
+    background: rgba(255,255,255,.08);
+    border: 3px solid rgba(255,255,255,.25);
+    border-radius: 999px;
+    cursor:pointer;
+    transition: transform .12s ease, background .2s ease, border-color .2s ease;
+  }
+  .difficulty-btn:hover{ transform: translateY(-2px); }
+  .difficulty-btn.active{
+    background: linear-gradient(135deg, var(--cyan), #9be9ff);
+    border-color: var(--cyan);
+    color: var(--navy-deep);
+  }
+
+  /* ---------- Missionsübersicht (Weltkarte) ---------- */
+  .grid-heading{
+    font-size: 1.05rem;
+    font-weight:bold;
+    color: var(--gold);
+    margin: 14px 0 2px;
+  }
+  .mission-grid-scroll{
+    width:100%;
+    max-width: 780px;
+    max-height: 42vh;
+    overflow-y:auto;
+    padding: 6px 8px 10px;
+    margin-top: 8px;
+    border-radius: 20px;
+    background: rgba(255,255,255,.05);
+    border: 2px solid rgba(255,255,255,.08);
+  }
+  .world-block{
+    margin: 10px 4px 14px;
+    text-align:left;
+  }
+  .world-title{
+    font-size: .95rem;
+    font-weight:bold;
+    color: var(--white);
+    opacity:.9;
+    margin-bottom:8px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .world-tiles{
+    display:flex;
+    gap: 10px;
+    flex-wrap:wrap;
+  }
+  .mission-tile{
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    font-size: 22px;
+    font-family: inherit;
+    background: rgba(255,255,255,.1);
+    border: 3px solid rgba(255,255,255,.2);
+    cursor: not-allowed;
+    opacity:.4;
+    position:relative;
+    color: var(--white);
+    transition: transform .15s ease, background .2s ease, border-color .2s ease, opacity .2s ease;
+    user-select:none;
+    padding:0;
+  }
+  .mission-tile .tile-num{
+    font-size:10px;
+    font-weight:bold;
+    margin-top:1px;
+  }
+  .mission-tile.unlocked{
+    cursor:pointer;
+    opacity:1;
+    border-color: var(--cyan);
+  }
+  .mission-tile.unlocked:hover{ transform: scale(1.08); }
+  .mission-tile.done{
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--navy-deep);
+    opacity:1;
+  }
+  .mission-tile .tile-check{
+    position:absolute;
+    bottom:-6px;
+    right:-6px;
+    background: var(--green);
+    color: var(--navy-deep);
+    border-radius:50%;
+    width:20px;
+    height:20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:12px;
+    font-weight:bold;
+    border: 2px solid var(--navy-deep);
+  }
+  .mission-tile .tile-lock{
+    position:absolute;
+    font-size:13px;
+    bottom:-3px;
+    right:-3px;
+  }
+
+  /* ---------- Kopfzeile innerhalb einer Mission ---------- */
+  .mission-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    width:100%;
+    max-width:700px;
+    margin-bottom:8px;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .btn-overview{
+    min-height:44px;
+    padding:8px 18px;
+    font-size:.9rem;
+    font-family:inherit;
+    font-weight:bold;
+    color:var(--white);
+    background:rgba(255,255,255,.12);
+    border:2px solid rgba(255,255,255,.3);
+    border-radius:999px;
+    cursor:pointer;
+    transition: transform .12s ease, background .2s ease;
+  }
+  .btn-overview:hover{ background: rgba(255,255,255,.2); transform: translateY(-1px); }
+  .mission-progress{
+    font-size:.85rem;
+    opacity:.85;
+    font-weight:bold;
+    color: var(--cyan);
+  }
+
   /* ---------- Spielfeld allgemein ---------- */
   .field-wrap{
     width:100%;
     max-width: 700px;
-    margin: 6px 0 14px;
+    margin: 4px 0 12px;
   }
   .counter{
-    font-size: clamp(1.1rem, 3.6vw, 1.5rem);
+    font-size: clamp(1.05rem, 3.4vw, 1.4rem);
     font-weight:bold;
     color: var(--gold);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     text-shadow: 0 0 10px rgba(255,200,87,.5);
   }
   .field{
     position:relative;
     width:100%;
-    height: min(52vh, 380px);
-    min-height: 260px;
+    height: min(48vh, 360px);
+    min-height: 240px;
     background: rgba(255,255,255,.06);
     border: 3px dashed rgba(255,255,255,.3);
     border-radius: 24px;
@@ -254,7 +351,7 @@
     touch-action:none;
   }
 
-  /* ---------- Mission 1: Sterne klicken ---------- */
+  /* ---------- Klick-Missionen (Sterne/Planeten/etc. anklicken) ---------- */
   .star-target{
     position:absolute;
     font-size: clamp(38px, 8vw, 56px);
@@ -284,7 +381,7 @@
     .star-target.popped{ animation:none; opacity:0; transition: opacity .3s; }
   }
 
-  /* ---------- Mission 2: Drag & Drop ---------- */
+  /* ---------- Andocken-Missionen: Drag & Drop ---------- */
   .m2-layout{
     display:flex;
     flex-direction:column;
@@ -299,13 +396,13 @@
     flex-wrap:wrap;
   }
   .crate, .station{
-    width: clamp(78px, 20vw, 110px);
-    height: clamp(78px, 20vw, 110px);
+    width: clamp(70px, 18vw, 100px);
+    height: clamp(70px, 18vw, 100px);
     border-radius: 20px;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size: clamp(34px, 8vw, 50px);
+    font-size: clamp(30px, 7vw, 46px);
     position:relative;
   }
   .crate{
@@ -332,7 +429,7 @@
   }
   .station .check-mark{
     position:absolute;
-    font-size: 34px;
+    font-size: 30px;
     opacity:0;
   }
   .station.filled .check-mark{
@@ -358,7 +455,7 @@
     .station.filled .check-mark{ animation:none; opacity:1; }
   }
 
-  /* ---------- Mission 3: Pfeiltasten ---------- */
+  /* ---------- Raketen-Steuerung: Pfeiltasten ---------- */
   .rocket-player{
     position:absolute;
     font-size: clamp(36px, 7vw, 50px);
@@ -366,6 +463,7 @@
     filter: drop-shadow(0 0 10px rgba(79,216,255,.8));
     user-select:none;
   }
+  /* Sammelbare Objekte (Sterne, Mondgestein, Edelsteine, ...) */
   .m3-star{
     position:absolute;
     font-size: clamp(28px, 6vw, 40px);
@@ -383,8 +481,8 @@
     display:flex;
     gap:8px;
     justify-content:center;
-    margin-top:10px;
-    font-size: 1.6rem;
+    margin-top:8px;
+    font-size: 1.5rem;
   }
   .key-cap{
     background: rgba(255,255,255,.15);
@@ -395,7 +493,7 @@
     display:inline-block;
   }
 
-  /* ---------- Mission 5: Maus-Bewegung (Sternenstaub) ---------- */
+  /* ---------- Sternenstaub: Maus-Bewegung ---------- */
   .dust-target{
     position:absolute;
     font-size: clamp(34px, 7vw, 48px);
@@ -410,34 +508,23 @@
     .dust-target{ animation:none; }
     .dust-target.collected{ animation:none; opacity:0; transition: opacity .3s; }
   }
-  .m5-cursor-hint{
-    position:absolute;
-    font-size: 30px;
-    pointer-events:none;
-    opacity:.85;
-    transform: translate(-6px, -6px);
-    transition: left .05s linear, top .05s linear;
-  }
-  @media (prefers-reduced-motion: reduce){
-    .m5-cursor-hint{ transition:none; }
-  }
 
-  /* ---------- Mission 6: Tastatur-Tippen ---------- */
+  /* ---------- Funksprüche: Tastatur-Tippen ---------- */
   .word-row{
     display:flex;
     gap: 8px;
     justify-content:center;
     flex-wrap:wrap;
-    margin: 10px 0 22px;
+    margin: 10px 0 18px;
   }
   .word-letter{
-    width: clamp(38px, 8vw, 52px);
-    height: clamp(46px, 9vw, 60px);
+    width: clamp(36px, 7.5vw, 50px);
+    height: clamp(44px, 8.5vw, 58px);
     border-radius: 12px;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size: clamp(1.2rem, 4vw, 1.7rem);
+    font-size: clamp(1.1rem, 3.6vw, 1.6rem);
     font-weight:bold;
     background: rgba(255,255,255,.08);
     border: 3px solid rgba(255,255,255,.3);
@@ -450,18 +537,18 @@
     transform: scale(1.08);
   }
   .letter-target{
-    width: clamp(90px, 22vw, 140px);
-    height: clamp(90px, 22vw, 140px);
-    border-radius: 28px;
+    width: clamp(80px, 20vw, 130px);
+    height: clamp(80px, 20vw, 130px);
+    border-radius: 26px;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size: clamp(2.4rem, 10vw, 4rem);
+    font-size: clamp(2.2rem, 9vw, 3.6rem);
     font-weight:bold;
     background: rgba(255,255,255,.1);
     border: 4px solid var(--cyan);
     box-shadow: 0 0 24px rgba(79,216,255,.5);
-    margin: 6px auto 10px;
+    margin: 4px auto 8px;
   }
   .letter-target.shake{ animation: shake .5s ease; }
   .letter-target.hit{ animation: check-pop .4s ease; }
@@ -470,7 +557,7 @@
     .letter-target.hit{ animation:none; }
   }
 
-  /* ---------- Mission 4: Leertaste ---------- */
+  /* ---------- Asteroiden-Sprung: Leertaste ---------- */
   .m4-rocket{
     position:absolute;
     left: 40px;
@@ -536,13 +623,13 @@
   }
 
   .trophy{
-    font-size: clamp(70px, 18vw, 120px);
+    font-size: clamp(60px, 16vw, 100px);
   }
 
   footer.small-note{
     margin-top:auto;
-    padding-top: 16px;
-    font-size: .8rem;
+    padding-top: 14px;
+    font-size: .78rem;
     opacity:.6;
   }
 
@@ -555,100 +642,125 @@
 
 <div class="app">
 
-  <!-- Fortschritts-Navigation: 6 Punkte für die 6 Missionen -->
-  <nav class="progress-nav" id="progressNav" aria-label="Missions-Fortschritt">
-    <div class="nav-dot" data-mission="1">⭐</div>
-    <div class="nav-dot" data-mission="2">📦</div>
-    <div class="nav-dot" data-mission="3">🚀</div>
-    <div class="nav-dot" data-mission="4">☄️</div>
-    <div class="nav-dot" data-mission="5">💫</div>
-    <div class="nav-dot" data-mission="6">🔤</div>
-  </nav>
-
-  <!-- ===================== INTRO-SCREEN ===================== -->
+  <!-- ===================== INTRO- / MISSIONSÜBERSICHT-SCREEN ===================== -->
   <section class="screen" id="screen-intro">
     <div class="big-emoji float">🧑‍🚀</div>
     <h1>Marlons Sternenreise</h1>
     <p class="info">
-      Hallo Marlon! Bereit für ein Weltraum-Abenteuer?<br>
-      Du übst mit der Maus und der Tastatur – ganz ohne Zeitdruck.<br>
-      Es gibt kein Verlieren. Du machst einfach alles super! 🌟
+      Hallo Marlon! Wähle deine Schwierigkeit und starte dein Weltraum-Abenteuer –
+      ganz ohne Zeitdruck. Es gibt kein Verlieren, nur Entdecken! 🌟
     </p>
+
+    <div class="difficulty-row" id="difficultyRow">
+      <button type="button" class="difficulty-btn" data-level="leicht">🐣 Leicht</button>
+      <button type="button" class="difficulty-btn" data-level="mittel">🚀 Mittel</button>
+      <button type="button" class="difficulty-btn" data-level="profi">🌟 Profi</button>
+    </div>
+
     <button class="btn" id="btnStart">🚀 Los geht's!</button>
-  </section>
 
-  <!-- ===================== MISSION 1: MAUS-KLICK ===================== -->
-  <section class="screen" id="screen-m1">
-    <h2>Mission 1: Sterne einsammeln ⭐</h2>
-    <p class="info">Klicke mit der Maus auf jeden Stern, sobald er erscheint!</p>
-    <div class="counter" id="m1Counter">Sterne: 0 / 8</div>
-    <div class="field-wrap">
-      <div class="field" id="m1Field"></div>
+    <div class="grid-heading">🗺️ Alle Missionen</div>
+    <div class="mission-grid-scroll" id="missionGridScroll">
+      <div id="missionGrid"></div>
     </div>
-    <button class="btn" id="m1Next" hidden>🎉 Weiter zu Mission 2</button>
   </section>
 
-  <!-- ===================== MISSION 2: DRAG & DROP ===================== -->
-  <section class="screen" id="screen-m2">
-    <h2>Mission 2: Fracht andocken 📦</h2>
-    <p class="info">Ziehe jede Kiste mit der Maus zur Andockstation in der gleichen Farbe!</p>
-    <div class="counter" id="m2Counter">Angedockt: 0 / 3</div>
+  <!-- ===================== TYP: KLICK (Welt 1) ===================== -->
+  <section class="screen" id="screen-typ-klick">
+    <div class="mission-header">
+      <button type="button" class="btn-overview" id="klickOverview">🗺️ Übersicht</button>
+      <div class="mission-progress" id="klickProgress"></div>
+    </div>
+    <h2 id="klickTitel">Mission</h2>
+    <p class="info" id="klickHinweis"></p>
+    <div class="counter" id="klickCounter"></div>
+    <div class="field-wrap">
+      <div class="field" id="klickField"></div>
+    </div>
+    <button class="btn" id="klickNext" hidden>🎉 Weiter</button>
+  </section>
+
+  <!-- ===================== TYP: DRAG & DROP (Welt 2) ===================== -->
+  <section class="screen" id="screen-typ-dragdrop">
+    <div class="mission-header">
+      <button type="button" class="btn-overview" id="ddOverview">🗺️ Übersicht</button>
+      <div class="mission-progress" id="ddProgress"></div>
+    </div>
+    <h2 id="ddTitel">Mission</h2>
+    <p class="info" id="ddHinweis"></p>
+    <div class="counter" id="ddCounter"></div>
     <div class="field-wrap m2-layout">
-      <div class="crates-row" id="m2Crates"></div>
-      <div class="stations-row" id="m2Stations"></div>
+      <div class="crates-row" id="ddCrates"></div>
+      <div class="stations-row" id="ddStations"></div>
     </div>
-    <button class="btn" id="m2Next" hidden>🎉 Weiter zu Mission 3</button>
+    <button class="btn" id="ddNext" hidden>🎉 Weiter</button>
   </section>
 
-  <!-- ===================== MISSION 3: PFEILTASTEN ===================== -->
-  <section class="screen" id="screen-m3">
-    <h2>Mission 3: Rakete steuern 🚀</h2>
-    <p class="info">Benutze die Pfeiltasten und sammle alle Sterne ein!</p>
-    <div class="counter" id="m3Counter">Sterne: 0 / 5</div>
+  <!-- ===================== TYP: PFEILTASTEN (Welt 3) ===================== -->
+  <section class="screen" id="screen-typ-pfeiltasten">
+    <div class="mission-header">
+      <button type="button" class="btn-overview" id="pfOverview">🗺️ Übersicht</button>
+      <div class="mission-progress" id="pfProgress"></div>
+    </div>
+    <h2 id="pfTitel">Mission</h2>
+    <p class="info" id="pfHinweis"></p>
+    <div class="counter" id="pfCounter"></div>
     <div class="field-wrap">
-      <div class="field" id="m3Field" tabindex="0"></div>
+      <div class="field" id="pfField" tabindex="0"></div>
     </div>
     <div class="hint-keys">
       <span class="key-cap">⬅️</span><span class="key-cap">⬆️</span>
       <span class="key-cap">⬇️</span><span class="key-cap">➡️</span>
     </div>
-    <button class="btn" id="m3Next" hidden>🎉 Weiter zu Mission 4</button>
+    <button class="btn" id="pfNext" hidden>🎉 Weiter</button>
   </section>
 
-  <!-- ===================== MISSION 4: LEERTASTE ===================== -->
-  <section class="screen" id="screen-m4">
-    <h2>Mission 4: Asteroiden-Sprung ☄️</h2>
-    <p class="info">Drücke die Leertaste, damit deine Rakete über die Asteroiden springt!</p>
-    <div class="counter" id="m4Counter">Geschafft: 0 / 8</div>
+  <!-- ===================== TYP: LEERTASTE (Welt 4) ===================== -->
+  <section class="screen" id="screen-typ-leertaste">
+    <div class="mission-header">
+      <button type="button" class="btn-overview" id="ltOverview">🗺️ Übersicht</button>
+      <div class="mission-progress" id="ltProgress"></div>
+    </div>
+    <h2 id="ltTitel">Mission</h2>
+    <p class="info" id="ltHinweis"></p>
+    <div class="counter" id="ltCounter"></div>
     <div class="field-wrap">
-      <div class="field" id="m4Field">
+      <div class="field" id="ltField">
         <div class="m4-ground"></div>
-        <div class="m4-rocket" id="m4Rocket">🚀</div>
+        <div class="m4-rocket" id="ltRocket">🚀</div>
       </div>
     </div>
     <div class="hint-keys"><span class="key-cap">Leertaste ␣</span></div>
-    <button class="btn" id="m4Next" hidden>🎉 Weiter zu Mission 5</button>
+    <button class="btn" id="ltNext" hidden>🎉 Weiter</button>
   </section>
 
-  <!-- ===================== MISSION 5: MAUS-BEWEGUNG ===================== -->
-  <section class="screen" id="screen-m5">
-    <h2>Mission 5: Sternenstaub einsammeln 💫</h2>
-    <p class="info">Fahre mit der Maus einfach über den funkelnden Sternenstaub – klicken musst du nicht!</p>
-    <div class="counter" id="m5Counter">Sternenstaub: 0 / 6</div>
-    <div class="field-wrap">
-      <div class="field" id="m5Field"></div>
+  <!-- ===================== TYP: MAUS-BEWEGUNG (Welt 5) ===================== -->
+  <section class="screen" id="screen-typ-maus">
+    <div class="mission-header">
+      <button type="button" class="btn-overview" id="msOverview">🗺️ Übersicht</button>
+      <div class="mission-progress" id="msProgress"></div>
     </div>
-    <button class="btn" id="m5Next" hidden>🎉 Weiter zu Mission 6</button>
+    <h2 id="msTitel">Mission</h2>
+    <p class="info" id="msHinweis"></p>
+    <div class="counter" id="msCounter"></div>
+    <div class="field-wrap">
+      <div class="field" id="msField"></div>
+    </div>
+    <button class="btn" id="msNext" hidden>🎉 Weiter</button>
   </section>
 
-  <!-- ===================== MISSION 6: TASTATUR-TIPPEN ===================== -->
-  <section class="screen" id="screen-m6">
-    <h2>Mission 6: Funkspruch senden 🔤</h2>
-    <p class="info">Tippe die leuchtende Taste auf deiner Tastatur – du schreibst deinen eigenen Namen!</p>
-    <div class="counter" id="m6Counter">Fortschritt: 0 / 6</div>
-    <div class="letter-target" id="m6LetterBox">M</div>
-    <div class="word-row" id="m6WordRow"></div>
-    <button class="btn" id="m6Next" hidden>🏁 Zum Abschluss</button>
+  <!-- ===================== TYP: TASTATUR-TIPPEN (Welt 6) ===================== -->
+  <section class="screen" id="screen-typ-tippen">
+    <div class="mission-header">
+      <button type="button" class="btn-overview" id="tpOverview">🗺️ Übersicht</button>
+      <div class="mission-progress" id="tpProgress"></div>
+    </div>
+    <h2 id="tpTitel">Mission</h2>
+    <p class="info" id="tpHinweis"></p>
+    <div class="counter" id="tpCounter"></div>
+    <div class="letter-target" id="tpLetterBox">?</div>
+    <div class="word-row" id="tpWordRow"></div>
+    <button class="btn" id="tpNext" hidden>🎉 Weiter</button>
   </section>
 
   <!-- ===================== END-SCREEN ===================== -->
@@ -656,10 +768,10 @@
     <div class="trophy">🏆</div>
     <h1>Super gemacht, Marlon!</h1>
     <p class="info">
-      Du hast alle sechs Missionen der Sternenreise gemeistert.<br>
+      Du hast alle <span id="endMissionsAnzahl"></span> Missionen der Sternenreise gemeistert.<br>
       Maus und Tastatur hast du wie ein echter Astronaut im Griff! 🚀✨
     </p>
-    <button class="btn secondary" id="btnReplay">🔁 Nochmal spielen</button>
+    <button class="btn secondary" id="btnReplay">🔁 Nochmal von vorne</button>
   </section>
 
   <footer class="small-note">Marlons Sternenreise – ein Lernspiel für Maus &amp; Tastatur</footer>
@@ -677,194 +789,400 @@
   // Prüfen, ob der Nutzer weniger Bewegung/Animation wünscht
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // Farbpalette für Mission 2 (Kisten & Stationen)
+  // Farbpalette (max. 4 Farben) für die Andocken-Missionen
   const PALETTE = [
     { name: "cyan",  color: "#4FD8FF" },
     { name: "gold",  color: "#FFC857" },
-    { name: "pink",  color: "#FF6B9D" }
+    { name: "pink",  color: "#FF6B9D" },
+    { name: "green", color: "#6BFFB8" }
   ];
+
+  // ---------- Hilfsfunktionen ----------
+  function randRange(min, max){ return Math.random() * (max - min) + min; }
+  function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+
+  // ==========================================================
+  // MISSIONS-DATEN: 6 Welten à 5 Missionen = 30 Missionen
+  // Jede Welt hat einen festen Mechanik-Typ; die 5 Missionen
+  // pro Welt sind Variationen (anderes Thema, andere Zielzahl).
+  // ==========================================================
+  const WELT_DEFS = [
+    {
+      name: "Sternen-Klick", icon: "⭐", typ: "klick",
+      missionen: [
+        { titel: "Sterne einsammeln", emojis: ["⭐","🌟","✨"], zielBasis: 8,
+          hinweis: "Klicke mit der Maus auf jeden Stern, sobald er erscheint!" },
+        { titel: "Planeten entdecken", emojis: ["🪐","🌍","🌕"], zielBasis: 8,
+          hinweis: "Klicke jeden Planeten an, sobald du ihn siehst!" },
+        { titel: "Kometen jagen", emojis: ["☄️","💫"], zielBasis: 9,
+          hinweis: "Klicke schnell auf die vorbeifliegenden Kometen!" },
+        { titel: "UFO-Alarm", emojis: ["🛸"], zielBasis: 9,
+          hinweis: "Ein UFO taucht auf! Klicke es an, bevor es weiterfliegt!" },
+        { titel: "Galaxien-Rallye", emojis: ["🌌","⭐","✨"], zielBasis: 10,
+          hinweis: "Letzte Herausforderung: Klicke alle funkelnden Punkte an!" }
+      ]
+    },
+    {
+      name: "Fracht-Andocken", icon: "📦", typ: "dragdrop",
+      missionen: [
+        { titel: "Fracht andocken", icon: "📦", stationIcon: "🛰️", basisAnzahl: 2,
+          hinweis: "Ziehe jede Kiste zur Andockstation in der gleichen Farbe!" },
+        { titel: "Roboter einsortieren", icon: "🤖", stationIcon: "🔌", basisAnzahl: 3,
+          hinweis: "Ziehe jeden Roboter zu seiner farblich passenden Station!" },
+        { titel: "Satelliten andocken", icon: "🛰️", stationIcon: "📡", basisAnzahl: 3,
+          hinweis: "Bringe jeden Satelliten zur richtigen Bodenstation!" },
+        { titel: "Edelsteine sortieren", icon: "💎", stationIcon: "💠", basisAnzahl: 4,
+          hinweis: "Ziehe jeden Edelstein zur Station in seiner Farbe!" },
+        { titel: "Fracht-Extreme", icon: "🎁", stationIcon: "🛰️", basisAnzahl: 4,
+          hinweis: "Die große Fracht-Mission: alle Pakete richtig andocken!" }
+      ]
+    },
+    {
+      name: "Raketen-Steuerung", icon: "🚀", typ: "pfeiltasten",
+      missionen: [
+        { titel: "Sterne sammeln", icon: "⭐", zielBasis: 5,
+          hinweis: "Benutze die Pfeiltasten und sammle alle Sterne ein!" },
+        { titel: "Mondgestein bergen", icon: "🪨", zielBasis: 6,
+          hinweis: "Steuere die Rakete zu jedem Mondgestein!" },
+        { titel: "Edelsteine bergen", icon: "💎", zielBasis: 6,
+          hinweis: "Fliege mit den Pfeiltasten zu jedem Edelstein!" },
+        { titel: "Energie sammeln", icon: "⚡", zielBasis: 7,
+          hinweis: "Sammle alle Energie-Blitze mit deiner Rakete ein!" },
+        { titel: "Galaxien-Marathon", icon: "🌟", zielBasis: 8,
+          hinweis: "Die große Sammel-Mission durchs ganze Spielfeld!" }
+      ]
+    },
+    {
+      name: "Asteroiden-Sprung", icon: "☄️", typ: "leertaste",
+      missionen: [
+        { titel: "Asteroiden-Sprung", icon: "☄️", zielErfolgBasis: 8,
+          hinweis: "Drücke die Leertaste, damit deine Rakete über die Asteroiden springt!" },
+        { titel: "Meteor-Regen", icon: "🌠", zielErfolgBasis: 8,
+          hinweis: "Springe über jeden Meteor, der angeflogen kommt!" },
+        { titel: "Mondgestein ausweichen", icon: "🪨", zielErfolgBasis: 9,
+          hinweis: "Weiche dem Mondgestein aus, indem du im richtigen Moment springst!" },
+        { titel: "Kometenschweif", icon: "☄️", zielErfolgBasis: 9,
+          hinweis: "Timing ist alles: Spring über jeden Kometen!" },
+        { titel: "Asteroidengürtel", icon: "☄️", zielErfolgBasis: 10,
+          hinweis: "Die große Sprung-Herausforderung durch den Asteroidengürtel!" }
+      ]
+    },
+    {
+      name: "Sternenstaub", icon: "💫", typ: "maus",
+      missionen: [
+        { titel: "Sternenstaub einsammeln", icon: "💫", zielBasis: 6,
+          hinweis: "Fahre mit der Maus über den funkelnden Sternenstaub – klicken musst du nicht!" },
+        { titel: "Kometenspur folgen", icon: "☄️", zielBasis: 6,
+          hinweis: "Folge mit dem Mauszeiger der Spur der Kometen!" },
+        { titel: "Glitzerregen", icon: "✨", zielBasis: 7,
+          hinweis: "Berühre mit der Maus jeden funkelnden Punkt!" },
+        { titel: "Nebel-Funken", icon: "🌌", zielBasis: 7,
+          hinweis: "Fahre sanft mit der Maus über die Nebel-Funken!" },
+        { titel: "Sternschnuppen-Wunsch", icon: "🌠", zielBasis: 8,
+          hinweis: "Berühre alle Sternschnuppen mit deinem Mauszeiger!" }
+      ]
+    },
+    {
+      name: "Funksprüche", icon: "🔤", typ: "tippen",
+      missionen: [
+        { titel: "Funkspruch: MARLON", wort: "MARLON",
+          hinweis: "Tippe die leuchtende Taste – du schreibst deinen eigenen Namen!" },
+        { titel: "Funkspruch: WELTALL", wort: "WELTALL",
+          hinweis: "Tippe Buchstabe für Buchstabe das Wort WELTALL!" },
+        { titel: "Funkspruch: RAKETE", wort: "RAKETE",
+          hinweis: "Tippe Buchstabe für Buchstabe das Wort RAKETE!" },
+        { titel: "Funkspruch: PLANET", wort: "PLANET",
+          hinweis: "Tippe Buchstabe für Buchstabe das Wort PLANET!" },
+        { titel: "Funkspruch: GALAXIE", wort: "GALAXIE",
+          hinweis: "Die letzte Mission: Tippe das Wort GALAXIE!" }
+      ]
+    }
+  ];
+
+  // Flache Liste aller 30 Missionen mit fortlaufender globaler ID (1..30)
+  const MISSIONS = [];
+  WELT_DEFS.forEach((welt, weltIndex) => {
+    welt.missionen.forEach((m, i) => {
+      MISSIONS.push(Object.assign({
+        id: MISSIONS.length + 1,
+        weltIndex: weltIndex,
+        posInWelt: i + 1,
+        typ: welt.typ
+      }, m));
+    });
+  });
+
+  function weltVon(spec){ return WELT_DEFS[spec.weltIndex]; }
+
+  // ---------- Schwierigkeitsgrade ----------
+  const SCHWIERIGKEIT = {
+    leicht: { ziel: 0.7,  tempo: 0.8,  radius: 1.25 },
+    mittel: { ziel: 1.0,  tempo: 1.0,  radius: 1.0  },
+    profi:  { ziel: 1.3,  tempo: 1.25, radius: 0.8  }
+  };
+  function aktuelleSchwierigkeit(){
+    return SCHWIERIGKEIT[state.schwierigkeit] || SCHWIERIGKEIT.mittel;
+  }
 
   // ---------- Allgemeiner Spielzustand ----------
   const state = {
-    // 0 = Intro, 1-6 = Missionen, 7 = Ende
-    screen: 0,
-    completed: [false, false, false, false, false, false]
+    screen: "intro",
+    completed: new Array(MISSIONS.length).fill(false),
+    schwierigkeit: "mittel",
+    aktuelleMissionId: null
   };
 
   // Aufräum-Funktion der aktuell aktiven Mission (Timer/Listener stoppen)
   let activeCleanup = null;
 
-  // ---------- Bildschirm-Wechsel ----------
-  const screens = {
-    0: document.getElementById("screen-intro"),
-    1: document.getElementById("screen-m1"),
-    2: document.getElementById("screen-m2"),
-    3: document.getElementById("screen-m3"),
-    4: document.getElementById("screen-m4"),
-    5: document.getElementById("screen-m5"),
-    6: document.getElementById("screen-m6"),
-    7: document.getElementById("screen-end")
-  };
-
-  function goToScreen(nr){
-    // Vorherige Mission sauber stoppen (Timer, Listener etc.)
-    if (typeof activeCleanup === "function") {
-      activeCleanup();
-      activeCleanup = null;
-    }
-
-    Object.values(screens).forEach(s => s.classList.remove("active"));
-    screens[nr].classList.add("active");
-    state.screen = nr;
-    updateNav();
-
-    // Mission bei Betreten initialisieren
-    if (nr === 1) activeCleanup = initMission1();
-    if (nr === 2) activeCleanup = initMission2();
-    if (nr === 3) activeCleanup = initMission3();
-    if (nr === 4) activeCleanup = initMission4();
-    if (nr === 5) activeCleanup = initMission5();
-    if (nr === 6) activeCleanup = initMission6();
-    if (nr === 7) startConfetti();
+  // ---------- Fortschritt / Freischaltung ----------
+  // Die erste Mission jeder Welt ist immer offen, damit Marlon frei
+  // zwischen den 6 Welten wählen kann. Innerhalb einer Welt schaltet
+  // sich die nächste Mission erst frei, wenn die vorherige geschafft ist.
+  function isUnlocked(id){
+    const spec = MISSIONS[id - 1];
+    if (spec.posInWelt === 1) return true;
+    return state.completed[id - 2];
   }
 
-  // ---------- Fortschritts-Navigation oben ----------
-  const navDots = Array.from(document.querySelectorAll(".nav-dot"));
-
-  function isUnlocked(missionNr){
-    // Mission 1 ist immer offen. Jede weitere Mission öffnet sich,
-    // sobald die vorherige geschafft wurde.
-    if (missionNr === 1) return true;
-    return state.completed[missionNr - 2];
+  function markCompleted(id){
+    state.completed[id - 1] = true;
+    renderMissionGrid();
   }
 
-  function updateNav(){
-    navDots.forEach(dot => {
-      const nr = Number(dot.dataset.mission);
-      const done = state.completed[nr - 1];
-      const unlocked = isUnlocked(nr);
+  function alleScreens(){ return document.querySelectorAll(".screen"); }
 
-      dot.classList.toggle("done", done);
-      dot.classList.toggle("unlocked", unlocked);
-      dot.classList.toggle("current", state.screen === nr);
+  function goOverview(){
+    if (typeof activeCleanup === "function"){ activeCleanup(); activeCleanup = null; }
+    alleScreens().forEach(s => s.classList.remove("active"));
+    document.getElementById("screen-intro").classList.add("active");
+    state.screen = "intro";
+    state.aktuelleMissionId = null;
+    renderMissionGrid();
+    updateStartButton();
+  }
 
-      // Häkchen für erledigte Missionen anzeigen
-      let check = dot.querySelector(".check");
-      if (done && !check){
-        check = document.createElement("span");
-        check.className = "check";
-        check.textContent = "✓";
-        dot.appendChild(check);
-      } else if (!done && check){
-        check.remove();
-      }
+  function goEnd(){
+    if (typeof activeCleanup === "function"){ activeCleanup(); activeCleanup = null; }
+    alleScreens().forEach(s => s.classList.remove("active"));
+    document.getElementById("screen-end").classList.add("active");
+    state.screen = "end";
+    startConfetti();
+  }
+
+  const INIT_FUNKTIONEN = {}; // wird weiter unten pro Typ befüllt
+
+  function playMission(id){
+    if (!isUnlocked(id)) return;
+    if (typeof activeCleanup === "function"){ activeCleanup(); activeCleanup = null; }
+
+    const spec = MISSIONS[id - 1];
+    const welt = weltVon(spec);
+
+    alleScreens().forEach(s => s.classList.remove("active"));
+    const screenEl = document.getElementById("screen-typ-" + spec.typ);
+    screenEl.classList.add("active");
+    state.screen = "typ-" + spec.typ;
+    state.aktuelleMissionId = id;
+
+    activeCleanup = INIT_FUNKTIONEN[spec.typ](spec, welt);
+  }
+
+  function weiterNachMission(id){
+    if (id < MISSIONS.length) playMission(id + 1); else goEnd();
+  }
+
+  // Gemeinsame Kopfzeile jeder Mission füllen (Übersicht-Button + Fortschritt)
+  function setupMissionHeader(prefix, spec, welt){
+    document.getElementById(prefix + "Overview").onclick = goOverview;
+    const erledigt = state.completed.filter(Boolean).length;
+    document.getElementById(prefix + "Progress").textContent =
+      welt.icon + " Welt " + (spec.weltIndex + 1) + "/" + WELT_DEFS.length +
+      " · Mission " + spec.posInWelt + "/5 · Gesamt " + erledigt + "/" + MISSIONS.length;
+  }
+
+  // ==========================================================
+  // MISSIONSÜBERSICHT (Weltkarte auf dem Intro-Screen)
+  // ==========================================================
+  function renderMissionGrid(){
+    const container = document.getElementById("missionGrid");
+    container.innerHTML = "";
+
+    WELT_DEFS.forEach((welt, weltIndex) => {
+      const block = document.createElement("div");
+      block.className = "world-block";
+
+      const titel = document.createElement("div");
+      titel.className = "world-title";
+      titel.textContent = welt.icon + " " + welt.name;
+      block.appendChild(titel);
+
+      const tilesRow = document.createElement("div");
+      tilesRow.className = "world-tiles";
+
+      MISSIONS.filter(m => m.weltIndex === weltIndex).forEach(spec => {
+        const done = state.completed[spec.id - 1];
+        const unlocked = isUnlocked(spec.id);
+
+        const tile = document.createElement("button");
+        tile.type = "button";
+        tile.className = "mission-tile" + (unlocked ? " unlocked" : "") + (done ? " done" : "");
+        tile.disabled = !unlocked;
+        tile.setAttribute("aria-label", welt.name + " Mission " + spec.posInWelt + ": " + spec.titel);
+        tile.innerHTML = "<span>" + welt.icon + "</span><span class=\"tile-num\">" + spec.posInWelt + "</span>";
+
+        if (done){
+          const check = document.createElement("span");
+          check.className = "tile-check";
+          check.textContent = "✓";
+          tile.appendChild(check);
+        } else if (!unlocked){
+          const lock = document.createElement("span");
+          lock.className = "tile-lock";
+          lock.textContent = "🔒";
+          tile.appendChild(lock);
+        }
+
+        tile.addEventListener("click", () => playMission(spec.id));
+        tilesRow.appendChild(tile);
+      });
+
+      block.appendChild(tilesRow);
+      container.appendChild(block);
     });
   }
 
-  navDots.forEach(dot => {
-    dot.addEventListener("click", () => {
-      const nr = Number(dot.dataset.mission);
-      if (isUnlocked(nr)) goToScreen(nr);
+  // ---------- Schwierigkeitsgrad-Auswahl ----------
+  const difficultyBtns = Array.from(document.querySelectorAll(".difficulty-btn"));
+  function renderDifficulty(){
+    difficultyBtns.forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.level === state.schwierigkeit);
+    });
+  }
+  difficultyBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      state.schwierigkeit = btn.dataset.level;
+      renderDifficulty();
     });
   });
 
-  function markCompleted(missionNr){
-    state.completed[missionNr - 1] = true;
-    updateNav();
+  // ---------- Start-/Weiterspielen-Button ----------
+  function updateStartButton(){
+    const btn = document.getElementById("btnStart");
+    const erledigt = state.completed.filter(Boolean).length;
+    if (erledigt === 0){
+      btn.textContent = "🚀 Los geht's!";
+    } else if (erledigt >= MISSIONS.length){
+      btn.textContent = "🏆 Zur Siegerehrung";
+    } else {
+      btn.textContent = "▶️ Weiter spielen";
+    }
   }
+  document.getElementById("btnStart").addEventListener("click", () => {
+    const erledigt = state.completed.filter(Boolean).length;
+    if (erledigt >= MISSIONS.length){ goEnd(); return; }
+    // Erste noch nicht geschaffte Mission (ist dank Freischalt-Logik
+    // immer bereits erreichbar, siehe isUnlocked())
+    const naechsteIdx = state.completed.findIndex(v => !v);
+    playMission(naechsteIdx === -1 ? 1 : naechsteIdx + 1);
+  });
 
-  // ---------- Hilfsfunktion: Zufallszahl in einem Bereich ----------
-  function randRange(min, max){
-    return Math.random() * (max - min) + min;
-  }
+  document.getElementById("btnReplay").addEventListener("click", () => {
+    state.completed = new Array(MISSIONS.length).fill(false);
+    document.getElementById("confettiWrap").innerHTML = "";
+    goOverview();
+  });
 
   // ==========================================================
-  // MISSION 1 – Maus-Klick: Sterne nacheinander anklicken
+  // TYP "klick" – Ziele nacheinander anklicken (Welt 1)
   // ==========================================================
-  function initMission1(){
-    const field = document.getElementById("m1Field");
-    const counterEl = document.getElementById("m1Counter");
-    const nextBtn = document.getElementById("m1Next");
-    const ZIEL = 8;
+  function initKlickMission(spec, welt){
+    setupMissionHeader("klick", spec, welt);
+    document.getElementById("klickTitel").textContent = spec.titel + " " + welt.icon;
+    document.getElementById("klickHinweis").textContent = spec.hinweis;
+
+    const field = document.getElementById("klickField");
+    const counterEl = document.getElementById("klickCounter");
+    const nextBtn = document.getElementById("klickNext");
+
+    const f = aktuelleSchwierigkeit();
+    const ZIEL = clamp(Math.round(spec.zielBasis * f.ziel), 5, 14);
     let gefunden = 0;
-    let aktiverStern = null;
 
     field.innerHTML = "";
     nextBtn.hidden = true;
-    counterEl.textContent = `Sterne: 0 / ${ZIEL}`;
+    counterEl.textContent = "Gesammelt: 0 / " + ZIEL;
 
-    const emojis = ["⭐", "🌟", "✨"];
+    function spawnZiel(){
+      const el = document.createElement("button");
+      el.className = "star-target";
+      el.type = "button";
+      el.setAttribute("aria-label", "anklicken");
+      el.textContent = spec.emojis[Math.floor(Math.random() * spec.emojis.length)];
 
-    function spawnStern(){
-      const stern = document.createElement("button");
-      stern.className = "star-target";
-      stern.type = "button";
-      stern.setAttribute("aria-label", "Stern anklicken");
-      stern.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-
-      // Zufällige Position innerhalb des Spielfelds (mit Rand-Abstand)
-      const fw = field.clientWidth;
-      const fh = field.clientHeight;
-      const size = 60; // ungefähre Sterngröße inkl. Puffer
+      const fw = field.clientWidth, fh = field.clientHeight, size = 60;
       const x = randRange(0, Math.max(0, fw - size));
       const y = randRange(0, Math.max(0, fh - size));
-      stern.style.left = x + "px";
-      stern.style.top = y + "px";
+      el.style.left = x + "px";
+      el.style.top = y + "px";
 
-      stern.addEventListener("click", () => {
-        if (stern.classList.contains("popped")) return;
-        stern.classList.add("popped");
+      el.addEventListener("click", () => {
+        if (el.classList.contains("popped")) return;
+        el.classList.add("popped");
         gefunden++;
-        counterEl.textContent = `Sterne: ${gefunden} / ${ZIEL}`;
-
-        setTimeout(() => stern.remove(), reduceMotion ? 0 : 350);
+        counterEl.textContent = "Gesammelt: " + gefunden + " / " + ZIEL;
+        setTimeout(() => el.remove(), reduceMotion ? 0 : 350);
 
         if (gefunden >= ZIEL){
-          markCompleted(1);
+          markCompleted(spec.id);
           nextBtn.hidden = false;
         } else {
-          spawnStern();
+          spawnZiel();
         }
       });
 
-      field.appendChild(stern);
-      aktiverStern = stern;
+      field.appendChild(el);
     }
+    spawnZiel();
 
-    spawnStern();
+    nextBtn.onclick = () => weiterNachMission(spec.id);
 
-    nextBtn.onclick = () => goToScreen(2);
-
-    // Aufräumen beim Verlassen der Mission
-    return function cleanup(){
-      field.innerHTML = "";
-    };
+    return function cleanup(){ field.innerHTML = ""; };
   }
+  INIT_FUNKTIONEN.klick = initKlickMission;
 
   // ==========================================================
-  // MISSION 2 – Drag & Drop: Kisten zu Andockstationen ziehen
+  // TYP "dragdrop" – Kisten per Drag & Drop andocken (Welt 2)
   // ==========================================================
-  function initMission2(){
-    const cratesRow = document.getElementById("m2Crates");
-    const stationsRow = document.getElementById("m2Stations");
-    const counterEl = document.getElementById("m2Counter");
-    const nextBtn = document.getElementById("m2Next");
+  function initDragDropMission(spec, welt){
+    setupMissionHeader("dd", spec, welt);
+    document.getElementById("ddTitel").textContent = spec.titel + " " + welt.icon;
+    document.getElementById("ddHinweis").textContent = spec.hinweis;
+
+    const cratesRow = document.getElementById("ddCrates");
+    const stationsRow = document.getElementById("ddStations");
+    const counterEl = document.getElementById("ddCounter");
+    const nextBtn = document.getElementById("ddNext");
+
+    // Anzahl der Kisten passt sich der Schwierigkeit an (max. 4 Farben verfügbar)
+    let anzahl = spec.basisAnzahl + (state.schwierigkeit === "leicht" ? -1 : state.schwierigkeit === "profi" ? 1 : 0);
+    anzahl = clamp(anzahl, 2, PALETTE.length);
+
+    const farben = [...PALETTE].sort(() => Math.random() - 0.5).slice(0, anzahl);
+    const stationOrder = [...farben].sort(() => Math.random() - 0.5);
+    const stationIcon = spec.stationIcon || "🛰️";
+
     let angedockt = 0;
-
     cratesRow.innerHTML = "";
     stationsRow.innerHTML = "";
     nextBtn.hidden = true;
-    counterEl.textContent = "Angedockt: 0 / 3";
+    counterEl.textContent = "Angedockt: 0 / " + anzahl;
 
-    // Stationen in zufälliger Reihenfolge anordnen, damit nicht
-    // immer die gleiche Farbe an derselben Stelle liegt
-    const stationOrder = [...PALETTE].sort(() => Math.random() - 0.5);
-
-    PALETTE.forEach(item => {
+    farben.forEach(item => {
       const crate = document.createElement("div");
       crate.className = "crate";
       crate.style.setProperty("--crate-color", item.color);
-      crate.textContent = "📦";
+      crate.textContent = spec.icon;
       crate.draggable = true;
       crate.dataset.color = item.name;
 
@@ -881,10 +1199,10 @@
       station.className = "station";
       station.style.setProperty("--station-color", item.color);
       station.dataset.color = item.name;
-      station.innerHTML = `<span class="target-label">🛰️</span><span class="check-mark">✅</span>`;
+      station.innerHTML = "<span class=\"target-label\">" + stationIcon + "</span><span class=\"check-mark\">✅</span>";
 
       station.addEventListener("dragover", (e) => {
-        e.preventDefault(); // erlaubt das Ablegen (Drop)
+        e.preventDefault();
         station.classList.add("dragover");
       });
       station.addEventListener("dragleave", () => {
@@ -895,24 +1213,21 @@
         station.classList.remove("dragover");
         const farbe = e.dataTransfer.getData("text/plain");
 
-        if (station.classList.contains("filled")) return; // schon belegt
+        if (station.classList.contains("filled")) return;
 
         if (farbe === station.dataset.color){
-          // Treffer: passende Farbe!
           station.classList.add("filled");
-          const crate = cratesRow.querySelector(`.crate[data-color="${farbe}"]`);
+          const crate = cratesRow.querySelector('.crate[data-color="' + farbe + '"]');
           if (crate) crate.classList.add("docked");
           angedockt++;
-          counterEl.textContent = `Angedockt: ${angedockt} / 3`;
+          counterEl.textContent = "Angedockt: " + angedockt + " / " + anzahl;
 
-          if (angedockt >= 3){
-            markCompleted(2);
+          if (angedockt >= anzahl){
+            markCompleted(spec.id);
             nextBtn.hidden = false;
           }
         } else {
-          // Falsche Farbe: sanftes Wackeln statt Fehlermeldung
           station.classList.remove("shake");
-          // Reflow erzwingen, damit die Animation erneut abspielt
           void station.offsetWidth;
           station.classList.add("shake");
         }
@@ -921,27 +1236,36 @@
       stationsRow.appendChild(station);
     });
 
-    nextBtn.onclick = () => goToScreen(3);
+    nextBtn.onclick = () => weiterNachMission(spec.id);
 
     return function cleanup(){
       cratesRow.innerHTML = "";
       stationsRow.innerHTML = "";
     };
   }
+  INIT_FUNKTIONEN.dragdrop = initDragDropMission;
 
   // ==========================================================
-  // MISSION 3 – Pfeiltasten: Rakete bewegen & Sterne einsammeln
+  // TYP "pfeiltasten" – Rakete steuern & Objekte einsammeln (Welt 3)
   // ==========================================================
-  function initMission3(){
-    const field = document.getElementById("m3Field");
-    const counterEl = document.getElementById("m3Counter");
-    const nextBtn = document.getElementById("m3Next");
-    const ZIEL = 5;
+  function initPfeiltastenMission(spec, welt){
+    setupMissionHeader("pf", spec, welt);
+    document.getElementById("pfTitel").textContent = spec.titel + " " + welt.icon;
+    document.getElementById("pfHinweis").textContent = spec.hinweis;
+
+    const field = document.getElementById("pfField");
+    const counterEl = document.getElementById("pfCounter");
+    const nextBtn = document.getElementById("pfNext");
+
+    const f = aktuelleSchwierigkeit();
+    const ZIEL = clamp(Math.round(spec.zielBasis * f.ziel), 3, 10);
+    const SPEED = 4.2 * f.tempo;
+    const TREFFER_RADIUS = clamp(34 * f.radius, 26, 46);
+
     let gesammelt = 0;
-
     field.innerHTML = "";
     nextBtn.hidden = true;
-    counterEl.textContent = `Sterne: 0 / ${ZIEL}`;
+    counterEl.textContent = "Eingesammelt: 0 / " + ZIEL;
 
     const rocketSize = 46;
     const rocket = document.createElement("div");
@@ -949,81 +1273,64 @@
     rocket.textContent = "🚀";
     field.appendChild(rocket);
 
-    // Position der Rakete (Mittelpunkt des Spielfelds als Start)
-    let fw = field.clientWidth;
-    let fh = field.clientHeight;
-    let rx = fw / 2 - rocketSize / 2;
-    let ry = fh / 2 - rocketSize / 2;
+    let fw = field.clientWidth, fh = field.clientHeight;
+    let rx = fw / 2 - rocketSize / 2, ry = fh / 2 - rocketSize / 2;
     rocket.style.left = rx + "px";
     rocket.style.top = ry + "px";
+    function drawRocket(){ rocket.style.left = rx + "px"; rocket.style.top = ry + "px"; }
 
-    function drawRocket(){
-      rocket.style.left = rx + "px";
-      rocket.style.top = ry + "px";
-    }
-
-    // 5 Sterne an zufälligen Positionen platzieren
-    const sterne = [];
+    // Sammelobjekte an zufälligen Positionen platzieren
+    const objekte = [];
     for (let i = 0; i < ZIEL; i++){
       const el = document.createElement("div");
       el.className = "m3-star";
-      el.textContent = "⭐";
+      el.textContent = spec.icon;
       const sx = randRange(0, Math.max(0, fw - 40));
       const sy = randRange(0, Math.max(0, fh - 40));
       el.style.left = sx + "px";
       el.style.top = sy + "px";
       field.appendChild(el);
-      sterne.push({ el, x: sx + 18, y: sy + 18, eingesammelt: false });
+      objekte.push({ el, x: sx + 18, y: sy + 18, eingesammelt: false });
     }
 
     // Gedrückte Pfeiltasten merken für flüssige Bewegung
     const pressed = new Set();
-    const SPEED = 4.2; // Pixel pro Frame
-
     function onKeyDown(e){
       if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)){
         pressed.add(e.key);
         e.preventDefault();
       }
     }
-    function onKeyUp(e){
-      pressed.delete(e.key);
-    }
+    function onKeyUp(e){ pressed.delete(e.key); }
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
     field.addEventListener("click", () => field.focus());
 
     let rafId = null;
     function loop(){
-      fw = field.clientWidth;
-      fh = field.clientHeight;
+      fw = field.clientWidth; fh = field.clientHeight;
 
       if (pressed.has("ArrowUp"))    ry -= SPEED;
       if (pressed.has("ArrowDown"))  ry += SPEED;
       if (pressed.has("ArrowLeft"))  rx -= SPEED;
       if (pressed.has("ArrowRight")) rx += SPEED;
 
-      // Nur die Ränder des Spielfelds begrenzen die Bewegung
       rx = Math.max(0, Math.min(rx, fw - rocketSize));
       ry = Math.max(0, Math.min(ry, fh - rocketSize));
       drawRocket();
 
-      // Kollision per Distanzberechnung prüfen
-      const rocketCenterX = rx + rocketSize / 2;
-      const rocketCenterY = ry + rocketSize / 2;
-      sterne.forEach(stern => {
-        if (stern.eingesammelt) return;
-        const dx = rocketCenterX - stern.x;
-        const dy = rocketCenterY - stern.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 34){
-          stern.eingesammelt = true;
-          stern.el.classList.add("collected");
-          setTimeout(() => stern.el.remove(), reduceMotion ? 0 : 350);
+      const cx = rx + rocketSize / 2, cy = ry + rocketSize / 2;
+      objekte.forEach(obj => {
+        if (obj.eingesammelt) return;
+        const dx = cx - obj.x, dy = cy - obj.y;
+        if (Math.sqrt(dx * dx + dy * dy) < TREFFER_RADIUS){
+          obj.eingesammelt = true;
+          obj.el.classList.add("collected");
+          setTimeout(() => obj.el.remove(), reduceMotion ? 0 : 350);
           gesammelt++;
-          counterEl.textContent = `Sterne: ${gesammelt} / ${ZIEL}`;
+          counterEl.textContent = "Eingesammelt: " + gesammelt + " / " + ZIEL;
           if (gesammelt >= ZIEL){
-            markCompleted(3);
+            markCompleted(spec.id);
             nextBtn.hidden = false;
           }
         }
@@ -1033,7 +1340,7 @@
     }
     rafId = requestAnimationFrame(loop);
 
-    nextBtn.onclick = () => goToScreen(4);
+    nextBtn.onclick = () => weiterNachMission(spec.id);
 
     return function cleanup(){
       cancelAnimationFrame(rafId);
@@ -1042,39 +1349,39 @@
       field.innerHTML = "";
     };
   }
+  INIT_FUNKTIONEN.pfeiltasten = initPfeiltastenMission;
 
   // ==========================================================
-  // MISSION 4 – Leertaste: Über Asteroiden springen
+  // TYP "leertaste" – über Hindernisse springen (Welt 4)
   // ==========================================================
-  function initMission4(){
-    const field = document.getElementById("m4Field");
-    const rocket = document.getElementById("m4Rocket");
-    const counterEl = document.getElementById("m4Counter");
-    const nextBtn = document.getElementById("m4Next");
-    const ZIEL_ERFOLG = 8;     // So viele erfolgreiche Sprünge sind das Ziel
-    const MAX_ASTEROIDEN = 16; // Sicherheitsnetz: spätestens danach endet die Mission
+  function initLeertasteMission(spec, welt){
+    setupMissionHeader("lt", spec, welt);
+    document.getElementById("ltTitel").textContent = spec.titel + " " + welt.icon;
+    document.getElementById("ltHinweis").textContent = spec.hinweis;
 
-    // Alte Asteroiden/Funken entfernen, Ground & Rakete bleiben erhalten
+    const field = document.getElementById("ltField");
+    const rocket = document.getElementById("ltRocket");
+    const counterEl = document.getElementById("ltCounter");
+    const nextBtn = document.getElementById("ltNext");
+
+    const f = aktuelleSchwierigkeit();
+    const ZIEL_ERFOLG = clamp(Math.round(spec.zielErfolgBasis * f.ziel), 5, 14);
+    const MAX_HINDERNISSE = Math.max(ZIEL_ERFOLG + 6, Math.round(ZIEL_ERFOLG * 1.8)); // Sicherheitsnetz
+    const ZONEN_BREITE = clamp(150 * f.radius, 100, 190); // großzügige Trefferzone
+    const GRUND_TEMPO = 2.6 * f.tempo;
+
     field.querySelectorAll(".m4-asteroid, .m4-spark").forEach(n => n.remove());
     rocket.classList.remove("jump");
     nextBtn.hidden = true;
-    counterEl.textContent = `Geschafft: 0 / ${ZIEL_ERFOLG}`;
+    counterEl.textContent = "Geschafft: 0 / " + ZIEL_ERFOLG;
 
-    let verarbeitet = 0;   // Anzahl bereits durchgelaufener Asteroiden
-    let geschafft = 0;     // Anzahl erfolgreich übersprungener Asteroiden
-    let isJumping = false;
-    let spawnTimeoutId = null;
-    let jumpTimeoutId = null;
-    let rafId = null;
-    let laeuftNoch = true;
+    let verarbeitet = 0, geschafft = 0, isJumping = false;
+    let spawnTimeoutId = null, jumpTimeoutId = null, rafId = null, laeuftNoch = true;
 
     // Sprungdauer per JS-Timer statt "animationend": Bei aktivem
-    // prefers-reduced-motion läuft gar keine CSS-Animation, dann würde
+    // prefers-reduced-motion läuft keine CSS-Animation, dann würde
     // "animationend" nie feuern und die Rakete bliebe für immer oben.
-    // Der Timer setzt isJumping garantiert zurück, egal ob eine
-    // Animation läuft oder nicht - und auch egal, ob die Leertaste
-    // noch gedrückt gehalten wird.
-    const JUMP_DAUER = reduceMotion ? 350 : 600; // ms, passend zur CSS-Animation
+    const JUMP_DAUER = reduceMotion ? 350 : 600;
 
     function onKeyDown(e){
       if (e.code === "Space" || e.key === " "){
@@ -1082,67 +1389,57 @@
         if (!isJumping){
           isJumping = true;
           rocket.classList.remove("jump");
-          void rocket.offsetWidth; // Reflow für erneute Animation
+          void rocket.offsetWidth;
           rocket.classList.add("jump");
 
           clearTimeout(jumpTimeoutId);
           jumpTimeoutId = setTimeout(() => {
             isJumping = false;
-            rocket.classList.remove("jump"); // Rakete kehrt sicher zum Boden zurück
+            rocket.classList.remove("jump");
           }, JUMP_DAUER);
         }
       }
     }
     window.addEventListener("keydown", onKeyDown);
 
-    function spawnAsteroid(){
-      if (!laeuftNoch || verarbeitet >= MAX_ASTEROIDEN || geschafft >= ZIEL_ERFOLG) return;
+    function spawnHindernis(){
+      if (!laeuftNoch || verarbeitet >= MAX_HINDERNISSE || geschafft >= ZIEL_ERFOLG) return;
 
       const fw = field.clientWidth;
-      const asteroid = document.createElement("div");
-      asteroid.className = "m4-asteroid";
-      asteroid.textContent = "☄️";
-      let x = fw - 10; // Startposition am rechten Rand
-      asteroid.style.left = x + "px";
-      field.appendChild(asteroid);
+      const hindernis = document.createElement("div");
+      hindernis.className = "m4-asteroid";
+      hindernis.textContent = spec.icon;
+      let x = fw - 10;
+      hindernis.style.left = x + "px";
+      field.appendChild(hindernis);
 
-      // Großzügige Trefferzone rund um die Rakete: Marlon darf die
-      // Leertaste an jeder Stelle dieses Bereichs drücken, nicht nur
-      // in einem einzigen Frame - das macht das Timing viel leichter.
-      const zoneStart = 0;
-      const zoneEnd = 150;
-      let erfolgErkannt = false;
-      let ausgewertet = false;
-      const speed = reduceMotion ? 2.0 : 2.6; // Pixel pro Frame (etwas langsamer = mehr Reaktionszeit)
+      const zoneStart = 0, zoneEnd = ZONEN_BREITE;
+      let erfolgErkannt = false, ausgewertet = false;
+      const speed = reduceMotion ? GRUND_TEMPO * 0.77 : GRUND_TEMPO;
 
       function step(){
         if (!laeuftNoch) return;
         x -= speed;
-        asteroid.style.left = x + "px";
+        hindernis.style.left = x + "px";
 
-        // Solange der Asteroid die Trefferzone durchquert: Sprung-Status merken
-        if (x <= zoneEnd && x >= zoneStart && isJumping){
-          erfolgErkannt = true;
-        }
+        if (x <= zoneEnd && x >= zoneStart && isJumping) erfolgErkannt = true;
 
-        // Zone verlassen -> Ergebnis für diesen Asteroiden festhalten
         if (!ausgewertet && x < zoneStart){
           ausgewertet = true;
           if (erfolgErkannt){
             geschafft++;
             zeigeFunke(60);
-            counterEl.textContent = `Geschafft: ${geschafft} / ${ZIEL_ERFOLG}`;
+            counterEl.textContent = "Geschafft: " + geschafft + " / " + ZIEL_ERFOLG;
           }
         }
 
         if (x < -60){
-          asteroid.remove();
+          hindernis.remove();
           verarbeitet++;
-
-          if (geschafft >= ZIEL_ERFOLG || verarbeitet >= MAX_ASTEROIDEN){
+          if (geschafft >= ZIEL_ERFOLG || verarbeitet >= MAX_HINDERNISSE){
             missionFertig();
           } else {
-            spawnTimeoutId = setTimeout(spawnAsteroid, 500);
+            spawnTimeoutId = setTimeout(spawnHindernis, 500);
           }
           return;
         }
@@ -1162,13 +1459,12 @@
     }
 
     function missionFertig(){
-      markCompleted(4);
+      markCompleted(spec.id);
       nextBtn.hidden = false;
     }
 
-    spawnTimeoutId = setTimeout(spawnAsteroid, 400);
-
-    nextBtn.onclick = () => goToScreen(5);
+    spawnTimeoutId = setTimeout(spawnHindernis, 400);
+    nextBtn.onclick = () => weiterNachMission(spec.id);
 
     return function cleanup(){
       laeuftNoch = false;
@@ -1180,72 +1476,74 @@
       rocket.classList.remove("jump");
     };
   }
+  INIT_FUNKTIONEN.leertaste = initLeertasteMission;
 
   // ==========================================================
-  // MISSION 5 – Maus-Bewegung: Sternenstaub mit dem Cursor berühren
+  // TYP "maus" – Ziele nur mit dem Mauszeiger berühren (Welt 5)
   // ==========================================================
-  function initMission5(){
-    const field = document.getElementById("m5Field");
-    const counterEl = document.getElementById("m5Counter");
-    const nextBtn = document.getElementById("m5Next");
-    const ZIEL = 6;
+  function initMausMission(spec, welt){
+    setupMissionHeader("ms", spec, welt);
+    document.getElementById("msTitel").textContent = spec.titel + " " + welt.icon;
+    document.getElementById("msHinweis").textContent = spec.hinweis;
+
+    const field = document.getElementById("msField");
+    const counterEl = document.getElementById("msCounter");
+    const nextBtn = document.getElementById("msNext");
+
+    const f = aktuelleSchwierigkeit();
+    const ZIEL = clamp(Math.round(spec.zielBasis * f.ziel), 4, 12);
+    const TREFFER_RADIUS = clamp(42 * f.radius, 26, 60);
+
     let gesammelt = 0;
-    const TREFFER_RADIUS = 42; // großzügig, damit ungenaue Mausführung reicht
-
     field.innerHTML = "";
     nextBtn.hidden = true;
-    counterEl.textContent = `Sternenstaub: 0 / ${ZIEL}`;
+    counterEl.textContent = "Eingesammelt: 0 / " + ZIEL;
 
-    let aktuellesStaubkorn = null;
+    let aktuellesZiel = null;
 
-    function spawnStaub(){
+    function spawnZiel(){
       const el = document.createElement("div");
       el.className = "dust-target";
-      el.textContent = "💫";
+      el.textContent = spec.icon;
 
-      const fw = field.clientWidth;
-      const fh = field.clientHeight;
-      const size = 50;
+      const fw = field.clientWidth, fh = field.clientHeight, size = 50;
       const x = randRange(0, Math.max(0, fw - size));
       const y = randRange(0, Math.max(0, fh - size));
       el.style.left = x + "px";
       el.style.top = y + "px";
       field.appendChild(el);
 
-      aktuellesStaubkorn = { el, x: x + size / 2, y: y + size / 2, eingesammelt: false };
+      aktuellesZiel = { el, x: x + size / 2, y: y + size / 2, eingesammelt: false };
     }
 
     function onMove(e){
-      if (!aktuellesStaubkorn || aktuellesStaubkorn.eingesammelt) return;
+      if (!aktuellesZiel || aktuellesZiel.eingesammelt) return;
       const rect = field.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
-      const dx = mx - aktuellesStaubkorn.x;
-      const dy = my - aktuellesStaubkorn.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      const dx = mx - aktuellesZiel.x, dy = my - aktuellesZiel.y;
 
-      if (dist < TREFFER_RADIUS){
-        aktuellesStaubkorn.eingesammelt = true;
-        aktuellesStaubkorn.el.classList.add("collected");
-        const toRemove = aktuellesStaubkorn.el;
+      if (Math.sqrt(dx * dx + dy * dy) < TREFFER_RADIUS){
+        aktuellesZiel.eingesammelt = true;
+        aktuellesZiel.el.classList.add("collected");
+        const toRemove = aktuellesZiel.el;
         setTimeout(() => toRemove.remove(), reduceMotion ? 0 : 350);
         gesammelt++;
-        counterEl.textContent = `Sternenstaub: ${gesammelt} / ${ZIEL}`;
+        counterEl.textContent = "Eingesammelt: " + gesammelt + " / " + ZIEL;
 
         if (gesammelt >= ZIEL){
-          markCompleted(5);
+          markCompleted(spec.id);
           nextBtn.hidden = false;
         } else {
-          spawnStaub();
+          spawnZiel();
         }
       }
     }
 
     field.addEventListener("mousemove", onMove);
     field.addEventListener("pointermove", onMove);
-    spawnStaub();
+    spawnZiel();
 
-    nextBtn.onclick = () => goToScreen(6);
+    nextBtn.onclick = () => weiterNachMission(spec.id);
 
     return function cleanup(){
       field.removeEventListener("mousemove", onMove);
@@ -1253,23 +1551,27 @@
       field.innerHTML = "";
     };
   }
+  INIT_FUNKTIONEN.maus = initMausMission;
 
   // ==========================================================
-  // MISSION 6 – Tastatur-Tippen: den eigenen Namen buchstabieren
+  // TYP "tippen" – ein Wort Buchstabe für Buchstabe tippen (Welt 6)
   // ==========================================================
-  function initMission6(){
-    const letterBox = document.getElementById("m6LetterBox");
-    const wordRow = document.getElementById("m6WordRow");
-    const counterEl = document.getElementById("m6Counter");
-    const nextBtn = document.getElementById("m6Next");
-    const WORT = "MARLON";
+  function initTippenMission(spec, welt){
+    setupMissionHeader("tp", spec, welt);
+    document.getElementById("tpTitel").textContent = spec.titel + " " + welt.icon;
+    document.getElementById("tpHinweis").textContent = spec.hinweis;
+
+    const letterBox = document.getElementById("tpLetterBox");
+    const wordRow = document.getElementById("tpWordRow");
+    const counterEl = document.getElementById("tpCounter");
+    const nextBtn = document.getElementById("tpNext");
+    const WORT = spec.wort;
     let index = 0;
 
     nextBtn.hidden = true;
-    counterEl.textContent = `Fortschritt: 0 / ${WORT.length}`;
+    counterEl.textContent = "Fortschritt: 0 / " + WORT.length;
     letterBox.classList.remove("shake", "hit");
 
-    // Buchstaben-Reihe aufbauen (zeigt den Fortschritt im Wort)
     wordRow.innerHTML = "";
     const letterEls = WORT.split("").map(buchstabe => {
       const span = document.createElement("div");
@@ -1280,9 +1582,7 @@
     });
 
     function zeigeAktuellenBuchstaben(){
-      if (index < WORT.length){
-        letterBox.textContent = WORT[index];
-      }
+      if (index < WORT.length) letterBox.textContent = WORT[index];
     }
     zeigeAktuellenBuchstaben();
 
@@ -1293,22 +1593,20 @@
       if (!/^[A-ZÄÖÜ]$/.test(taste)) return;
 
       if (taste === WORT[index]){
-        // Richtige Taste getroffen!
         letterEls[index].classList.add("done");
         letterBox.classList.remove("hit");
         void letterBox.offsetWidth;
         letterBox.classList.add("hit");
         index++;
-        counterEl.textContent = `Fortschritt: ${index} / ${WORT.length}`;
+        counterEl.textContent = "Fortschritt: " + index + " / " + WORT.length;
 
         if (index >= WORT.length){
-          markCompleted(6);
+          markCompleted(spec.id);
           nextBtn.hidden = false;
         } else {
           zeigeAktuellenBuchstaben();
         }
       } else {
-        // Falsche Taste: sanftes Wackeln statt Fehlermeldung
         letterBox.classList.remove("shake");
         void letterBox.offsetWidth;
         letterBox.classList.add("shake");
@@ -1316,12 +1614,13 @@
     }
     window.addEventListener("keydown", onKeyDown);
 
-    nextBtn.onclick = () => goToScreen(7);
+    nextBtn.onclick = () => weiterNachMission(spec.id);
 
     return function cleanup(){
       window.removeEventListener("keydown", onKeyDown);
     };
   }
+  INIT_FUNKTIONEN.tippen = initTippenMission;
 
   // ==========================================================
   // KONFETTI-ANIMATION (End-Screen)
@@ -1331,7 +1630,7 @@
     wrap.innerHTML = "";
     if (reduceMotion) return; // Bei reduzierter Bewegung kein Konfetti
 
-    const farben = [PALETTE[0].color, PALETTE[1].color, PALETTE[2].color, "#6BFFB8"];
+    const farben = PALETTE.map(p => p.color);
     const anzahl = 90;
 
     for (let i = 0; i < anzahl; i++){
@@ -1349,23 +1648,13 @@
   }
 
   // ==========================================================
-  // Start- und Neustart-Buttons
+  // Grundzustand herstellen
   // ==========================================================
-  document.getElementById("btnStart").addEventListener("click", () => {
-    goToScreen(1);
-  });
-
-  document.getElementById("btnReplay").addEventListener("click", () => {
-    // Kompletten Fortschritt zurücksetzen und wieder von vorne beginnen
-    state.completed = [false, false, false, false, false, false];
-    document.getElementById("confettiWrap").innerHTML = "";
-    updateNav();
-    goToScreen(0);
-  });
-
-  // ---------- Los geht's: Intro-Screen anzeigen ----------
-  updateNav();
-  screens[0].classList.add("active");
+  document.getElementById("endMissionsAnzahl").textContent = MISSIONS.length;
+  renderDifficulty();
+  renderMissionGrid();
+  updateStartButton();
+  document.getElementById("screen-intro").classList.add("active");
 
 })();
 </script>
