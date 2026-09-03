@@ -395,6 +395,81 @@
     display:inline-block;
   }
 
+  /* ---------- Mission 5: Maus-Bewegung (Sternenstaub) ---------- */
+  .dust-target{
+    position:absolute;
+    font-size: clamp(34px, 7vw, 48px);
+    filter: drop-shadow(0 0 10px rgba(107,255,184,.8));
+    animation: pop-in .25s ease;
+    pointer-events:none; /* wird per Mausposition erkannt, nicht angeklickt */
+  }
+  .dust-target.collected{
+    animation: pop-out .35s ease forwards;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .dust-target{ animation:none; }
+    .dust-target.collected{ animation:none; opacity:0; transition: opacity .3s; }
+  }
+  .m5-cursor-hint{
+    position:absolute;
+    font-size: 30px;
+    pointer-events:none;
+    opacity:.85;
+    transform: translate(-6px, -6px);
+    transition: left .05s linear, top .05s linear;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .m5-cursor-hint{ transition:none; }
+  }
+
+  /* ---------- Mission 6: Tastatur-Tippen ---------- */
+  .word-row{
+    display:flex;
+    gap: 8px;
+    justify-content:center;
+    flex-wrap:wrap;
+    margin: 10px 0 22px;
+  }
+  .word-letter{
+    width: clamp(38px, 8vw, 52px);
+    height: clamp(46px, 9vw, 60px);
+    border-radius: 12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size: clamp(1.2rem, 4vw, 1.7rem);
+    font-weight:bold;
+    background: rgba(255,255,255,.08);
+    border: 3px solid rgba(255,255,255,.3);
+    transition: background .3s ease, border-color .3s ease, transform .3s ease;
+  }
+  .word-letter.done{
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--navy-deep);
+    transform: scale(1.08);
+  }
+  .letter-target{
+    width: clamp(90px, 22vw, 140px);
+    height: clamp(90px, 22vw, 140px);
+    border-radius: 28px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size: clamp(2.4rem, 10vw, 4rem);
+    font-weight:bold;
+    background: rgba(255,255,255,.1);
+    border: 4px solid var(--cyan);
+    box-shadow: 0 0 24px rgba(79,216,255,.5);
+    margin: 6px auto 10px;
+  }
+  .letter-target.shake{ animation: shake .5s ease; }
+  .letter-target.hit{ animation: check-pop .4s ease; }
+  @media (prefers-reduced-motion: reduce){
+    .letter-target.shake{ animation:none; background: rgba(255,255,255,.3); }
+    .letter-target.hit{ animation:none; }
+  }
+
   /* ---------- Mission 4: Leertaste ---------- */
   .m4-rocket{
     position:absolute;
@@ -480,12 +555,14 @@
 
 <div class="app">
 
-  <!-- Fortschritts-Navigation: 4 Punkte für die 4 Missionen -->
+  <!-- Fortschritts-Navigation: 6 Punkte für die 6 Missionen -->
   <nav class="progress-nav" id="progressNav" aria-label="Missions-Fortschritt">
     <div class="nav-dot" data-mission="1">⭐</div>
     <div class="nav-dot" data-mission="2">📦</div>
     <div class="nav-dot" data-mission="3">🚀</div>
     <div class="nav-dot" data-mission="4">☄️</div>
+    <div class="nav-dot" data-mission="5">💫</div>
+    <div class="nav-dot" data-mission="6">🔤</div>
   </nav>
 
   <!-- ===================== INTRO-SCREEN ===================== -->
@@ -550,7 +627,28 @@
       </div>
     </div>
     <div class="hint-keys"><span class="key-cap">Leertaste ␣</span></div>
-    <button class="btn" id="m4Next" hidden>🏁 Zum Abschluss</button>
+    <button class="btn" id="m4Next" hidden>🎉 Weiter zu Mission 5</button>
+  </section>
+
+  <!-- ===================== MISSION 5: MAUS-BEWEGUNG ===================== -->
+  <section class="screen" id="screen-m5">
+    <h2>Mission 5: Sternenstaub einsammeln 💫</h2>
+    <p class="info">Fahre mit der Maus einfach über den funkelnden Sternenstaub – klicken musst du nicht!</p>
+    <div class="counter" id="m5Counter">Sternenstaub: 0 / 6</div>
+    <div class="field-wrap">
+      <div class="field" id="m5Field"></div>
+    </div>
+    <button class="btn" id="m5Next" hidden>🎉 Weiter zu Mission 6</button>
+  </section>
+
+  <!-- ===================== MISSION 6: TASTATUR-TIPPEN ===================== -->
+  <section class="screen" id="screen-m6">
+    <h2>Mission 6: Funkspruch senden 🔤</h2>
+    <p class="info">Tippe die leuchtende Taste auf deiner Tastatur – du schreibst deinen eigenen Namen!</p>
+    <div class="counter" id="m6Counter">Fortschritt: 0 / 6</div>
+    <div class="letter-target" id="m6LetterBox">M</div>
+    <div class="word-row" id="m6WordRow"></div>
+    <button class="btn" id="m6Next" hidden>🏁 Zum Abschluss</button>
   </section>
 
   <!-- ===================== END-SCREEN ===================== -->
@@ -558,7 +656,7 @@
     <div class="trophy">🏆</div>
     <h1>Super gemacht, Marlon!</h1>
     <p class="info">
-      Du hast alle vier Missionen der Sternenreise gemeistert.<br>
+      Du hast alle sechs Missionen der Sternenreise gemeistert.<br>
       Maus und Tastatur hast du wie ein echter Astronaut im Griff! 🚀✨
     </p>
     <button class="btn secondary" id="btnReplay">🔁 Nochmal spielen</button>
@@ -588,9 +686,9 @@
 
   // ---------- Allgemeiner Spielzustand ----------
   const state = {
-    // 0 = Intro, 1-4 = Missionen, 5 = Ende
+    // 0 = Intro, 1-6 = Missionen, 7 = Ende
     screen: 0,
-    completed: [false, false, false, false]
+    completed: [false, false, false, false, false, false]
   };
 
   // Aufräum-Funktion der aktuell aktiven Mission (Timer/Listener stoppen)
@@ -603,7 +701,9 @@
     2: document.getElementById("screen-m2"),
     3: document.getElementById("screen-m3"),
     4: document.getElementById("screen-m4"),
-    5: document.getElementById("screen-end")
+    5: document.getElementById("screen-m5"),
+    6: document.getElementById("screen-m6"),
+    7: document.getElementById("screen-end")
   };
 
   function goToScreen(nr){
@@ -623,7 +723,9 @@
     if (nr === 2) activeCleanup = initMission2();
     if (nr === 3) activeCleanup = initMission3();
     if (nr === 4) activeCleanup = initMission4();
-    if (nr === 5) startConfetti();
+    if (nr === 5) activeCleanup = initMission5();
+    if (nr === 6) activeCleanup = initMission6();
+    if (nr === 7) startConfetti();
   }
 
   // ---------- Fortschritts-Navigation oben ----------
@@ -949,13 +1051,14 @@
     const rocket = document.getElementById("m4Rocket");
     const counterEl = document.getElementById("m4Counter");
     const nextBtn = document.getElementById("m4Next");
-    const ZIEL = 8;
+    const ZIEL_ERFOLG = 8;     // So viele erfolgreiche Sprünge sind das Ziel
+    const MAX_ASTEROIDEN = 16; // Sicherheitsnetz: spätestens danach endet die Mission
 
     // Alte Asteroiden/Funken entfernen, Ground & Rakete bleiben erhalten
     field.querySelectorAll(".m4-asteroid, .m4-spark").forEach(n => n.remove());
     rocket.classList.remove("jump");
     nextBtn.hidden = true;
-    counterEl.textContent = `Geschafft: 0 / ${ZIEL}`;
+    counterEl.textContent = `Geschafft: 0 / ${ZIEL_ERFOLG}`;
 
     let verarbeitet = 0;   // Anzahl bereits durchgelaufener Asteroiden
     let geschafft = 0;     // Anzahl erfolgreich übersprungener Asteroiden
@@ -979,7 +1082,7 @@
     window.addEventListener("keydown", onKeyDown);
 
     function spawnAsteroid(){
-      if (!laeuftNoch || verarbeitet >= ZIEL) return;
+      if (!laeuftNoch || verarbeitet >= MAX_ASTEROIDEN || geschafft >= ZIEL_ERFOLG) return;
 
       const fw = field.clientWidth;
       const asteroid = document.createElement("div");
@@ -989,33 +1092,43 @@
       asteroid.style.left = x + "px";
       field.appendChild(asteroid);
 
-      const rocketRect = { x: 40, width: 56 }; // Trefferzone bei der Rakete
-      let bewertet = false;
-      const speed = reduceMotion ? 2.4 : 3.2; // Pixel pro Frame
+      // Großzügige Trefferzone rund um die Rakete: Marlon darf die
+      // Leertaste an jeder Stelle dieses Bereichs drücken, nicht nur
+      // in einem einzigen Frame - das macht das Timing viel leichter.
+      const zoneStart = 0;
+      const zoneEnd = 150;
+      let erfolgErkannt = false;
+      let ausgewertet = false;
+      const speed = reduceMotion ? 2.0 : 2.6; // Pixel pro Frame (etwas langsamer = mehr Reaktionszeit)
 
       function step(){
         if (!laeuftNoch) return;
         x -= speed;
         asteroid.style.left = x + "px";
 
-        // Wenn der Asteroid die Rakete erreicht: Sprung-Status prüfen
-        if (!bewertet && x <= rocketRect.x + rocketRect.width){
-          bewertet = true;
-          if (isJumping){
+        // Solange der Asteroid die Trefferzone durchquert: Sprung-Status merken
+        if (x <= zoneEnd && x >= zoneStart && isJumping){
+          erfolgErkannt = true;
+        }
+
+        // Zone verlassen -> Ergebnis für diesen Asteroiden festhalten
+        if (!ausgewertet && x < zoneStart){
+          ausgewertet = true;
+          if (erfolgErkannt){
             geschafft++;
-            zeigeFunke(rocketRect.x + 20);
+            zeigeFunke(60);
+            counterEl.textContent = `Geschafft: ${geschafft} / ${ZIEL_ERFOLG}`;
           }
         }
 
         if (x < -60){
           asteroid.remove();
           verarbeitet++;
-          counterEl.textContent = `Geschafft: ${geschafft} / ${ZIEL}`;
 
-          if (verarbeitet >= ZIEL){
+          if (geschafft >= ZIEL_ERFOLG || verarbeitet >= MAX_ASTEROIDEN){
             missionFertig();
           } else {
-            spawnTimeoutId = setTimeout(spawnAsteroid, 550);
+            spawnTimeoutId = setTimeout(spawnAsteroid, 500);
           }
           return;
         }
@@ -1054,6 +1167,148 @@
   }
 
   // ==========================================================
+  // MISSION 5 – Maus-Bewegung: Sternenstaub mit dem Cursor berühren
+  // ==========================================================
+  function initMission5(){
+    const field = document.getElementById("m5Field");
+    const counterEl = document.getElementById("m5Counter");
+    const nextBtn = document.getElementById("m5Next");
+    const ZIEL = 6;
+    let gesammelt = 0;
+    const TREFFER_RADIUS = 42; // großzügig, damit ungenaue Mausführung reicht
+
+    field.innerHTML = "";
+    nextBtn.hidden = true;
+    counterEl.textContent = `Sternenstaub: 0 / ${ZIEL}`;
+
+    let aktuellesStaubkorn = null;
+
+    function spawnStaub(){
+      const el = document.createElement("div");
+      el.className = "dust-target";
+      el.textContent = "💫";
+
+      const fw = field.clientWidth;
+      const fh = field.clientHeight;
+      const size = 50;
+      const x = randRange(0, Math.max(0, fw - size));
+      const y = randRange(0, Math.max(0, fh - size));
+      el.style.left = x + "px";
+      el.style.top = y + "px";
+      field.appendChild(el);
+
+      aktuellesStaubkorn = { el, x: x + size / 2, y: y + size / 2, eingesammelt: false };
+    }
+
+    function onMove(e){
+      if (!aktuellesStaubkorn || aktuellesStaubkorn.eingesammelt) return;
+      const rect = field.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      const dx = mx - aktuellesStaubkorn.x;
+      const dy = my - aktuellesStaubkorn.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < TREFFER_RADIUS){
+        aktuellesStaubkorn.eingesammelt = true;
+        aktuellesStaubkorn.el.classList.add("collected");
+        const toRemove = aktuellesStaubkorn.el;
+        setTimeout(() => toRemove.remove(), reduceMotion ? 0 : 350);
+        gesammelt++;
+        counterEl.textContent = `Sternenstaub: ${gesammelt} / ${ZIEL}`;
+
+        if (gesammelt >= ZIEL){
+          markCompleted(5);
+          nextBtn.hidden = false;
+        } else {
+          spawnStaub();
+        }
+      }
+    }
+
+    field.addEventListener("mousemove", onMove);
+    field.addEventListener("pointermove", onMove);
+    spawnStaub();
+
+    nextBtn.onclick = () => goToScreen(6);
+
+    return function cleanup(){
+      field.removeEventListener("mousemove", onMove);
+      field.removeEventListener("pointermove", onMove);
+      field.innerHTML = "";
+    };
+  }
+
+  // ==========================================================
+  // MISSION 6 – Tastatur-Tippen: den eigenen Namen buchstabieren
+  // ==========================================================
+  function initMission6(){
+    const letterBox = document.getElementById("m6LetterBox");
+    const wordRow = document.getElementById("m6WordRow");
+    const counterEl = document.getElementById("m6Counter");
+    const nextBtn = document.getElementById("m6Next");
+    const WORT = "MARLON";
+    let index = 0;
+
+    nextBtn.hidden = true;
+    counterEl.textContent = `Fortschritt: 0 / ${WORT.length}`;
+    letterBox.classList.remove("shake", "hit");
+
+    // Buchstaben-Reihe aufbauen (zeigt den Fortschritt im Wort)
+    wordRow.innerHTML = "";
+    const letterEls = WORT.split("").map(buchstabe => {
+      const span = document.createElement("div");
+      span.className = "word-letter";
+      span.textContent = buchstabe;
+      wordRow.appendChild(span);
+      return span;
+    });
+
+    function zeigeAktuellenBuchstaben(){
+      if (index < WORT.length){
+        letterBox.textContent = WORT[index];
+      }
+    }
+    zeigeAktuellenBuchstaben();
+
+    function onKeyDown(e){
+      if (index >= WORT.length) return;
+      if (typeof e.key !== "string" || e.key.length !== 1) return; // nur echte Buchstabentasten
+      const taste = e.key.toUpperCase();
+      if (!/^[A-ZÄÖÜ]$/.test(taste)) return;
+
+      if (taste === WORT[index]){
+        // Richtige Taste getroffen!
+        letterEls[index].classList.add("done");
+        letterBox.classList.remove("hit");
+        void letterBox.offsetWidth;
+        letterBox.classList.add("hit");
+        index++;
+        counterEl.textContent = `Fortschritt: ${index} / ${WORT.length}`;
+
+        if (index >= WORT.length){
+          markCompleted(6);
+          nextBtn.hidden = false;
+        } else {
+          zeigeAktuellenBuchstaben();
+        }
+      } else {
+        // Falsche Taste: sanftes Wackeln statt Fehlermeldung
+        letterBox.classList.remove("shake");
+        void letterBox.offsetWidth;
+        letterBox.classList.add("shake");
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+
+    nextBtn.onclick = () => goToScreen(7);
+
+    return function cleanup(){
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }
+
+  // ==========================================================
   // KONFETTI-ANIMATION (End-Screen)
   // ==========================================================
   function startConfetti(){
@@ -1087,7 +1342,7 @@
 
   document.getElementById("btnReplay").addEventListener("click", () => {
     // Kompletten Fortschritt zurücksetzen und wieder von vorne beginnen
-    state.completed = [false, false, false, false];
+    state.completed = [false, false, false, false, false, false];
     document.getElementById("confettiWrap").innerHTML = "";
     updateNav();
     goToScreen(0);
