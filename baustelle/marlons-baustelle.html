@@ -3,22 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Marlons Sternenreise</title>
+<title>Marlons Baustelle</title>
 <style>
   /* ====================================================
-     MARLONS STERNENREISE - Lernspiel für Maus & Tastatur
+     MARLONS BAUSTELLE - Lernspiel für Maus & Tastatur
      Alles in einer Datei: HTML + CSS + JavaScript
-     30 Missionen in 6 Welten, Schwierigkeitsgrad wählbar,
+     12 Missionen in 6 Welten, Schwierigkeitsgrad wählbar,
      bereits geschaffte Missionen frei auswählbar.
+     (Gleiche Spiel-Engine wie "Marlons Sternenreise",
+     mit Baustellen-Thema statt Weltraum-Thema.)
      ==================================================== */
 
   :root{
-    --navy: #0B0E2E;
-    --navy-deep: #05061a;
-    --violet: #2D1B69;
-    --cyan: #4FD8FF;
-    --gold: #FFC857;
-    --pink: #FF6B9D;
+    --navy: #2A2419;
+    --navy-deep: #171310;
+    --violet: #3D3320;
+    --cyan: #4FC3F7;
+    --gold: #FF9F1C;
+    --pink: #FF5C5C;
     --green: #6BFFB8;
     --white: #ffffff;
   }
@@ -755,11 +757,11 @@
 
   <!-- ===================== INTRO- / MISSIONSÜBERSICHT-SCREEN ===================== -->
   <section class="screen" id="screen-intro">
-    <div class="big-emoji float">🧑‍🚀</div>
-    <h1>Marlons Sternenreise</h1>
+    <div class="big-emoji float">👷</div>
+    <h1>Marlons Baustelle</h1>
     <p class="info">
-      Hallo Marlon! Wähle deine Schwierigkeit und starte dein Weltraum-Abenteuer –
-      ganz ohne Zeitdruck. Es gibt kein Verlieren, nur Entdecken! 🌟
+      Hallo Marlon! Wähle deine Schwierigkeit und pack mit an auf der Baustelle –
+      ganz ohne Zeitdruck. Es gibt kein Verlieren, nur Bauen! 🚧
     </p>
 
     <div class="difficulty-row" id="difficultyRow">
@@ -879,20 +881,20 @@
     <div class="trophy">🏆</div>
     <h1>Super gemacht, Marlon!</h1>
     <p class="info">
-      Du hast alle <span id="endMissionsAnzahl"></span> Missionen der Sternenreise gemeistert.<br>
-      Maus und Tastatur hast du wie ein echter Astronaut im Griff! 🚀✨
+      Du hast alle <span id="endMissionsAnzahl"></span> Missionen der Baustelle gemeistert.<br>
+      Maus und Tastatur hast du wie ein echter Baumeister im Griff! 👷🏗️
     </p>
     <button class="btn secondary" id="btnReplay">🔁 Nochmal von vorne</button>
   </section>
 
-  <footer class="small-note">Marlons Sternenreise – ein Lernspiel für Maus &amp; Tastatur</footer>
+  <footer class="small-note">Marlons Baustelle – ein Lernspiel für Maus &amp; Tastatur</footer>
 </div>
 
 <div class="confetti-wrap" id="confettiWrap"></div>
 
 <script>
 // ==========================================================
-// MARLONS STERNENREISE – Spiellogik (Vanilla JavaScript)
+// MARLONS BAUSTELLE – Spiellogik (Vanilla JavaScript)
 // ==========================================================
 (function(){
   "use strict";
@@ -902,9 +904,9 @@
 
   // Farbpalette (max. 4 Farben) für die Andocken-Missionen
   const PALETTE = [
-    { name: "cyan",  color: "#4FD8FF" },
-    { name: "gold",  color: "#FFC857" },
-    { name: "pink",  color: "#FF6B9D" },
+    { name: "cyan",  color: "#4FC3F7" },
+    { name: "gold",  color: "#FF9F1C" },
+    { name: "pink",  color: "#FF5C5C" },
     { name: "green", color: "#6BFFB8" }
   ];
 
@@ -919,98 +921,57 @@
   // ==========================================================
   const WELT_DEFS = [
     {
-      name: "Sternen-Klick", icon: "⭐", typ: "klick",
+      name: "Werkzeug-Klick", icon: "🔨", typ: "klick",
       missionen: [
-        { titel: "Sterne einsammeln", modus: "einzeln", emojis: ["⭐","🌟","✨"], zielBasis: 8,
-          hinweis: "Klicke mit der Maus auf jeden Stern, sobald er erscheint!" },
-        { titel: "Planeten der Reihe nach", modus: "reihenfolge", emojis: ["🪐"], zielBasis: 5,
-          hinweis: "Klicke die Planeten in der richtigen Reihenfolge an: 1, 2, 3 …" },
-        { titel: "Kometen jagen", modus: "vermeiden", emojis: ["☄️","💫"], stoererEmojis: ["🛸"], zielBasis: 7,
-          hinweis: "Klicke nur die Kometen an – die UFOs lässt du in Ruhe!" },
-        { titel: "UFO-Alarm", modus: "beweglich", emojis: ["🛸"], zielBasis: 6,
-          hinweis: "Die UFOs fliegen umher! Klicke sie an, während sie sich bewegen." },
-        { titel: "Galaxien-Rallye", modus: "kombi", emojis: ["⭐"], stoererEmojis: ["☄️"], zielBasis: 5,
-          hinweis: "Klicke die nummerierten Sterne der Reihe nach an – Asteroiden ignorierst du!" }
+        { titel: "Steine einsammeln", modus: "einzeln", emojis: ["🧱"], zielBasis: 8,
+          hinweis: "Klicke mit der Maus auf jeden Ziegelstein, sobald er erscheint!" },
+        { titel: "Ziegel in Reihenfolge stapeln", modus: "reihenfolge", emojis: ["🧱"], zielBasis: 5,
+          hinweis: "Klicke die Ziegel in der richtigen Reihenfolge an: 1, 2, 3 …" }
       ]
     },
     {
-      name: "Fracht-Andocken", icon: "📦", typ: "dragdrop",
+      name: "Werkzeugkiste", icon: "🧰", typ: "dragdrop",
       missionen: [
-        { titel: "Fracht andocken", modus: "farbe", icon: "📦", stationIcon: "🛰️", basisAnzahl: 2,
-          hinweis: "Ziehe jede Kiste zur Andockstation in der gleichen Farbe!" },
-        { titel: "Wohin gehört das?", modus: "kategorie", stationIcon: "🛰️",
-          kategorien: [
-            { key: "all",    farbe: "#4FD8FF", stationIcon: "🌌 All",       beispiel: "🧑‍🚀" },
-            { key: "erde",   farbe: "#6BFFB8", stationIcon: "🌍 Erde",      beispiel: "🌳" },
-            { key: "schiff", farbe: "#FFC857", stationIcon: "🚀 Raumschiff", beispiel: "⛽" }
-          ],
-          hinweis: "Ziehe jedes Ding dorthin, wo es hingehört!" },
-        { titel: "Roboter nach Größe", modus: "groesse", icon: "🤖",
-          hinweis: "Ziehe jeden Roboter zur passenden Größen-Station!" },
-        { titel: "Edelsteine nach Gewicht", modus: "reihenfolge", icon: "💎", basisAnzahl: 4,
-          hinweis: "Ziehe die Edelsteine vom leichtesten bis zum schwersten in die Reihe!" },
-        { titel: "Fracht-Extreme", modus: "pfad", icon: "🎁",
-          hinweis: "Halte die Maustaste gedrückt und ziehe die Fracht bis zum Ziel!" }
+        { titel: "Werkzeug einsortieren", modus: "farbe", icon: "🔧", stationIcon: "🧰", basisAnzahl: 2,
+          hinweis: "Ziehe jedes Werkzeug in die Kiste mit der gleichen Farbe!" },
+        { titel: "Bausteine stapeln", modus: "reihenfolge", icon: "🧱", basisAnzahl: 4,
+          hinweis: "Ziehe die Bausteine vom kleinsten bis zum größten in die Reihe!" }
       ]
     },
     {
-      name: "Raketen-Steuerung", icon: "🚀", typ: "pfeiltasten",
+      name: "Bagger-Fahrt", icon: "🚜", typ: "pfeiltasten",
       missionen: [
-        { titel: "Sterne sammeln", modus: "sammeln", icon: "⭐", zielBasis: 5,
-          hinweis: "Benutze die Pfeiltasten und sammle alle Sterne ein!" },
-        { titel: "Mondgestein bergen", modus: "einzeln", icon: "🪨", zielBasis: 6,
-          hinweis: "Steuere die Rakete zu jedem Mondgestein – eins nach dem anderen!" },
-        { titel: "Edelsteine der Reihe nach", modus: "reihenfolge", icon: "💎", zielBasis: 5,
-          hinweis: "Sammle die nummerierten Edelsteine in der richtigen Reihenfolge ein!" },
-        { titel: "Energie-Pfad", modus: "pfad", icon: "⚡", zielBasis: 6,
-          hinweis: "Folge dem Energie-Pfad durchs Spielfeld!" },
-        { titel: "Galaxien-Marathon", modus: "vermeiden", icon: "🌟", stoererIcon: "☄️", zielBasis: 7,
-          hinweis: "Sammle die Sterne ein – die kalten Kometen lässt du links liegen!" }
+        { titel: "Steine sammeln", modus: "sammeln", icon: "🪨", zielBasis: 5,
+          hinweis: "Benutze die Pfeiltasten und sammle alle Steine mit dem Bagger ein!" },
+        { titel: "Kran auf Schiene", modus: "pfad", icon: "🔩", zielBasis: 6,
+          hinweis: "Folge der Kran-Schiene durchs Spielfeld!" }
       ]
     },
     {
-      name: "Asteroiden-Sprung", icon: "☄️", typ: "leertaste",
+      name: "Presslufthammer", icon: "🚧", typ: "leertaste",
       missionen: [
-        { titel: "Asteroiden-Sprung", modus: "hindernis-sprung", icon: "☄️", zielErfolgBasis: 8,
-          hinweis: "Drücke die Leertaste, damit deine Rakete über die Asteroiden springt!" },
-        { titel: "Meteor-Regen", modus: "fangen", icon: "🌠", zielErfolgBasis: 7,
-          hinweis: "Meteore fallen von oben – drücke die Leertaste im richtigen Moment zum Fangen!" },
-        { titel: "Schneller Hindernislauf", modus: "schnellfolge", icon: "🪨", zielErfolgBasis: 8,
-          hinweis: "Die Hindernisse kommen jetzt schneller – bleib am Ball mit der Leertaste!" },
-        { titel: "Kometenschweif", modus: "doppel-druck", icon: "☄️", zielErfolgBasis: 6,
-          hinweis: "Drücke die Leertaste zweimal kurz hintereinander für einen großen Schub-Sprung!" },
-        { titel: "Asteroidengürtel", modus: "kombi", icon: "☄️", iconFallend: "🌠", zielErfolgBasis: 9,
-          hinweis: "Manche Hindernisse kommen von der Seite, manche von oben – bleib bereit!" }
+        { titel: "Über Pfützen springen", modus: "hindernis-sprung", icon: "💧", zielErfolgBasis: 8,
+          hinweis: "Drücke die Leertaste, damit der Bagger über die Pfützen springt!" },
+        { titel: "Presslufthammer-Schlag", modus: "doppel-druck", icon: "🪨", zielErfolgBasis: 6,
+          hinweis: "Drücke die Leertaste zweimal kurz hintereinander für einen kräftigen Schlag!" }
       ]
     },
     {
-      name: "Sternenstaub", icon: "💫", typ: "maus",
+      name: "Baustellen-Reinigung", icon: "🧹", typ: "maus",
       missionen: [
-        { titel: "Sternenstaub einsammeln", modus: "beruehren", icon: "💫", zielBasis: 6,
-          hinweis: "Fahre mit der Maus über den funkelnden Sternenstaub – klicken musst du nicht!" },
-        { titel: "Kometenspur folgen", modus: "spur-folgen", icon: "☄️",
-          hinweis: "Folge mit dem Mauszeiger durchgehend der gepunkteten Spur!" },
-        { titel: "Wanderstern verfolgen", modus: "verfolgen", icon: "🌠", zielBasis: 5,
-          hinweis: "Der Stern wandert umher – hol ihn mit dem Mauszeiger ein!" },
-        { titel: "Nebel lichten", modus: "aufdecken", icon: "🪐",
-          hinweis: "Fahre mit der Maus über den Nebel, um das Bild dahinter freizulegen!" },
-        { titel: "Sternschnuppen-Wunsch", modus: "kombi", icon: "✨",
-          hinweis: "Folge der Spur – und pass auf die beweglichen Bonuspunkte auf!" }
+        { titel: "Sand wegpusten", modus: "aufdecken", icon: "🏗️",
+          hinweis: "Fahre mit der Maus über den Sand, um die Baustelle darunter freizulegen!" },
+        { titel: "Fenster putzen", modus: "wischen", icon: "🪟",
+          hinweis: "Halte die Maustaste gedrückt und wische über die schmutzige Fläche!" }
       ]
     },
     {
-      name: "Funksprüche", icon: "🔤", typ: "tippen",
+      name: "Bauplan", icon: "🔤", typ: "tippen",
       missionen: [
-        { titel: "Funkspruch: MARLON", modus: "wort", wort: "MARLON",
-          hinweis: "Tippe die leuchtende Taste – du schreibst deinen eigenen Namen!" },
-        { titel: "Countdown-Zahlen", modus: "zahlen", zahlenfolge: "123456789",
-          hinweis: "Tippe die Zahlen der Reihe nach auf der Tastatur!" },
-        { titel: "Buchstaben-Funken", modus: "zufallsbuchstaben", anzahl: 6,
-          hinweis: "Tippe die aufleuchtenden Buchstaben – kein echtes Wort, einfach draufloslegen!" },
-        { titel: "Buchstaben-Regen", modus: "fallend", zielErfolgBasis: 8,
-          hinweis: "Buchstaben fallen vom Himmel – tippe die passende Taste, bevor sie unten ankommen!" },
-        { titel: "Funkspruch: WELTALL", modus: "grossklein", wort: "WELTALL",
-          hinweis: "Mal groß, mal klein geschrieben – die Taste bleibt trotzdem gleich!" }
+        { titel: "Funkspruch: KRAN", modus: "wort", wort: "KRAN",
+          hinweis: "Tippe die leuchtende Taste – buchstabiere KRAN!" },
+        { titel: "Ziegelstein-Regen", modus: "fallend", zielErfolgBasis: 8,
+          hinweis: "Ziegelsteine fallen von oben – tippe die passende Taste, bevor sie unten ankommen!" }
       ]
     }
   ];
@@ -1979,8 +1940,8 @@
     if (modus === "spur-folgen" || modus === "kombi"){
       return initMausSpurModus(spec, welt, field, counterEl, nextBtn, modus === "kombi");
     }
-    if (modus === "aufdecken"){
-      return initMausAufdeckenModus(spec, welt, field, counterEl, nextBtn);
+    if (modus === "aufdecken" || modus === "wischen"){
+      return initMausAufdeckenModus(spec, welt, field, counterEl, nextBtn, modus === "wischen");
     }
 
     // ---------- Modi "beruehren" (Basis) und "verfolgen" (Ziel wandert) ----------
@@ -2132,7 +2093,7 @@
   }
 
   // ---------- Maus: Modus "aufdecken" (verdecktes Bild freilegen) ----------
-  function initMausAufdeckenModus(spec, welt, field, counterEl, nextBtn){
+  function initMausAufdeckenModus(spec, welt, field, counterEl, nextBtn, erfordertMausTaste){
     const bild = document.createElement("div");
     bild.className = "nebel-bild";
     bild.textContent = spec.icon;
@@ -2156,7 +2117,14 @@
     const ZIEL_ANZAHL = Math.ceil(zellen.length * 0.7);
     counterEl.textContent = "Aufgedeckt: 0 / " + ZIEL_ANZAHL;
 
+    // Beim "Wischen"-Modus (Baustelle) muss die Maustaste gehalten werden,
+    // beim "Aufdecken"-Modus reicht reines Bewegen der Maus (kein Klick).
+    let mausGedrueckt = !erfordertMausTaste;
+    function onDown(){ if (erfordertMausTaste) mausGedrueckt = true; }
+    function onUp(){ if (erfordertMausTaste) mausGedrueckt = false; }
+
     function onMove(e){
+      if (!mausGedrueckt) return;
       const rect = field.getBoundingClientRect();
       const mx = e.clientX - rect.left, my = e.clientY - rect.top;
       let geaendert = false;
@@ -2179,6 +2147,12 @@
       }
     }
 
+    if (erfordertMausTaste){
+      field.addEventListener("mousedown", onDown);
+      window.addEventListener("mouseup", onUp);
+      field.addEventListener("touchstart", onDown, { passive: true });
+      window.addEventListener("touchend", onUp);
+    }
     field.addEventListener("mousemove", onMove);
     field.addEventListener("pointermove", onMove);
 
@@ -2187,6 +2161,10 @@
     return function cleanup(){
       field.removeEventListener("mousemove", onMove);
       field.removeEventListener("pointermove", onMove);
+      field.removeEventListener("mousedown", onDown);
+      window.removeEventListener("mouseup", onUp);
+      field.removeEventListener("touchstart", onDown);
+      window.removeEventListener("touchend", onUp);
       field.innerHTML = "";
     };
   }

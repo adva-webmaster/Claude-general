@@ -3,22 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Marlons Sternenreise</title>
+<title>Marlons Tierwelt</title>
 <style>
   /* ====================================================
-     MARLONS STERNENREISE - Lernspiel für Maus & Tastatur
+     MARLONS TIERWELT - Lernspiel für Maus & Tastatur
      Alles in einer Datei: HTML + CSS + JavaScript
-     30 Missionen in 6 Welten, Schwierigkeitsgrad wählbar,
+     12 Missionen in 6 Welten, Schwierigkeitsgrad wählbar,
      bereits geschaffte Missionen frei auswählbar.
+     (Gleiche Spiel-Engine wie "Marlons Sternenreise",
+     mit Tier-Thema statt Weltraum-Thema.)
      ==================================================== */
 
   :root{
-    --navy: #0B0E2E;
-    --navy-deep: #05061a;
-    --violet: #2D1B69;
-    --cyan: #4FD8FF;
-    --gold: #FFC857;
-    --pink: #FF6B9D;
+    --navy: #16301F;
+    --navy-deep: #0B1A11;
+    --violet: #1F4A2E;
+    --cyan: #4FC3F7;
+    --gold: #FFD166;
+    --pink: #FF8FB3;
     --green: #6BFFB8;
     --white: #ffffff;
   }
@@ -618,6 +620,15 @@
   .ziel-stoerer{ filter: grayscale(.35) drop-shadow(0 0 10px rgba(255,255,255,.5)); }
   .star-target.shake, .m3-star .ziel-badge.shake{ animation: shake .4s ease; }
 
+  /* Gedrückt-Halten-Feedback (Klick: "Halten"-Modus) */
+  .star-target.haltend{
+    transform: scale(1.4);
+    filter: drop-shadow(0 0 18px rgba(255,209,102,.9)) brightness(1.15);
+  }
+  @media (prefers-reduced-motion: reduce){
+    .star-target.haltend{ transition:none !important; }
+  }
+
   /* Gepunkteter Pfad (Ziehen: "Pfad"-Modus / Maus: "Spur folgen"-Modus) */
   .pfad-punkt{
     position:absolute;
@@ -755,11 +766,11 @@
 
   <!-- ===================== INTRO- / MISSIONSÜBERSICHT-SCREEN ===================== -->
   <section class="screen" id="screen-intro">
-    <div class="big-emoji float">🧑‍🚀</div>
-    <h1>Marlons Sternenreise</h1>
+    <div class="big-emoji float">🦊</div>
+    <h1>Marlons Tierwelt</h1>
     <p class="info">
-      Hallo Marlon! Wähle deine Schwierigkeit und starte dein Weltraum-Abenteuer –
-      ganz ohne Zeitdruck. Es gibt kein Verlieren, nur Entdecken! 🌟
+      Hallo Marlon! Wähle deine Schwierigkeit und entdecke jede Menge Tiere –
+      ganz ohne Zeitdruck. Es gibt kein Verlieren, nur Entdecken! 🐾
     </p>
 
     <div class="difficulty-row" id="difficultyRow">
@@ -879,20 +890,20 @@
     <div class="trophy">🏆</div>
     <h1>Super gemacht, Marlon!</h1>
     <p class="info">
-      Du hast alle <span id="endMissionsAnzahl"></span> Missionen der Sternenreise gemeistert.<br>
-      Maus und Tastatur hast du wie ein echter Astronaut im Griff! 🚀✨
+      Du hast alle <span id="endMissionsAnzahl"></span> Missionen der Tierwelt gemeistert.<br>
+      Maus und Tastatur hast du wie ein echter Tierpfleger im Griff! 🦊🐾
     </p>
     <button class="btn secondary" id="btnReplay">🔁 Nochmal von vorne</button>
   </section>
 
-  <footer class="small-note">Marlons Sternenreise – ein Lernspiel für Maus &amp; Tastatur</footer>
+  <footer class="small-note">Marlons Tierwelt – ein Lernspiel für Maus &amp; Tastatur</footer>
 </div>
 
 <div class="confetti-wrap" id="confettiWrap"></div>
 
 <script>
 // ==========================================================
-// MARLONS STERNENREISE – Spiellogik (Vanilla JavaScript)
+// MARLONS TIERWELT – Spiellogik (Vanilla JavaScript)
 // ==========================================================
 (function(){
   "use strict";
@@ -902,9 +913,9 @@
 
   // Farbpalette (max. 4 Farben) für die Andocken-Missionen
   const PALETTE = [
-    { name: "cyan",  color: "#4FD8FF" },
-    { name: "gold",  color: "#FFC857" },
-    { name: "pink",  color: "#FF6B9D" },
+    { name: "cyan",  color: "#4FC3F7" },
+    { name: "gold",  color: "#FFD166" },
+    { name: "pink",  color: "#FF8FB3" },
     { name: "green", color: "#6BFFB8" }
   ];
 
@@ -919,97 +930,61 @@
   // ==========================================================
   const WELT_DEFS = [
     {
-      name: "Sternen-Klick", icon: "⭐", typ: "klick",
+      name: "Tier-Klick", icon: "🐾", typ: "klick",
       missionen: [
-        { titel: "Sterne einsammeln", modus: "einzeln", emojis: ["⭐","🌟","✨"], zielBasis: 8,
-          hinweis: "Klicke mit der Maus auf jeden Stern, sobald er erscheint!" },
-        { titel: "Planeten der Reihe nach", modus: "reihenfolge", emojis: ["🪐"], zielBasis: 5,
-          hinweis: "Klicke die Planeten in der richtigen Reihenfolge an: 1, 2, 3 …" },
-        { titel: "Kometen jagen", modus: "vermeiden", emojis: ["☄️","💫"], stoererEmojis: ["🛸"], zielBasis: 7,
-          hinweis: "Klicke nur die Kometen an – die UFOs lässt du in Ruhe!" },
-        { titel: "UFO-Alarm", modus: "beweglich", emojis: ["🛸"], zielBasis: 6,
-          hinweis: "Die UFOs fliegen umher! Klicke sie an, während sie sich bewegen." },
-        { titel: "Galaxien-Rallye", modus: "kombi", emojis: ["⭐"], stoererEmojis: ["☄️"], zielBasis: 5,
-          hinweis: "Klicke die nummerierten Sterne der Reihe nach an – Asteroiden ignorierst du!" }
+        { titel: "Tiere entdecken", modus: "einzeln", emojis: ["🐶","🐱","🐰"], zielBasis: 8,
+          hinweis: "Klicke mit der Maus auf jedes Tier, sobald es erscheint!" },
+        { titel: "Tier streicheln", modus: "halten", emojis: ["🐕"], zielBasis: 5,
+          hinweis: "Halte die Maustaste auf dem Tier gedrückt, bis der Kreis voll ist!" }
       ]
     },
     {
-      name: "Fracht-Andocken", icon: "📦", typ: "dragdrop",
+      name: "Tier-Zuhause", icon: "🏡", typ: "dragdrop",
       missionen: [
-        { titel: "Fracht andocken", modus: "farbe", icon: "📦", stationIcon: "🛰️", basisAnzahl: 2,
-          hinweis: "Ziehe jede Kiste zur Andockstation in der gleichen Farbe!" },
-        { titel: "Wohin gehört das?", modus: "kategorie", stationIcon: "🛰️",
+        { titel: "Wo lebt das Tier?", modus: "kategorie", stationIcon: "🏡",
           kategorien: [
-            { key: "all",    farbe: "#4FD8FF", stationIcon: "🌌 All",       beispiel: "🧑‍🚀" },
-            { key: "erde",   farbe: "#6BFFB8", stationIcon: "🌍 Erde",      beispiel: "🌳" },
-            { key: "schiff", farbe: "#FFC857", stationIcon: "🚀 Raumschiff", beispiel: "⛽" }
+            { key: "wasser", farbe: "#4FC3F7", stationIcon: "🌊 Wasser", beispiel: "🐟" },
+            { key: "land",   farbe: "#8BC34A", stationIcon: "🌳 Land",   beispiel: "🦊" },
+            { key: "luft",   farbe: "#FFD166", stationIcon: "☁️ Luft",   beispiel: "🦋" }
           ],
-          hinweis: "Ziehe jedes Ding dorthin, wo es hingehört!" },
-        { titel: "Roboter nach Größe", modus: "groesse", icon: "🤖",
-          hinweis: "Ziehe jeden Roboter zur passenden Größen-Station!" },
-        { titel: "Edelsteine nach Gewicht", modus: "reihenfolge", icon: "💎", basisAnzahl: 4,
-          hinweis: "Ziehe die Edelsteine vom leichtesten bis zum schwersten in die Reihe!" },
-        { titel: "Fracht-Extreme", modus: "pfad", icon: "🎁",
-          hinweis: "Halte die Maustaste gedrückt und ziehe die Fracht bis zum Ziel!" }
+          hinweis: "Ziehe jedes Tier zu seinem Lebensraum!" },
+        { titel: "Futter in Näpfe", modus: "farbe", icon: "🍖", stationIcon: "🥣", basisAnzahl: 2,
+          hinweis: "Ziehe jedes Futter zum Napf in der gleichen Farbe!" }
       ]
     },
     {
-      name: "Raketen-Steuerung", icon: "🚀", typ: "pfeiltasten",
+      name: "Wiesen-Streifzug", icon: "🌾", typ: "pfeiltasten",
       missionen: [
-        { titel: "Sterne sammeln", modus: "sammeln", icon: "⭐", zielBasis: 5,
-          hinweis: "Benutze die Pfeiltasten und sammle alle Sterne ein!" },
-        { titel: "Mondgestein bergen", modus: "einzeln", icon: "🪨", zielBasis: 6,
-          hinweis: "Steuere die Rakete zu jedem Mondgestein – eins nach dem anderen!" },
-        { titel: "Edelsteine der Reihe nach", modus: "reihenfolge", icon: "💎", zielBasis: 5,
-          hinweis: "Sammle die nummerierten Edelsteine in der richtigen Reihenfolge ein!" },
-        { titel: "Energie-Pfad", modus: "pfad", icon: "⚡", zielBasis: 6,
-          hinweis: "Folge dem Energie-Pfad durchs Spielfeld!" },
-        { titel: "Galaxien-Marathon", modus: "vermeiden", icon: "🌟", stoererIcon: "☄️", zielBasis: 7,
-          hinweis: "Sammle die Sterne ein – die kalten Kometen lässt du links liegen!" }
+        { titel: "Karotten sammeln", modus: "sammeln", icon: "🥕", zielBasis: 5,
+          hinweis: "Benutze die Pfeiltasten und sammle alle Karotten für den Hasen ein!" },
+        { titel: "Körner sammeln, Wolken meiden", modus: "vermeiden", icon: "🌾", stoererIcon: "☁️", zielBasis: 6,
+          hinweis: "Sammle die Körner ein – die Wolken lässt du in Ruhe!" }
       ]
     },
     {
-      name: "Asteroiden-Sprung", icon: "☄️", typ: "leertaste",
+      name: "Frosch-Teich", icon: "🐸", typ: "leertaste",
       missionen: [
-        { titel: "Asteroiden-Sprung", modus: "hindernis-sprung", icon: "☄️", zielErfolgBasis: 8,
-          hinweis: "Drücke die Leertaste, damit deine Rakete über die Asteroiden springt!" },
-        { titel: "Meteor-Regen", modus: "fangen", icon: "🌠", zielErfolgBasis: 7,
-          hinweis: "Meteore fallen von oben – drücke die Leertaste im richtigen Moment zum Fangen!" },
-        { titel: "Schneller Hindernislauf", modus: "schnellfolge", icon: "🪨", zielErfolgBasis: 8,
-          hinweis: "Die Hindernisse kommen jetzt schneller – bleib am Ball mit der Leertaste!" },
-        { titel: "Kometenschweif", modus: "doppel-druck", icon: "☄️", zielErfolgBasis: 6,
-          hinweis: "Drücke die Leertaste zweimal kurz hintereinander für einen großen Schub-Sprung!" },
-        { titel: "Asteroidengürtel", modus: "kombi", icon: "☄️", iconFallend: "🌠", zielErfolgBasis: 9,
-          hinweis: "Manche Hindernisse kommen von der Seite, manche von oben – bleib bereit!" }
+        { titel: "Frosch springt über Steine", modus: "hindernis-sprung", icon: "🪨", zielErfolgBasis: 8,
+          hinweis: "Drücke die Leertaste, damit der Frosch über die Steine springt!" },
+        { titel: "Körner fangen", modus: "fangen", icon: "🌰", zielErfolgBasis: 7,
+          hinweis: "Körner fallen von oben – drücke die Leertaste im richtigen Moment zum Fangen!" }
       ]
     },
     {
-      name: "Sternenstaub", icon: "💫", typ: "maus",
+      name: "Schmetterlingswiese", icon: "🦋", typ: "maus",
       missionen: [
-        { titel: "Sternenstaub einsammeln", modus: "beruehren", icon: "💫", zielBasis: 6,
-          hinweis: "Fahre mit der Maus über den funkelnden Sternenstaub – klicken musst du nicht!" },
-        { titel: "Kometenspur folgen", modus: "spur-folgen", icon: "☄️",
-          hinweis: "Folge mit dem Mauszeiger durchgehend der gepunkteten Spur!" },
-        { titel: "Wanderstern verfolgen", modus: "verfolgen", icon: "🌠", zielBasis: 5,
-          hinweis: "Der Stern wandert umher – hol ihn mit dem Mauszeiger ein!" },
-        { titel: "Nebel lichten", modus: "aufdecken", icon: "🪐",
-          hinweis: "Fahre mit der Maus über den Nebel, um das Bild dahinter freizulegen!" },
-        { titel: "Sternschnuppen-Wunsch", modus: "kombi", icon: "✨",
-          hinweis: "Folge der Spur – und pass auf die beweglichen Bonuspunkte auf!" }
+        { titel: "Schmetterlinge berühren", modus: "beruehren", icon: "🦋", zielBasis: 6,
+          hinweis: "Fahre mit der Maus über jeden Schmetterling – klicken musst du nicht!" },
+        { titel: "Vogel verfolgen", modus: "verfolgen", icon: "🐦", zielBasis: 5,
+          hinweis: "Der Vogel flattert umher – hol ihn mit dem Mauszeiger ein!" }
       ]
     },
     {
-      name: "Funksprüche", icon: "🔤", typ: "tippen",
+      name: "Tierlaute", icon: "🔤", typ: "tippen",
       missionen: [
-        { titel: "Funkspruch: MARLON", modus: "wort", wort: "MARLON",
-          hinweis: "Tippe die leuchtende Taste – du schreibst deinen eigenen Namen!" },
-        { titel: "Countdown-Zahlen", modus: "zahlen", zahlenfolge: "123456789",
-          hinweis: "Tippe die Zahlen der Reihe nach auf der Tastatur!" },
-        { titel: "Buchstaben-Funken", modus: "zufallsbuchstaben", anzahl: 6,
-          hinweis: "Tippe die aufleuchtenden Buchstaben – kein echtes Wort, einfach draufloslegen!" },
-        { titel: "Buchstaben-Regen", modus: "fallend", zielErfolgBasis: 8,
-          hinweis: "Buchstaben fallen vom Himmel – tippe die passende Taste, bevor sie unten ankommen!" },
-        { titel: "Funkspruch: WELTALL", modus: "grossklein", wort: "WELTALL",
+        { titel: "Funkspruch: HUND", modus: "wort", wort: "HUND",
+          hinweis: "Tippe die leuchtende Taste – buchstabiere HUND!" },
+        { titel: "Funkspruch: KATZE", modus: "grossklein", wort: "KATZE",
           hinweis: "Mal groß, mal klein geschrieben – die Taste bleibt trotzdem gleich!" }
       ]
     }
@@ -1300,6 +1275,36 @@
           setTimeout(() => el.remove(), reduceMotion ? 0 : 350);
           if (gefunden >= ZIEL) fertig(); else spawn();
         });
+      }
+      spawn();
+    }
+
+    // ---------- Modus: halten (Maustaste gedrückt halten = streicheln) ----------
+    else if (modus === "halten"){
+      const HALTE_DAUER = state.schwierigkeit === "leicht" ? 550 : state.schwierigkeit === "profi" ? 900 : 700;
+      function spawn(){
+        const el = macheZielElement(spec.emojis[Math.floor(Math.random() * spec.emojis.length)], {});
+        let haltTimeoutId = null;
+        function abbrechen(){
+          if (haltTimeoutId){ clearTimeout(haltTimeoutId); haltTimeoutId = null; }
+          el.classList.remove("haltend");
+        }
+        el.addEventListener("mousedown", (e) => {
+          e.preventDefault();
+          if (el.classList.contains("popped")) return;
+          el.classList.add("haltend");
+          el.style.transition = "transform " + HALTE_DAUER + "ms ease";
+          haltTimeoutId = setTimeout(() => {
+            el.classList.remove("haltend");
+            el.classList.add("popped");
+            gefunden++;
+            counterEl.textContent = "Gesammelt: " + gefunden + " / " + ZIEL;
+            setTimeout(() => el.remove(), reduceMotion ? 0 : 350);
+            if (gefunden >= ZIEL) fertig(); else spawn();
+          }, HALTE_DAUER);
+        });
+        el.addEventListener("mouseup", abbrechen);
+        el.addEventListener("mouseleave", abbrechen);
       }
       spawn();
     }

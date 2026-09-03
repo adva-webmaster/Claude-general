@@ -14,7 +14,11 @@ Verlieren, ohne Frustration.
 
 ## Was steckt drin?
 
-- **30 Missionen** in 6 thematischen Welten, jeweils 30–60 Sekunden lang:
+- **30 Missionen** in 6 thematischen Welten, jeweils 30–60 Sekunden lang.
+  Jede der 5 Missionen einer Welt nutzt eine eigene Spielmechanik statt nur
+  andere Zahlen – z.B. bei den Klick-Missionen: Ziele einzeln anklicken,
+  in Reihenfolge, Störer meiden, bewegliche Ziele treffen, oder eine
+  Kombination davon:
   - ⭐ **Sternen-Klick** – mit der Maus anklicken
   - 📦 **Fracht-Andocken** – Drag & Drop
   - 🚀 **Raketen-Steuerung** – Pfeiltasten
