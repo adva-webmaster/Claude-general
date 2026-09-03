@@ -1064,8 +1064,17 @@
     let geschafft = 0;     // Anzahl erfolgreich übersprungener Asteroiden
     let isJumping = false;
     let spawnTimeoutId = null;
+    let jumpTimeoutId = null;
     let rafId = null;
     let laeuftNoch = true;
+
+    // Sprungdauer per JS-Timer statt "animationend": Bei aktivem
+    // prefers-reduced-motion läuft gar keine CSS-Animation, dann würde
+    // "animationend" nie feuern und die Rakete bliebe für immer oben.
+    // Der Timer setzt isJumping garantiert zurück, egal ob eine
+    // Animation läuft oder nicht - und auch egal, ob die Leertaste
+    // noch gedrückt gehalten wird.
+    const JUMP_DAUER = reduceMotion ? 350 : 600; // ms, passend zur CSS-Animation
 
     function onKeyDown(e){
       if (e.code === "Space" || e.key === " "){
@@ -1075,10 +1084,15 @@
           rocket.classList.remove("jump");
           void rocket.offsetWidth; // Reflow für erneute Animation
           rocket.classList.add("jump");
+
+          clearTimeout(jumpTimeoutId);
+          jumpTimeoutId = setTimeout(() => {
+            isJumping = false;
+            rocket.classList.remove("jump"); // Rakete kehrt sicher zum Boden zurück
+          }, JUMP_DAUER);
         }
       }
     }
-    rocket.addEventListener("animationend", () => { isJumping = false; });
     window.addEventListener("keydown", onKeyDown);
 
     function spawnAsteroid(){
@@ -1159,6 +1173,7 @@
     return function cleanup(){
       laeuftNoch = false;
       clearTimeout(spawnTimeoutId);
+      clearTimeout(jumpTimeoutId);
       cancelAnimationFrame(rafId);
       window.removeEventListener("keydown", onKeyDown);
       field.querySelectorAll(".m4-asteroid, .m4-spark").forEach(n => n.remove());
