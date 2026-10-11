@@ -14,7 +14,8 @@ auf Deutsch. **Keine Werbung, keine Statistik, kein Tracking.**
 > |---|---|
 > | `:core` (reine Kotlin-Logik) bauen und testen | ✅ **129 Tests grün**, inkl. SQL-Abfragen gegen echtes SQLite |
 > | `:app` Kotlin-Quelltext gegen echte Compose-Desktop-, Coil-, osmdroid- und Android-Framework-Jars kompilieren (mit Stubs für Room, Paging, DataStore, WorkManager, Media3, Navigation, Lifecycle) | ✅ fehlerfrei (siehe `tools/compile-check/`) |
-> | XML-Ressourcen (Manifest, Strings, Themes, Icon) wohlgeformt; alle `R.string.*`/`R.plurals.*` vorhanden | ✅ |
+> | Alle Room-`@Query`-Texte gegen echtes SQLite (`tools/room-sql-check.py`) | ✅ 37 Abfragen ohne Befund |
+| XML-Ressourcen (Manifest, Strings, Themes, Icon) wohlgeformt; alle `R.string.*`/`R.plurals.*` vorhanden | ✅ |
 > | **`./gradlew assembleDebug`, `./gradlew lint`, `./gradlew test` für `:app`, Instrumented-Tests, Test auf einem Gerät** | ❌ **nicht ausgeführt** |
 > | **Debug-APK** | ❌ **nicht gebaut – keine APK im Repository** |
 >

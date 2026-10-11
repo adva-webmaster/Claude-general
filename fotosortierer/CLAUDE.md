@@ -161,6 +161,8 @@ Namen/API, Room 2.8.5 ist die etablierte stabile Linie.
 - **Sicherung (JSON):** nur BEHALTEN/PAPIERKORB/ZURUECKGESTELLT + Einstellungen; Zuordnung beim Import über
   (Name, Aufnahmezeit, Größe), bei Mehrdeutigkeit zusätzlich (Volume, ID) – `BackupPlanner` in `:core`.
 - **„Datenbank neu aufbauen“** verwirft Standorte/Orte/Ortsnamen und gleicht neu ab; Entscheidungen bleiben.
+- **Build-Dateien:** Plugins stehen mit `apply false` im Wurzel-`build.gradle.kts` (ein Classloader für Kotlin/
+  AGP/KSP/Compose). Im Kern-Modus liest Gradle stattdessen `build-core.gradle.kts` (siehe `settings.gradle.kts`).
 - **Navigation:** Untere Leiste (Start, Kalender, Orte, Papierkorb, Einstellungen), ab 600 dp Breite
   `NavigationRail`. Sortieren, Detail und Einführung sind Vollbild.
 - **Manifest:** `allowBackup=false` (Entscheidungen sichert der JSON-Export); von osmdroid mitgebrachte
@@ -189,6 +191,9 @@ Ausgeführt und grün:
   Android-Framework (API 37), Coil, osmdroid und Stubs für die nur auf Google Maven liegenden Bibliotheken.
   Das beweist Syntax, Typen und interne Konsistenz – nicht die Übereinstimmung der Stubs mit den echten
   Bibliotheken.
+- `tools/room-sql-check.py`: prüft alle 37 `@Query`-Texte der DAOs gegen echtes SQLite (gültiges SQL, Parameter
+  ↔ Funktionsparameter, Ergebnisspalten ⊇ Konstruktorparameter der Ergebnisklasse) – Ersatz für die
+  Compile-Zeit-Prüfung von Room.
 - XML-Ressourcen wohlgeformt; jede im Code verwendete `R.string`/`R.plurals` existiert.
 
 **Nicht** ausgeführt (kein SDK/Google Maven): `assembleDebug`, `lint`, `test` für `:app`, Instrumented-/Compose-
