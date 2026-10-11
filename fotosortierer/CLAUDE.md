@@ -6,21 +6,35 @@ Videos per Wischgesten (Vorbild: „Slidebox"). UI-Sprache Deutsch (Standardspra
 
 > **Wichtiger Hinweis zum Stand:** Die Entwicklungsumgebung, in der dieses Projekt entstanden ist,
 > hatte **keinen Zugriff auf `dl.google.com`** (Egress-Policy, HTTP 403). Damit waren weder das
-> Android-SDK noch Google Maven (AGP, AndroidX, Compose, Room, Media3, …) erreichbar. Der Android-Teil
-> (`:app`) konnte dort daher **nicht gebaut** werden. Voll gebaut und getestet wurde `:core`
-> (siehe „Verifikation"). Details und Build-Anleitung: `README.md`.
+> Android-SDK noch Google Maven (AGP, AndroidX, Compose, Room, Media3, …) erreichbar. `:core` wurde voll
+> gebaut und getestet; `:app` wurde nur **gegen Stubs/Ersatz-Jars kompiliert** (`tools/compile-check/`), aber
+> **nie mit AGP gebaut**, nie gelintet, nie auf einem Gerät gestartet. Siehe „Verifikation“ und `README.md`.
 
 ## Modulstruktur
 
 ```
 fotosortierer/
 ├── core/   reines Kotlin/JVM, KEINE Android-Abhängigkeit – gesamte testbare Logik
-└── app/    Android-App (Compose, Room, DataStore, WorkManager, Coil, Media3, osmdroid)
+├── app/    Android-App (Compose, Room, DataStore, WorkManager, Coil, Media3, osmdroid)
+└── tools/compile-check/   Kompilier-Prüfstand für :app ohne Android-SDK
 ```
 
 Gedanke: Alles, was Fachlogik ist (Statusaggregation, Zeit-/Tagesgrenzen, Sync-Abgleich,
-Clustering, Undo, SQL-Bausteine), liegt in `:core` und ist mit `./gradlew :core:test` ohne Gerät und
-ohne Android-SDK testbar. `:app` enthält nur Android-/UI-Klebecode darum herum.
+Clustering, Undo, SQL-Bausteine, Wischgeometrie, Zoom-Rechnung, Sicherungs-Zuordnung), liegt in `:core` und
+ist mit `./gradlew :core:test` ohne Gerät und ohne Android-SDK testbar. `:app` enthält nur Android-/UI-Klebecode
+darum herum.
+
+`app/src/main/kotlin/de/ingvoss/fotosortierer/`:
+
+| Paket | Inhalt |
+|---|---|
+| (Wurzel) | `FotoApp` (Application, Coil-Factory), `AppContainer` (manuelle DI, MediaStore-Beobachter), `MainActivity` |
+| `data/db` | Room: `MediaStateEntity`, `PlaceEntity`, `GeocodeCacheEntity`, DAOs (SQL-Texte aus `MediaSql`), Zeilenklassen |
+| `data/settings` | `SettingsRepository` (DataStore), `SessionStore` (laufende Sitzung), `AppSettings` |
+| `data/media` | `MediaStoreScanner`, `MediaSyncer`, `LocationReader`, `LocationIndexer`, `PlaceBuilder`, `PlaceNamer`, `GeocodingService`, `MediaRepository`, `TrashRepository`, `FilterLabeler`, `MediaAccess` |
+| `data/backup` | `BackupManager` (JSON per `JsonWriter`/`JsonReader`, SAF) |
+| `work` | `LocationWorker`, `GeocodeWorker`, `WorkScheduler` |
+| `ui/…` | `theme` (Farben, eigene Linien-Icons), `components`, `sort` (Wischkarte, Sortier-VM), `calendar`, `places` (Karte, Overlay, Liste), `detail` (Raster/Korrektur), `trash`, `home`, `settings`, `onboarding`, `AppRoot` (Navigation) |
 
 ## Build-Befehle
 
@@ -109,6 +123,49 @@ Namen/API, Room 2.8.5 ist die etablierte stabile Linie.
   vorgesehen. Duplikat-/Serienerkennung (Perceptual Hash) und Favoriten sind nicht umgesetzt; das
   Schema lässt zusätzliche Spalten/Tabellen ohne Umbau zu.
 
+### Weitere Entscheidungen (App)
+
+- **Eigene Symbole statt `material-icons-extended`:** `ui/theme/Icons.kt` zeichnet ~20 Linien-Symbole als
+  `ImageVector`. Die Icon-Bibliothek ist groß und verlangsamt Debug-Builds; die Version wäre zudem über das
+  BOM nicht von mir prüfbar gewesen.
+- **Farben (Okabe–Ito, farbenblind-sicher):** unbearbeitet #D55E00 (Ring gestrichelt), teilweise #F0E442/E0B800
+  (Teil-Ring), vollständig #0072B2 (gefüllt mit Haken), Zurückgestellt-Punkt #CC79A7; Medien: behalten #009E73,
+  Papierkorb #D55E00, zurückgestellt #CC79A7. Farbe ist nie das einzige Merkmal (Form, Zahl, Symbol, Text).
+  Dunkel-Varianten in `FotoColors.Dark`. Vollständige Zeiträume wirken gedämpft.
+- **Wischkarte (`ui/sort/SwipeCard.kt`):** zwei `pointerInput`-Modifier – außen `detectTapGestures`
+  (Tippen/Doppeltipp-Zoom), innen eine eigene Gestenschleife (Wischen, Zwei-Finger-Zoom, Verschieben). Wischen
+  konsumiert die Ereignisse und bricht damit den Tipp ab. Schwelle = 30 % der kürzeren Kartenseite oder
+  schnelle Geste ab 25 % der Schwelle (`SwipeGeometry`). Während des Zoomens ist Wischen aus. `beginExit()`
+  stellt sicher, dass eine Karte nie zwei Entscheidungen auslöst. Für TalkBack hat die Karte
+  `customActions`; Schaltflächen sind räumlich wie die Richtungen angeordnet.
+- **Kartenstapel:** oberste Karte + zwei sichtbare Hintergrundkarten + eine unsichtbar vorgeladene (4 Abfrage-
+  ergebnisse = „Vorladen 2–3“). Coil lädt auf Layoutgröße herunterskaliert, erst beim Zoomen einmal mit 2400 px.
+- **Optimistische Oberfläche:** `SortViewModel.decide` entfernt die Karte sofort, schreibt dann der Reihe nach
+  (Mutex) in Room und lädt die Warteschlange nach; noch nicht geschriebene Entscheidungen (`pending`) werden aus
+  Nachladeergebnissen herausgefiltert.
+- **Teilzugriff (Android 14):** Der Sync darf bei `PARTIAL` keine Tombstones setzen (nicht freigegebene Medien
+  fehlen im Scan). Nur `FULL` vergibt Tombstones.
+- **Hintergrundarbeit:** `MediaSyncer` (Scan, schnell, bei Start + `ContentObserver` mit 2 s Ruhezeit),
+  `LocationWorker` (EXIF/ISO-6709, 4 parallele Lesevorgänge, Stapel zu 200, ordnet nach jedem Stapel Orte zu),
+  `GeocodeWorker` (nur mit Netz, Backoff 60 s). Fortschritt kommt aus der Datenbank (`observeLocationProgress`),
+  nicht aus WorkManager-Progress. Einreihung mit `APPEND_OR_REPLACE`, damit während eines Laufs neu
+  hinzugekommene Medien nicht untergehen.
+- **Orte:** Radius ändern → `PlaceBuilder.rebuild` (Cluster-IDs neu, Namen aus `geocode_cache`, Rasterzelle
+  ≈ 110 m). Geocoding: Android-`Geocoder` → Nominatim → Koordinaten. Netzfehler zählen nicht als Ergebnis
+  (spätere Wiederholung); „kein Ergebnis“ wird dauerhaft gemerkt.
+- **Kartenclustering:** `PlaceClusterOverlay` rechnet pro Zeichnen mit `ScreenClusterer` (Raster, Pixelradius =
+  Markerdurchmesser). Antippen eines Clusters zoomt hinein; auf höchster Zoomstufe öffnet sich das Sheet mit
+  mehreren Orten.
+- **Löschen:** `TrashViewModel` fragt Block für Block (`createTrashRequest`, je Volume, ≤ 500); `RESULT_OK` →
+  `GELOESCHT`, sonst Abbruch ohne Änderung. Einmaliger Hinweisdialog (`trashHintShown`).
+- **Sicherung (JSON):** nur BEHALTEN/PAPIERKORB/ZURUECKGESTELLT + Einstellungen; Zuordnung beim Import über
+  (Name, Aufnahmezeit, Größe), bei Mehrdeutigkeit zusätzlich (Volume, ID) – `BackupPlanner` in `:core`.
+- **„Datenbank neu aufbauen“** verwirft Standorte/Orte/Ortsnamen und gleicht neu ab; Entscheidungen bleiben.
+- **Navigation:** Untere Leiste (Start, Kalender, Orte, Papierkorb, Einstellungen), ab 600 dp Breite
+  `NavigationRail`. Sortieren, Detail und Einführung sind Vollbild.
+- **Manifest:** `allowBackup=false` (Entscheidungen sichert der JSON-Export); von osmdroid mitgebrachte
+  Berechtigungen `WRITE_EXTERNAL_STORAGE`/`ACCESS_WIFI_STATE` werden per `tools:node="remove"` entfernt.
+
 ## Statuslogik (Tag, Monat, Ort)
 
 - **Unbearbeitet:** kein Element ist bearbeitet (BEHALTEN/PAPIERKORB/GELOESCHT).
@@ -123,10 +180,21 @@ Namen/API, Room 2.8.5 ist die etablierte stabile Linie.
 ## Verifikation
 
 Ausgeführt und grün:
-- `./gradlew -Dfoto.coreOnly=true :core:test` – 73 Tests (Statusaggregation, Zeitzonen/Tagesgrenzen/
-  Fallback, Sync-Planung, Clustering inkl. Performance mit 60 000 Punkten, Undo-Stack, ISO-6709,
-  alle SQL-Aggregationen/Warteschlangen gegen echtes SQLite via sqlite-jdbc). `:core` kompiliert mit
-  `allWarningsAsErrors`.
+- `./gradlew -Dfoto.coreOnly=true :core:test` – **129 Tests** (Statusaggregation, Zeitzonen/Tagesgrenzen/
+  Fallback, Sync-Planung, Clustering inkl. Performance mit 60 000 Punkten, Bildschirm-Clustering, Undo-Stapel,
+  ISO-6709, Wischgeometrie und -belegung, Zoom-Rechnung, Filter-Codec, Monatsraster, Formate, Ortsnamen,
+  Medien-Klassifizierer, Sicherungs-Zuordnung, alle SQL-Aggregationen/Warteschlangen gegen echtes SQLite via
+  sqlite-jdbc). `:core` kompiliert mit `allWarningsAsErrors`.
+- `tools/compile-check`: `:app` (main, Unit-Tests, androidTest) kompiliert fehlerfrei gegen Compose-Desktop 1.7.3,
+  Android-Framework (API 37), Coil, osmdroid und Stubs für die nur auf Google Maven liegenden Bibliotheken.
+  Das beweist Syntax, Typen und interne Konsistenz – nicht die Übereinstimmung der Stubs mit den echten
+  Bibliotheken.
+- XML-Ressourcen wohlgeformt; jede im Code verwendete `R.string`/`R.plurals` existiert.
 
-Nicht ausführbar in der Entwicklungsumgebung (kein SDK/Google Maven): `assembleDebug`, `lint`,
-`test` für `:app`, Instrumented-/Compose-Tests. Siehe README für exakte Schritte.
+**Nicht** ausgeführt (kein SDK/Google Maven): `assembleDebug`, `lint`, `test` für `:app`, Instrumented-/Compose-
+Tests, KSP/Room-Verarbeitung (SQL-Prüfung der DAOs zur Compile-Zeit), Start auf einem Gerät. Mögliche
+Reibungspunkte beim ersten echten Build, in dieser Reihenfolge:
+1. `compileSdk`/`targetSdk` 37 nicht installiert → auf 36 senken (`app/build.gradle.kts`).
+2. Eine Bibliotheksversion im Katalog ist auf Google Maven (noch) nicht auffindbar → `gradle/libs.versions.toml`.
+3. AGP-9-DSL-Eigenheiten (`kotlin { }` im App-Modul mit eingebautem Kotlin, KSP-Zusammenspiel).
+4. Lint-Fehler (nicht Warnungen) in Compose-/Manifest-Prüfungen.

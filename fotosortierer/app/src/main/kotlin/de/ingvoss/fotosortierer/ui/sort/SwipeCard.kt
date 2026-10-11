@@ -56,6 +56,7 @@ import de.ingvoss.fotosortierer.core.SwipeAction
 import de.ingvoss.fotosortierer.core.SwipeDirection
 import de.ingvoss.fotosortierer.core.SwipeGeometry
 import de.ingvoss.fotosortierer.core.SwipeMapping
+import de.ingvoss.fotosortierer.core.ZoomPan
 import de.ingvoss.fotosortierer.ui.theme.AppIcons
 import de.ingvoss.fotosortierer.ui.theme.LocalFotoColors
 import kotlinx.coroutines.launch
@@ -81,24 +82,15 @@ class SwipeCardState {
     var widthPx by mutableFloatStateOf(0f)
     var heightPx by mutableFloatStateOf(0f)
 
-    val isZoomed: Boolean get() = scale > ZOOMED_THRESHOLD
+    val isZoomed: Boolean get() = ZoomPan(scale, panX, panY).isZoomed
 
     /** Zoomt um den Punkt [centroid] (relativ zur Kartenmitte) und verschiebt um [pan]. */
     fun transform(zoom: Float, centroid: Offset, pan: Offset) {
-        val old = scale
-        val new = (old * zoom).coerceIn(1f, MAX_SCALE)
-        val ratio = if (old == 0f) 1f else new / old
-        panX = centroid.x - (centroid.x - panX) * ratio + pan.x
-        panY = centroid.y - (centroid.y - panY) * ratio + pan.y
-        scale = new
-        clampPan()
-    }
-
-    private fun clampPan() {
-        val maxX = widthPx * (scale - 1f) / 2f
-        val maxY = heightPx * (scale - 1f) / 2f
-        panX = panX.coerceIn(-maxX, maxX)
-        panY = panY.coerceIn(-maxY, maxY)
+        val result = ZoomPan(scale, panX, panY)
+            .transform(zoom, centroid.x, centroid.y, pan.x, pan.y, widthPx, heightPx)
+        scale = result.scale
+        panX = result.panX
+        panY = result.panY
     }
 
     suspend fun resetZoom() {
@@ -119,13 +111,11 @@ class SwipeCardState {
         val s0 = scale
         val x0 = panX
         val y0 = panY
-        val c = tap - Offset(widthPx / 2f, heightPx / 2f)
-        val x1 = (-(target - 1f) * c.x).coerceIn(-widthPx * (target - 1f) / 2f, widthPx * (target - 1f) / 2f)
-        val y1 = (-(target - 1f) * c.y).coerceIn(-heightPx * (target - 1f) / 2f, heightPx * (target - 1f) / 2f)
+        val end = ZoomPan().zoomedTo(target, tap.x, tap.y, widthPx, heightPx)
         animate(0f, 1f, animationSpec = tween(200)) { t, _ ->
-            scale = s0 + (target - s0) * t
-            panX = x0 + (x1 - x0) * t
-            panY = y0 + (y1 - y0) * t
+            scale = s0 + (end.scale - s0) * t
+            panX = x0 + (end.panX - x0) * t
+            panY = y0 + (end.panY - y0) * t
         }
     }
 
@@ -140,10 +130,18 @@ class SwipeCardState {
         dragY = 0f
     }
 
-    /** Lässt die Karte in [direction] aus dem Bild fliegen. */
-    suspend fun flyOut(direction: SwipeDirection) {
-        if (exiting) return
+    /**
+     * Reserviert den Abgang der Karte. Nur der erste Aufruf liefert true; dadurch löst eine Karte nie zwei
+     * Entscheidungen aus (z. B. Wischen und Schaltfläche fast gleichzeitig).
+     */
+    fun beginExit(): Boolean {
+        if (exiting) return false
         exiting = true
+        return true
+    }
+
+    /** Lässt die Karte in [direction] aus dem Bild fliegen. Vorher [beginExit] aufrufen. */
+    suspend fun flyOut(direction: SwipeDirection) {
         val x0 = dragX
         val y0 = dragY
         val targetX = when (direction) {
@@ -159,9 +157,7 @@ class SwipeCardState {
     }
 
     companion object {
-        const val MAX_SCALE = 5f
-        const val DOUBLE_TAP_SCALE = 2.5f
-        private const val ZOOMED_THRESHOLD = 1.02f
+        const val DOUBLE_TAP_SCALE = ZoomPan.DOUBLE_TAP_SCALE
         private const val EXIT_FACTOR = 1.4f
         private const val EXIT_MILLIS = 220
     }
@@ -214,6 +210,7 @@ fun SwipeCard(
 
     fun commit(dir: SwipeDirection) {
         val action = currentMapping.actionFor(dir) ?: return
+        if (!state.beginExit()) return
         scope.launch {
             state.flyOut(dir)
             if (currentHaptics) haptic.performHapticFeedback(HapticFeedbackType.LongPress)

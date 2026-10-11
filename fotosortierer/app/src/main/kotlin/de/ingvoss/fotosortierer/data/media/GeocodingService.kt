@@ -15,7 +15,7 @@ import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
 import java.net.HttpURLConnection
-import java.net.URL
+import java.net.URI
 import java.util.Locale
 import kotlin.coroutines.resume
 
@@ -91,13 +91,13 @@ class GeocodingService(private val context: Context, private val userAgent: Stri
     }
 
     private fun requestNominatim(lat: Double, lon: Double): GeocodeResult {
-        val url = URL(
+        val url = URI.create(
             String.format(
                 Locale.ROOT,
                 "https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&addressdetails=1&accept-language=de&lat=%.6f&lon=%.6f",
                 lat, lon
             )
-        )
+        ).toURL()
         val connection = url.openConnection() as HttpURLConnection
         return try {
             connection.setRequestProperty("User-Agent", userAgent)

@@ -134,7 +134,7 @@ private fun SortingContent(ui: SortUiState, settings: AppSettings, viewModel: So
 
     fun trigger(direction: SwipeDirection) {
         val action = mapping.actionFor(direction) ?: return
-        if (top == null || cardState.exiting) return
+        if (top == null || !cardState.beginExit()) return
         scope.launch {
             cardState.flyOut(direction)
             if (settings.haptics) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
