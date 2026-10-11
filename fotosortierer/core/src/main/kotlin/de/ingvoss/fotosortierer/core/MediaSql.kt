@@ -150,6 +150,13 @@ object MediaSql {
         return SqlQuery("SELECT * FROM media_state WHERE $where ${order(ascending)}", args)
     }
 
+    /** Nur die IDs (uid) eines Filters, z. B. für "Alle auswählen". */
+    fun uids(filter: MediaFilter, ascending: Boolean = true): SqlQuery {
+        val args = mutableListOf<Any>()
+        val where = baseConditions(filter, args).joinToString(" AND ")
+        return SqlQuery("SELECT uid FROM media_state WHERE $where ${order(ascending)}", args)
+    }
+
     /** Anzahl Medien eines Filters. */
     fun count(filter: MediaFilter): SqlQuery {
         val args = mutableListOf<Any>()

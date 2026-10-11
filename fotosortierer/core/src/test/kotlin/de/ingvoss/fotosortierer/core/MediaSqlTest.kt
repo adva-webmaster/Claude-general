@@ -263,4 +263,13 @@ class MediaSqlTest {
         assertEquals(0, (query(MediaSql.count(MediaFilter.ALL)).single().values.single() as Number).toInt())
         assertTrue(query(MediaSql.Q_MONTHS, emptyList()).isEmpty())
     }
+
+    @Test
+    fun uidAbfrageLiefertNurIdsInSortierreihenfolge() {
+        insert(Row(1, "2026-03-12"))
+        insert(Row(2, "2026-03-12"))
+        insert(Row(3, "2026-03-13"))
+        val rows = query(MediaSql.uids(MediaFilter(localDate = "2026-03-12"), ascending = false))
+        assertEquals(listOf(2L, 1L), rows.map { (it["uid"] as Number).toLong() })
+    }
 }
