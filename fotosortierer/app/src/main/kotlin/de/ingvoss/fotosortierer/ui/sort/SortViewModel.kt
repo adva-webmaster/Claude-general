@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.ConcurrentHashMap
 
 enum class SortStage {
     /** Karten werden sortiert. */
@@ -69,7 +70,8 @@ class SortViewModel(
 ) : ViewModel() {
     private val media = container.media
     private val undoStack = UndoStack<UndoEntry>()
-    private val pending = HashSet<Long>()
+    /** Entscheidungen, die die Oberfläche schon zeigt, aber Room noch nicht geschrieben hat. */
+    private val pending: MutableSet<Long> = ConcurrentHashMap.newKeySet()
     private val mutex = Mutex()
     private var session: SessionState? = null
     private var summaryJob: Job? = null
@@ -143,18 +145,24 @@ class SortViewModel(
 
     // ---- Entscheidungen ---------------------------------------------------------------------
 
-    /** Übernimmt die Entscheidung für die oberste Karte (nach der Ausflug-Animation). */
+    /**
+     * Übernimmt die Entscheidung für die oberste Karte (nach der Ausflug-Animation). Geschrieben wird im
+     * App-Scope, damit die Entscheidung auch dann gespeichert wird, wenn der Bildschirm sofort verlassen wird.
+     */
     fun decide(action: SwipeAction) {
         val s = session ?: return
         val card = _state.value.cards.firstOrNull() ?: return
         pending += card.uid
         undoStack.push(UndoEntry(StatusSnapshot(card.uid, card.mediaStatus, card.statusChangedAt), s.phase))
         _state.update { it.copy(cards = it.cards.drop(1), canUndo = true) }
-        viewModelScope.launch {
+        val write = container.appScope.launch {
             mutex.withLock {
                 media.setStatus(card.uid, action.status)
                 pending -= card.uid
             }
+        }
+        viewModelScope.launch {
+            write.join()
             load()
         }
     }
@@ -162,8 +170,9 @@ class SortViewModel(
     fun undo() {
         val entry = undoStack.pop() ?: return
         _state.update { it.copy(canUndo = !undoStack.isEmpty) }
+        val write = container.appScope.launch { mutex.withLock { media.restore(listOf(entry.snapshot)) } }
         viewModelScope.launch {
-            mutex.withLock { media.restore(listOf(entry.snapshot)) }
+            write.join()
             session = session?.let { container.sessionStore.setPhase(it, entry.phase) }
             load()
         }
@@ -183,7 +192,7 @@ class SortViewModel(
 
     /** Beendet die Sitzung ("Fertig"): "Weitermachen" startet danach eine neue. */
     fun finish() {
-        viewModelScope.launch { container.sessionStore.clear() }
+        container.appScope.launch { container.sessionStore.clear() }
     }
 
     private companion object {

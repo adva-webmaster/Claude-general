@@ -38,15 +38,15 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     val messages: Flow<SettingsMessage> = _messages.receiveAsFlow()
 
     fun assignSwipe(direction: SwipeDirection, action: SwipeAction) {
-        viewModelScope.launch { repo.assignSwipe(direction, action) }
+        container.appScope.launch { repo.assignSwipe(direction, action) }
     }
 
     fun setOldestFirst(value: Boolean) {
-        viewModelScope.launch { repo.setOldestFirst(value) }
+        container.appScope.launch { repo.setOldestFirst(value) }
     }
 
     fun setClusterRadius(meters: Int) {
-        viewModelScope.launch {
+        container.appScope.launch {
             repo.setClusterRadius(meters)
             container.onClusterRadiusChanged(meters)
         }
@@ -58,30 +58,30 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     fun setExcludedAlbums(albums: Set<String>) = visibility { repo.setExcludedAlbums(albums) }
 
     private fun visibility(change: suspend () -> Unit) {
-        viewModelScope.launch {
+        container.appScope.launch {
             change()
             container.onVisibilitySettingsChanged()
         }
     }
 
     fun setTheme(mode: ThemeMode) {
-        viewModelScope.launch { repo.setThemeMode(mode) }
+        container.appScope.launch { repo.setThemeMode(mode) }
     }
 
     fun setHaptics(value: Boolean) {
-        viewModelScope.launch { repo.setHaptics(value) }
+        container.appScope.launch { repo.setHaptics(value) }
     }
 
     fun setVideoSound(value: Boolean) {
-        viewModelScope.launch { repo.setVideoSoundDefault(value) }
+        container.appScope.launch { repo.setVideoSoundDefault(value) }
     }
 
     fun setInfoLine(value: Boolean) {
-        viewModelScope.launch { repo.setShowInfoLine(value) }
+        container.appScope.launch { repo.setShowInfoLine(value) }
     }
 
     fun export(target: Uri) {
-        viewModelScope.launch {
+        container.appScope.launch {
             val message = try {
                 SettingsMessage(R.string.settings_export_done, listOf(container.backup.export(target)))
             } catch (e: IOException) {
@@ -92,7 +92,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     fun import(source: Uri) {
-        viewModelScope.launch {
+        container.appScope.launch {
             val message = try {
                 val result = container.backup.import(source)
                 container.onVisibilitySettingsChanged()
@@ -109,6 +109,6 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
 
     fun rebuildDatabase() {
         container.rebuildDatabase()
-        viewModelScope.launch { _messages.send(SettingsMessage(R.string.settings_rebuild_started)) }
+        container.appScope.launch { _messages.send(SettingsMessage(R.string.settings_rebuild_started)) }
     }
 }

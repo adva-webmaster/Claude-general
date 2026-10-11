@@ -50,6 +50,7 @@ data class ZoomPan(val scale: Float = 1f, val panX: Float = 0f, val panY: Float 
         const val MIN_SCALE = 1f
         const val MAX_SCALE = 5f
         const val DOUBLE_TAP_SCALE = 2.5f
-        private const val ZOOMED_THRESHOLD = 1.02f
+        /** Ab diesem Faktor gilt das Bild als vergrößert (Wischen ist dann aus, Ziehen verschiebt das Bild). */
+        const val ZOOMED_THRESHOLD = 1.02f
     }
 }

@@ -70,13 +70,13 @@ class TrashViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     fun markHintShown() {
-        viewModelScope.launch { container.settings.setTrashHintShown() }
+        container.appScope.launch { container.settings.setTrashHintShown() }
     }
 
     /** Gibt die Auswahl (oder, ohne Auswahl, alle) in die Warteschlange zurück. */
     fun restore() {
         val selected = _selection.value
-        viewModelScope.launch {
+        container.appScope.launch {
             val uids = if (selected.isEmpty()) media.uids(filter) else selected.toList()
             trash.restore(uids)
             _selection.value = emptySet()
@@ -119,7 +119,9 @@ class TrashViewModel(private val container: AppContainer) : ViewModel() {
     /** Ergebnis der Systemabfrage: Nur nach Bestätigung (RESULT_OK) wird der Block als gelöscht markiert. */
     fun onDeleteResult(confirmed: Boolean) {
         val state = _progress.value ?: return
-        viewModelScope.launch {
+        // Im App-Scope: Der bestätigte Block muss auch dann als gelöscht gespeichert werden, wenn der Bildschirm
+        // gerade verlassen wird.
+        container.appScope.launch {
             if (confirmed) {
                 val block = state.blocks[state.index]
                 trash.markDeleted(block)

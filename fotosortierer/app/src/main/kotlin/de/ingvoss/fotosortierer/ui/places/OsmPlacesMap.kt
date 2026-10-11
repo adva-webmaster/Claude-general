@@ -31,8 +31,10 @@ private fun configureOsmdroid(context: Context, userAgent: String) {
     val configuration = Configuration.getInstance()
     configuration.userAgentValue = userAgent
     val base = File(context.cacheDir, "osmdroid")
+    val tiles = File(base, "tiles")
+    tiles.mkdirs()
     configuration.osmdroidBasePath = base
-    configuration.osmdroidTileCache = File(base, "tiles")
+    configuration.osmdroidTileCache = tiles
     configuration.tileFileSystemCacheMaxBytes = TILE_CACHE_MAX_BYTES
     configuration.tileFileSystemCacheTrimBytes = TILE_CACHE_TRIM_BYTES
 }

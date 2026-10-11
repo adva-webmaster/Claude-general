@@ -82,7 +82,8 @@ class SwipeCardState {
     var widthPx by mutableFloatStateOf(0f)
     var heightPx by mutableFloatStateOf(0f)
 
-    val isZoomed: Boolean get() = ZoomPan(scale, panX, panY).isZoomed
+    /** Liest nur [scale], damit reines Verschieben die Karteninhalte nicht neu zusammensetzt. */
+    val isZoomed: Boolean get() = scale > ZoomPan.ZOOMED_THRESHOLD
 
     /** Zoomt um den Punkt [centroid] (relativ zur Kartenmitte) und verschiebt um [pan]. */
     fun transform(zoom: Float, centroid: Offset, pan: Offset) {
@@ -272,6 +273,8 @@ fun SwipeCard(
                         val event: PointerEvent = awaitPointerEvent()
                         val pressed = event.changes.count { it.pressed }
                         if (pressed >= 2) {
+                            // Begann die Geste als Wischen, kehrt die Karte zuerst an ihren Platz zurück.
+                            if (mode == GestureMode.SWIPE) scope.launch { state.snapBack() }
                             mode = GestureMode.ZOOM
                             val centroid = event.calculateCentroid(useCurrent = true)
                             val relative = if (centroid.isSpecified) centroid - Offset(size.width / 2f, size.height / 2f) else Offset.Zero

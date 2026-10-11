@@ -91,7 +91,7 @@ class FilterDetailViewModel(private val container: AppContainer, val filter: Med
     fun applyTo(uid: Long, status: MediaStatus) = change(listOf(uid), status)
 
     private fun change(uids: List<Long>, status: MediaStatus) {
-        viewModelScope.launch {
+        container.appScope.launch {
             lastChange = media.setStatusBulk(uids, status)
             changes.send(ChangeEvent(uids.size, status))
         }
@@ -101,6 +101,6 @@ class FilterDetailViewModel(private val container: AppContainer, val filter: Med
         val snapshots = lastChange
         if (snapshots.isEmpty()) return
         lastChange = emptyList()
-        viewModelScope.launch { media.restore(snapshots) }
+        container.appScope.launch { media.restore(snapshots) }
     }
 }

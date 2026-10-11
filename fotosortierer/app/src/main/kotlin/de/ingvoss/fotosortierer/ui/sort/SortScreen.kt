@@ -34,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -130,7 +131,8 @@ private fun SortingContent(ui: SortUiState, settings: AppSettings, viewModel: So
 
     var soundOn by remember(top?.uid) { mutableStateOf(settings.videoSoundDefault) }
     var paused by remember(top?.uid) { mutableStateOf(false) }
-    var progress by remember(top?.uid) { mutableFloatStateOf(0f) }
+    // Als State-Objekt weitergereicht: nur der Fortschrittsbalken liest den Wert, nicht der ganze Kartenstapel.
+    val progress = remember(top?.uid) { mutableFloatStateOf(0f) }
 
     fun trigger(direction: SwipeDirection) {
         val action = mapping.actionFor(direction) ?: return
@@ -154,7 +156,7 @@ private fun SortingContent(ui: SortUiState, settings: AppSettings, viewModel: So
                 progress = progress,
                 onToggleSound = { soundOn = !soundOn },
                 onTogglePause = { paused = !paused },
-                onProgress = { progress = it },
+                onProgress = { progress.floatValue = it },
                 onDecision = viewModel::decide,
                 modifier = modifier
             )
@@ -192,7 +194,7 @@ private fun CardStack(
     settings: AppSettings,
     soundOn: Boolean,
     paused: Boolean,
-    progress: Float,
+    progress: State<Float>,
     onToggleSound: () -> Unit,
     onTogglePause: () -> Unit,
     onProgress: (Float) -> Unit,
@@ -224,7 +226,7 @@ private fun TopCard(
     settings: AppSettings,
     soundOn: Boolean,
     paused: Boolean,
-    progress: Float,
+    progress: State<Float>,
     onToggleSound: () -> Unit,
     onTogglePause: () -> Unit,
     onProgress: (Float) -> Unit,
@@ -273,7 +275,7 @@ private fun BackCard(card: MediaStateEntity, depth: Int) {
 private fun BoxScope.VideoOverlay(
     soundOn: Boolean,
     paused: Boolean,
-    progress: Float,
+    progress: State<Float>,
     onToggleSound: () -> Unit
 ) {
     if (paused) {
@@ -302,7 +304,7 @@ private fun BoxScope.VideoOverlay(
         )
     }
     LinearProgressIndicator(
-        progress = { progress },
+        progress = { progress.value },
         modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(4.dp),
         color = Color.White,
         trackColor = Color.Black.copy(alpha = 0.4f)
