@@ -150,7 +150,10 @@ private fun AppNavHost(
     NavHost(navController = navController, startDestination = start, modifier = modifier) {
         composable(Routes.ONBOARDING) {
             OnboardingScreen(onDone = {
-                navController.navigate(Routes.HOME) { popUpTo(Routes.ONBOARDING) { inclusive = true } }
+                navController.navigate(Routes.HOME) {
+                    popUpTo(Routes.ONBOARDING) { inclusive = true }
+                    launchSingleTop = true
+                }
             })
         }
         composable(Routes.HOME) {

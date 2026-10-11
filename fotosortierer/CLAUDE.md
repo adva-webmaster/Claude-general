@@ -140,6 +140,9 @@ Namen/API, Room 2.8.5 ist die etablierte stabile Linie.
   `customActions`; Schaltflächen sind räumlich wie die Richtungen angeordnet.
 - **Kartenstapel:** oberste Karte + zwei sichtbare Hintergrundkarten + eine unsichtbar vorgeladene (4 Abfrage-
   ergebnisse = „Vorladen 2–3“). Coil lädt auf Layoutgröße herunterskaliert, erst beim Zoomen einmal mit 2400 px.
+- **Schreibzugriffe im App-Scope:** Entscheidungen, Korrekturen, Einstellungen und bestätigte Löschblöcke werden
+  im `AppContainer.appScope` geschrieben, nicht im `viewModelScope` – wer nach dem Wischen sofort zurückgeht,
+  verliert nichts. Die Oberfläche lädt danach im `viewModelScope` nach.
 - **Optimistische Oberfläche:** `SortViewModel.decide` entfernt die Karte sofort, schreibt dann der Reihe nach
   (Mutex) in Room und lädt die Warteschlange nach; noch nicht geschriebene Entscheidungen (`pending`) werden aus
   Nachladeergebnissen herausgefiltert.
