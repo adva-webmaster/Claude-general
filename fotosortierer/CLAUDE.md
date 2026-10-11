@@ -4,11 +4,10 @@ Native Android-App (Kotlin, Jetpack Compose, Material 3) zum schnellen Aussortie
 Videos per Wischgesten (Vorbild: „Slidebox"). UI-Sprache Deutsch (Standardsprache `de`, alle Texte in
 `strings.xml`). Keine Analytics, kein Tracking.
 
-> **Wichtiger Hinweis zum Stand:** Die Entwicklungsumgebung, in der dieses Projekt entstanden ist,
-> hatte **keinen Zugriff auf `dl.google.com`** (Egress-Policy, HTTP 403). Damit waren weder das
-> Android-SDK noch Google Maven (AGP, AndroidX, Compose, Room, Media3, …) erreichbar. `:core` wurde voll
-> gebaut und getestet; `:app` wurde nur **gegen Stubs/Ersatz-Jars kompiliert** (`tools/compile-check/`), aber
-> **nie mit AGP gebaut**, nie gelintet, nie auf einem Gerät gestartet. Siehe „Verifikation“ und `README.md`.
+> **Stand:** `:core` ist lokal getestet. Der Android-Teil wird bei GitHub Actions gebaut, getestet und gelintet
+> (`.github/workflows/fotosortierer-apk.yml`; Lauf auf Branch `fotosortierer`: Build, Tests, Lint ohne Fehler).
+> In der ursprünglichen Entwicklungsumgebung war `dl.google.com` gesperrt, daher entstanden zusätzlich die
+> Hilfsmittel in `tools/` (Kompilier-Prüfstand, Room-SQL-Prüfung). Auf einem Gerät wurde die App noch nicht getestet.
 
 ## Modulstruktur
 

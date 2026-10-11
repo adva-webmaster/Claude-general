@@ -4,25 +4,23 @@ Android-App zum schnellen Aussortieren von Fotos und Videos per Wischgeste (Vorb
 Kotlin · Jetpack Compose · Material 3 · Room · WorkManager · osmdroid (OpenStreetMap). Oberfläche komplett
 auf Deutsch. **Keine Werbung, keine Statistik, kein Tracking.**
 
-> ## ⚠️ Stand der Prüfung – bitte zuerst lesen
+> ## Stand der Prüfung
 >
-> Dieses Projekt wurde in einer Umgebung geschrieben, die **keinen Zugriff auf `dl.google.com` / Google Maven**
-> hatte (Egress-Sperre, HTTP 403). Dadurch standen weder das Android-SDK noch AGP, AndroidX, Room, Media3 usw.
-> zur Verfügung. Deshalb gilt:
+> Die App wird bei GitHub automatisch gebaut (`.github/workflows/fotosortierer-apk.yml`). Letzter geprüfter Lauf:
 >
 > | Prüfung | Ergebnis |
 > |---|---|
-> | `:core` (reine Kotlin-Logik) bauen und testen | ✅ **129 Tests grün**, inkl. SQL-Abfragen gegen echtes SQLite |
-> | `:app` Kotlin-Quelltext gegen echte Compose-Desktop-, Coil-, osmdroid- und Android-Framework-Jars kompilieren (mit Stubs für Room, Paging, DataStore, WorkManager, Media3, Navigation, Lifecycle) | ✅ fehlerfrei (siehe `tools/compile-check/`) |
-> | Alle Room-`@Query`-Texte gegen echtes SQLite (`tools/room-sql-check.py`) | ✅ 37 Abfragen ohne Befund |
-| XML-Ressourcen (Manifest, Strings, Themes, Icon) wohlgeformt; alle `R.string.*`/`R.plurals.*` vorhanden | ✅ |
-> | **`./gradlew assembleDebug`, `./gradlew lint`, `./gradlew test` für `:app`, Instrumented-Tests, Test auf einem Gerät** | ❌ **nicht ausgeführt** |
-> | **Debug-APK** | ❌ **nicht gebaut – keine APK im Repository** |
+> | `./gradlew assembleDebug` (Debug-APK) | ✅ erfolgreich |
+> | `./gradlew test` (Unit-Tests `:core` und `:app`) | ✅ erfolgreich (129 Tests im Kern) |
+> | `./gradlew lint` | ✅ 0 Fehler, 2 Hinweise (Framework-ExifInterface, `allowBackup`) |
+> | Test auf einem echten Gerät, Compose-Wischtest (`connectedDebugAndroidTest`) | ❌ nicht ausgeführt |
 >
-> Die App ist vollständig geschrieben und gegen die Bibliotheks-APIs geprüft, soweit das ohne Android-SDK
-> möglich war. Ob `assembleDebug`/`lint` auf deinem Rechner **ohne Beanstandung** durchlaufen, konnte nicht
-> bestätigt werden – das ist der erste Schritt unter „Bauen“. Falls etwas hakt (am ehesten: eine
-> Bibliotheksversion oder `compileSdk`), steht in `CLAUDE.md`, wo die Stellschrauben sind.
+> **APK herunterladen:** GitHub → Reiter **Actions** → „Fotosortierer – APK bauen“ → letzter grüner Lauf auf dem Branch
+> `fotosortierer` → unten bei **Artifacts** `fotosortierer-debug-apk` (ZIP mit `app-debug.apk`). Dafür muss man bei GitHub angemeldet sein.
+> Den Bau kann man dort auch selbst per „Run workflow“ neu starten.
+>
+> Die App wurde noch nicht auf einem Gerät ausprobiert – Fehler im Zusammenspiel (z. B. Berechtigungsdialog, Karte,
+> Löschen) sind möglich. Hilfsmittel aus der Entwicklung ohne Android-SDK (`tools/`) bleiben als Zusatzprüfung erhalten.
 
 ## Funktionen
 
