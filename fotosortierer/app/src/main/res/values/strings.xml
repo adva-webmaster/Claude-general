@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="PluralsCandidate">
     <string name="app_name">Fotosortierer</string>
 
     <!-- Allgemeine Aktionen -->
@@ -33,7 +33,7 @@
     <string name="status_trash">Papierkorb</string>
     <string name="status_deferred">Zurückgestellt</string>
     <string name="status_deleted">Gelöscht</string>
-    <string name="state_empty">keine Medien</string>
+    <string name="progress_state_empty">keine Medien</string>
     <string name="state_open">unbearbeitet</string>
     <string name="state_partial">teilweise bearbeitet</string>
     <string name="state_complete">vollständig bearbeitet</string>

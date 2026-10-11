@@ -32,7 +32,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -48,12 +48,12 @@ import de.ingvoss.fotosortierer.ui.theme.LocalFotoColors
 /** Plural-Text (z. B. "1 Medium" / "5 Medien"). */
 @Composable
 fun pluralText(@PluralsRes id: Int, count: Int): String =
-    LocalContext.current.resources.getQuantityString(id, count, count)
+    LocalResources.current.getQuantityString(id, count, count)
 
 @Composable
 fun stateDescription(state: ProgressState): String = stringResource(
     when (state) {
-        ProgressState.LEER -> R.string.state_empty
+        ProgressState.LEER -> R.string.progress_state_empty
         ProgressState.UNBEARBEITET -> R.string.state_open
         ProgressState.TEILWEISE -> R.string.state_partial
         ProgressState.VOLLSTAENDIG -> R.string.state_complete

@@ -1,5 +1,6 @@
 package de.ingvoss.fotosortierer.data.media
 
+import android.annotation.SuppressLint
 import android.content.ContentUris
 import android.content.Context
 import android.media.ExifInterface
@@ -34,6 +35,8 @@ class LocationReader(private val context: Context) {
         }
     }
 
+    // Das Framework-ExifInterface reicht (nur Position lesen); androidx.exifinterface wäre eine weitere Abhängigkeit.
+    @SuppressLint("ExifInterface")
     private fun readImage(uri: Uri): LatLon? {
         context.contentResolver.openInputStream(uri)?.use { stream ->
             val exif = ExifInterface(stream)

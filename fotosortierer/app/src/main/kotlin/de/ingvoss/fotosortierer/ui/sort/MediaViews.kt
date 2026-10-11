@@ -1,7 +1,6 @@
-@file:OptIn(androidx.media3.common.util.UnstableApi::class)
-
 package de.ingvoss.fotosortierer.ui.sort
 
+import android.annotation.SuppressLint
 import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -55,6 +54,7 @@ fun MediaImage(
  * Videowiedergabe (Media3/ExoPlayer) in Endlosschleife. Stumm ist der Standard; [soundOn] und [paused]
  * steuern Ton und Pause. [onProgress] meldet den Fortschritt 0..1 für den Fortschrittsbalken.
  */
+@SuppressLint("UnsafeOptInUsageError") // PlayerView-Einstellungen sind in Media3 als @UnstableApi markiert
 @Composable
 fun VideoSurface(
     uri: Uri,

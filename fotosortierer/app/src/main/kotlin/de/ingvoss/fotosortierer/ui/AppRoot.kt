@@ -83,6 +83,7 @@ private fun topLevelOf(route: String?): String? = when {
     else -> null
 }
 
+@Suppress("ConfigurationScreenWidthHeight") // grobe Breitenklasse genügt für Leiste vs. Rail
 @Composable
 fun AppRoot(startWithOnboarding: Boolean) {
     val navController = rememberNavController()
