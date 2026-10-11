@@ -18,9 +18,9 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-      - uses: android-actions/setup-android@v3
       - name: Android-Plattform installieren (37, ersatzweise 36)
         run: |
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
           yes | sdkmanager --licenses > /dev/null || true
           if sdkmanager "platforms;android-37" "build-tools;37.0.0"; then
             echo "API 37 installiert"
