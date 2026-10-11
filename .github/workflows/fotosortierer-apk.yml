@@ -37,6 +37,12 @@ jobs:
       - name: Lint (nicht abbrechend)
         continue-on-error: true
         run: ./gradlew lint --console=plain
+      - name: Lint-Ergebnis anzeigen
+        if: always()
+        run: |
+          f=$(find app/build -name 'lint-results-debug.txt' | head -1)
+          echo "Datei: $f"
+          [ -n "$f" ] && sed -n '1,400p' "$f" || true
       - uses: actions/upload-artifact@v4
         with:
           name: fotosortierer-debug-apk
