@@ -245,6 +245,19 @@ class MediaSqlTest {
     }
 
     @Test
+    fun sitzungszusammenfassungZaehltNurEntscheidungenSeitSitzungsbeginn() {
+        insert(Row(1, "2026-03-12", MediaStatus.BEHALTEN, changedAt = 1000))
+        insert(Row(2, "2026-03-12", MediaStatus.PAPIERKORB, changedAt = 1100, size = 700))
+        insert(Row(3, "2026-03-12", MediaStatus.ZURUECKGESTELLT, changedAt = 1200))
+        insert(Row(4, "2026-03-12", MediaStatus.PAPIERKORB, changedAt = 500, size = 9999)) // frühere Sitzung
+        insert(Row(5, "2026-03-12", MediaStatus.UNBEARBEITET, changedAt = 0))
+        insert(Row(6, "2026-03-13", MediaStatus.BEHALTEN, changedAt = 1300))               // anderer Tag
+        val row = query(MediaSql.sessionSummary(MediaFilter(localDate = "2026-03-12"), startedAt = 1000)).single()
+        assertEquals(StatusCounts(behalten = 1, papierkorb = 1, zurueckgestellt = 1), row.counts())
+        assertEquals(700L, (row["trashBytes"] as Number).toLong())
+    }
+
+    @Test
     fun versteckteMedienErscheinenNie() {
         insert(Row(1, "2026-03-12", hidden = true))
         assertEquals(0, (query(MediaSql.count(MediaFilter.ALL)).single().values.single() as Number).toInt())

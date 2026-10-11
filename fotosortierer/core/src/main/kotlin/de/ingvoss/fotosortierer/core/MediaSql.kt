@@ -195,6 +195,24 @@ object MediaSql {
         )
     }
 
+    /**
+     * Zusammenfassung einer Sitzung: Zähler der in dieser Sitzung (seit [startedAt]) getroffenen
+     * Entscheidungen im Filter plus die Größe der in den Papierkorb gelegten Medien (Spalte `trashBytes`).
+     * Neu indexierte Medien haben `statusChangedAt = 0` und zählen deshalb nie mit.
+     */
+    fun sessionSummary(filter: MediaFilter, startedAt: Long): SqlQuery {
+        val args = mutableListOf<Any>()
+        val parts = baseConditions(filter.copy(statuses = null), args)
+        parts += "statusChangedAt >= ?"
+        args += startedAt
+        return SqlQuery(
+            "SELECT 'sitzung' AS groupKey, $COUNT_COLUMNS, " +
+                "COALESCE(SUM(CASE WHEN status = 2 THEN sizeBytes ELSE 0 END), 0) AS trashBytes " +
+                "FROM media_state WHERE ${parts.joinToString(" AND ")}",
+            args
+        )
+    }
+
     /** Anzahl der Medien in der Warteschlange einer Phase. */
     fun queueCount(filter: MediaFilter, phase: QueuePhase, phase2StartedAt: Long): SqlQuery {
         val args = mutableListOf<Any>()
