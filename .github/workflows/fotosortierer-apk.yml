@@ -2,7 +2,7 @@ name: Fotosortierer – APK bauen
 
 on:
   push:
-    branches: [claude/marlons-sternenreise-game-v4g9y0]
+    branches: [fotosortierer]
     paths: ["fotosortierer/**", ".github/workflows/fotosortierer-apk.yml"]
   workflow_dispatch:
 
