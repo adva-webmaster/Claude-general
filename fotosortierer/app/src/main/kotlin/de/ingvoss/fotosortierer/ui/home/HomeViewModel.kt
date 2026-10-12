@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.ingvoss.fotosortierer.AppContainer
 import de.ingvoss.fotosortierer.core.MediaFilter
+import de.ingvoss.fotosortierer.core.QueuePhase
 import de.ingvoss.fotosortierer.core.StatusCounts
 import de.ingvoss.fotosortierer.data.db.LocationProgressRow
 import de.ingvoss.fotosortierer.data.media.AccessLevel
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 data class HomeUi(
@@ -47,7 +49,14 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         combine(container.access, container.locationAccess, container.database.placeDao().observePendingCount()) { a, l, n ->
             Triple(a, l, n)
         },
-        container.sessionStore.state.flatMapLatest { s -> container.media.counts(s?.filter ?: MediaFilter.ALL) }
+        container.sessionStore.state.flatMapLatest { s ->
+            if (s?.phase == QueuePhase.ERNEUT) {
+                // Erneutes Sortieren: "offen" = noch nicht erneut entschiedene Medien der Sitzung.
+                container.media.queueCountFlow(s.filter, s.phase, s.phase2StartedAt).map { StatusCounts(unbearbeitet = it) }
+            } else {
+                container.media.counts(s?.filter ?: MediaFilter.ALL)
+            }
+        }
     ) { totals, session, access, continueCounts ->
         HomeUi(
             overall = totals.first,

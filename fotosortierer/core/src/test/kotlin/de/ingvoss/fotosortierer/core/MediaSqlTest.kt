@@ -272,4 +272,60 @@ class MediaSqlTest {
         val rows = query(MediaSql.uids(MediaFilter(localDate = "2026-03-12"), ascending = false))
         assertEquals(listOf(2L, 1L), rows.map { (it["uid"] as Number).toLong() })
     }
+
+    private fun uidsOf(q: SqlQuery) = query(q).map { (it["uid"] as Number).toLong() }
+
+    @Test
+    fun mehrereOrteAlsFilter() {
+        seed()
+        assertEquals(4, (query(MediaSql.count(MediaFilter(clusterIds = setOf(1, 2)))).single().values.single() as Number).toInt())
+        assertEquals(2, (query(MediaSql.count(MediaFilter(clusterIds = setOf(2)))).single().values.single() as Number).toInt())
+        assertEquals(0, (query(MediaSql.count(MediaFilter(clusterIds = emptySet()))).single().values.single() as Number).toInt())
+    }
+
+    @Test
+    fun jahresfilterErfasstAlleMonate() {
+        seed()
+        assertEquals(7, (query(MediaSql.count(MediaFilter(localYear = "2026"))).single().values.single() as Number).toInt())
+        assertEquals(0, (query(MediaSql.count(MediaFilter(localYear = "2025"))).single().values.single() as Number).toInt())
+    }
+
+    @Test
+    fun gruppierteMonateRespektierenOrtsfilter() {
+        seed()
+        val rows = query(MediaSql.groupedMonths(MediaFilter(clusterIds = setOf(1))))
+        assertEquals(listOf("2026-03"), rows.map { it["groupKey"] })
+        assertEquals(StatusCounts(behalten = 1, papierkorb = 1), rows.single().counts())
+    }
+
+    @Test
+    fun gruppierteTageRespektierenMonatUndOrt() {
+        seed()
+        val rows = query(MediaSql.groupedDays(MediaFilter(localMonth = "2026-03", clusterIds = setOf(2))))
+        assertEquals(listOf("2026-03-13"), rows.map { it["groupKey"] })
+    }
+
+    @Test
+    fun gruppierteOrteRespektierenZeitraum() {
+        seed()
+        val alle = query(MediaSql.groupedPlaces(MediaFilter.ALL))
+        assertEquals(setOf(1L, 2L), alle.map { (it["clusterId"] as Number).toLong() }.toSet())
+        val tag = query(MediaSql.groupedPlaces(MediaFilter(localDate = "2026-03-13")))
+        assertEquals(listOf(2L), tag.map { (it["clusterId"] as Number).toLong() })
+        assertEquals(StatusCounts(behalten = 1, unbearbeitet = 1), tag.single().counts())
+        assertTrue(query(MediaSql.groupedPlaces(MediaFilter(localMonth = "2026-04"))).isEmpty())
+    }
+
+    @Test
+    fun erneutesSortierenNimmtEntschiedeneMedienVorSitzungsbeginn() {
+        seed()
+        insert(Row(9, "2026-03-15", MediaStatus.BEHALTEN, takenAt = 500, changedAt = 2000)) // in dieser Sitzung entschieden
+        val behalten = MediaFilter(statuses = setOf(MediaStatus.BEHALTEN))
+        assertEquals(listOf(1L, 3L), uidsOf(MediaSql.queue(behalten, QueuePhase.ERNEUT, 1000, true, 10)))
+        assertEquals(2, (query(MediaSql.queueCount(behalten, QueuePhase.ERNEUT, 1000)).single().values.single() as Number).toInt())
+        // Ohne Statusangabe: alles außer gelöscht, ausgeblendet und in dieser Sitzung Entschiedenem.
+        assertEquals(listOf(1L, 2L, 3L, 4L, 5L, 6L), uidsOf(MediaSql.queue(MediaFilter.ALL, QueuePhase.ERNEUT, 1000, true, 10)))
+        // Ortsfilter wirkt mit.
+        assertEquals(listOf(3L), uidsOf(MediaSql.queue(MediaFilter(clusterIds = setOf(2), statuses = setOf(MediaStatus.BEHALTEN)), QueuePhase.ERNEUT, 1000, true, 10)))
+    }
 }

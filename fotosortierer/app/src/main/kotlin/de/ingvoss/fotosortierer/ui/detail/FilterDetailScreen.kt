@@ -32,6 +32,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -104,7 +105,9 @@ private fun statusIcon(status: MediaStatus) = when (status) {
 fun FilterDetailScreen(
     filter: MediaFilter,
     onBack: () -> Unit,
-    onStartSorting: (MediaFilter) -> Unit
+    onStartSorting: (MediaFilter) -> Unit,
+    onShowMap: (MediaFilter) -> Unit,
+    onShowCalendar: (MediaFilter) -> Unit
 ) {
     val viewModel = containerViewModel(key = filter.toString()) { FilterDetailViewModel(it, filter) }
     val counts by viewModel.counts.collectAsStateWithLifecycle()
@@ -153,6 +156,18 @@ fun FilterDetailScreen(
                         IconButton(onClick = viewModel::selectAll) {
                             Icon(AppIcons.SelectAll, contentDescription = stringResource(R.string.action_select_all))
                         }
+                    } else {
+                        // Zeitraum (Tag/Monat/Jahr) → Karte; Ort(e) → Kalender.
+                        if (filter.hasTimeScope) {
+                            IconButton(onClick = { onShowMap(filter.timeScope()) }) {
+                                Icon(AppIcons.Pin, contentDescription = stringResource(R.string.action_show_on_map))
+                            }
+                        }
+                        if (filter.hasPlaceScope) {
+                            IconButton(onClick = { onShowCalendar(filter.placeScope()) }) {
+                                Icon(AppIcons.Calendar, contentDescription = stringResource(R.string.action_show_in_calendar))
+                            }
+                        }
                     }
                 }
             )
@@ -166,9 +181,30 @@ fun FilterDetailScreen(
             if (!selecting) {
                 Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     ProgressSummary(counts)
-                    if (counts.open > 0) {
-                        Button(onClick = { onStartSorting(filter) }, modifier = Modifier.fillMaxWidth()) {
-                            Text(stringResource(R.string.action_start_sorting))
+                    val chip = statusFilter
+                    val allDecidable = setOf(MediaStatus.UNBEARBEITET, MediaStatus.BEHALTEN, MediaStatus.PAPIERKORB, MediaStatus.ZURUECKGESTELLT)
+                    if (chip == null || chip == MediaStatus.UNBEARBEITET) {
+                        // Normales Sortieren: zuerst Unbearbeitete, danach auf Wunsch die Zurückgestellten.
+                        if (counts.open > 0) {
+                            Button(onClick = { onStartSorting(filter.copy(statuses = null)) }, modifier = Modifier.fillMaxWidth()) {
+                                Text(stringResource(R.string.action_start_sorting))
+                            }
+                        }
+                    }
+                    if (chip == null) {
+                        // Bereits Entschiedenes (behalten, Papierkorb, zurückgestellt) erneut durchgehen.
+                        val decided = counts.total - counts.geloescht
+                        if (decided > 0) {
+                            OutlinedButton(onClick = { onStartSorting(filter.copy(statuses = allDecidable)) }, modifier = Modifier.fillMaxWidth()) {
+                                Text(stringResource(R.string.action_resort_all, decided))
+                            }
+                        }
+                    } else if (chip != MediaStatus.UNBEARBEITET) {
+                        val n = counts.count(chip)
+                        if (n > 0) {
+                            Button(onClick = { onStartSorting(filter.copy(statuses = setOf(chip))) }, modifier = Modifier.fillMaxWidth()) {
+                                Text(stringResource(R.string.action_resort_status, statusLabel(chip), n))
+                            }
                         }
                     }
                 }

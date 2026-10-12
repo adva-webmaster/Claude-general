@@ -14,7 +14,9 @@ object FilterCodec {
         val parts = mutableListOf<String>()
         filter.localDate?.let { parts += "d=$it" }
         filter.localMonth?.let { parts += "m=$it" }
+        filter.localYear?.let { parts += "y=$it" }
         filter.clusterId?.let { parts += "c=$it" }
+        filter.clusterIds?.let { ids -> parts += "cs=" + ids.sorted().joinToString(",") }
         if (filter.withoutPlace) parts += "np=1"
         filter.album?.let { parts += "a=" + URLEncoder.encode(it, "UTF-8") }
         filter.kind?.let { parts += "k=${it.code}" }
@@ -39,7 +41,9 @@ object FilterCodec {
                 filter = when (key) {
                     "d" -> filter.copy(localDate = value)
                     "m" -> filter.copy(localMonth = value)
+                    "y" -> filter.copy(localYear = value)
                     "c" -> filter.copy(clusterId = value.toLongOrNull())
+                    "cs" -> filter.copy(clusterIds = value.split(',').mapNotNull { it.toLongOrNull() }.toSet())
                     "np" -> filter.copy(withoutPlace = value == "1")
                     "a" -> filter.copy(album = URLDecoder.decode(value, "UTF-8"))
                     "k" -> filter.copy(kind = value.toIntOrNull()?.let { code -> MediaKind.entries.firstOrNull { it.code == code } })

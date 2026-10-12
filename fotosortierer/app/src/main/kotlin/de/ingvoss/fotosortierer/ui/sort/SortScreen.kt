@@ -38,6 +38,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -84,9 +85,9 @@ fun SortScreen(viewModel: SortViewModel, onClose: () -> Unit, onOpenTrash: () ->
                 title = {
                     Column {
                         Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.titleMedium)
-                        if (ui.stage == SortStage.SORTING && ui.counts.total > 0) {
+                        if (ui.stage == SortStage.SORTING && ui.headerTotal > 0) {
                             Text(
-                                stringResource(R.string.sort_position, ui.position, ui.counts.total),
+                                stringResource(R.string.sort_position, ui.headerPosition, ui.headerTotal),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -134,13 +135,24 @@ private fun SortingContent(ui: SortUiState, settings: AppSettings, viewModel: So
     // Als State-Objekt weitergereicht: nur der Fortschrittsbalken liest den Wert, nicht der ganze Kartenstapel.
     val progress = remember(top?.uid) { mutableFloatStateOf(0f) }
 
-    fun trigger(direction: SwipeDirection) {
-        val action = mapping.actionFor(direction) ?: return
-        if (top == null || !cardState.beginExit()) return
-        scope.launch {
-            cardState.flyOut(direction)
-            if (settings.haptics) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            viewModel.decide(action)
+    // Die Schaltflächen müssen immer die AKTUELLE Karte bedienen. Würde der Handler beim ersten Mal "eingefroren"
+    // (Compose merkt sich Lambdas/Funktionsverweise), träfe jeder weitere Tipp die längst abgeflogene erste Karte
+    // und bliebe wirkungslos. Deshalb liest er seine Werte über rememberUpdatedState und ist selbst stabil.
+    val currentTop by rememberUpdatedState(top)
+    val currentCardState by rememberUpdatedState(cardState)
+    val currentMapping by rememberUpdatedState(mapping)
+    val currentSettings by rememberUpdatedState(settings)
+    val trigger: (SwipeDirection) -> Unit = remember {
+        { direction ->
+            val action = currentMapping.actionFor(direction)
+            val state = currentCardState
+            if (action != null && currentTop != null && state.beginExit()) {
+                scope.launch {
+                    state.flyOut(direction)
+                    if (currentSettings.haptics) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    viewModel.decide(action)
+                }
+            }
         }
     }
 
@@ -172,7 +184,7 @@ private fun SortingContent(ui: SortUiState, settings: AppSettings, viewModel: So
                     verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    ActionButtons(mapping, enabled = top != null && !cardState.exiting, vertical = true, onTrigger = ::trigger)
+                    ActionButtons(mapping, enabled = top != null && !cardState.exiting, vertical = true, onTrigger = trigger)
                 }
             }
         } else {
@@ -180,7 +192,7 @@ private fun SortingContent(ui: SortUiState, settings: AppSettings, viewModel: So
                 stack(Modifier.weight(1f).fillMaxWidth())
                 InfoLine(top, settings)
                 Spacer(Modifier.height(8.dp))
-                ActionButtons(mapping, enabled = top != null && !cardState.exiting, vertical = false, onTrigger = ::trigger)
+                ActionButtons(mapping, enabled = top != null && !cardState.exiting, vertical = false, onTrigger = trigger)
             }
         }
     }

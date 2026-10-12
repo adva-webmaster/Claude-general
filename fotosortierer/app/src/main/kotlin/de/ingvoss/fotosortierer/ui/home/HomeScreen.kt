@@ -1,5 +1,6 @@
 package de.ingvoss.fotosortierer.ui.home
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -15,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -32,6 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.ingvoss.fotosortierer.R
 import de.ingvoss.fotosortierer.core.Formats
 import de.ingvoss.fotosortierer.core.MediaFilter
+import de.ingvoss.fotosortierer.core.MediaStatus
 import de.ingvoss.fotosortierer.data.media.AccessLevel
 import de.ingvoss.fotosortierer.ui.appContainer
 import de.ingvoss.fotosortierer.ui.components.EmptyState
@@ -39,6 +43,7 @@ import de.ingvoss.fotosortierer.ui.components.ProgressSummary
 import de.ingvoss.fotosortierer.ui.components.pluralText
 import de.ingvoss.fotosortierer.ui.containerViewModel
 import de.ingvoss.fotosortierer.ui.onboarding.openAppSettings
+import de.ingvoss.fotosortierer.ui.theme.AppIcons
 import de.ingvoss.fotosortierer.ui.theme.LocalFotoColors
 
 /** Startseite: Weitermachen, Gesamtstatistik, Fortschritt der Hintergrundarbeiten, Hinweise zum Zugriff. */
@@ -48,7 +53,8 @@ fun HomeScreen(
     onOpenCalendar: () -> Unit,
     onOpenPlaces: () -> Unit,
     onOpenTrash: () -> Unit,
-    onOpenOnboarding: () -> Unit
+    onOpenOnboarding: () -> Unit,
+    onOpenFilter: (MediaFilter) -> Unit
 ) {
     val viewModel = containerViewModel { HomeViewModel(it) }
     val ui by viewModel.state.collectAsStateWithLifecycle()
@@ -91,7 +97,7 @@ fun HomeScreen(
                     hasSession = ui.session != null,
                     onContinue = { onContinue(ui.continueFilter, ui.session != null) }
                 )
-                StatsCard(ui)
+                StatsCard(ui, onOpenFilter)
             }
 
             IndexingCard(ui)
@@ -143,21 +149,24 @@ private fun ContinueCard(label: String, open: Int, hasSession: Boolean, onContin
 }
 
 @Composable
-private fun StatsCard(ui: HomeUi) {
+private fun StatsCard(ui: HomeUi, onOpenFilter: (MediaFilter) -> Unit) {
     val colors = LocalFotoColors.current
     Card {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.home_stats_title), style = MaterialTheme.typography.titleMedium)
             ProgressSummary(ui.overall, Modifier.fillMaxWidth())
             Spacer(Modifier.height(4.dp))
-            StatRow(stringResource(R.string.status_keep), ui.overall.behalten.toString(), colors.keep)
+            // Tipp auf eine Zeile zeigt diese Medien (und erlaubt dort das erneute Sortieren).
+            fun show(status: MediaStatus) = { onOpenFilter(MediaFilter(statuses = setOf(status))) }
+            StatRow(stringResource(R.string.status_keep), ui.overall.behalten.toString(), colors.keep, show(MediaStatus.BEHALTEN))
             StatRow(
                 stringResource(R.string.status_trash),
                 stringResource(R.string.stat_count_size, ui.overall.papierkorb, Formats.bytes(ui.trashBytes)),
-                colors.trash
+                colors.trash,
+                show(MediaStatus.PAPIERKORB)
             )
-            StatRow(stringResource(R.string.status_deferred), ui.overall.zurueckgestellt.toString(), colors.deferred)
-            StatRow(stringResource(R.string.status_unprocessed), ui.overall.unbearbeitet.toString(), colors.unprocessed)
+            StatRow(stringResource(R.string.status_deferred), ui.overall.zurueckgestellt.toString(), colors.deferred, show(MediaStatus.ZURUECKGESTELLT))
+            StatRow(stringResource(R.string.status_unprocessed), ui.overall.unbearbeitet.toString(), colors.unprocessed, show(MediaStatus.UNBEARBEITET))
             StatRow(stringResource(R.string.status_deleted), ui.overall.geloescht.toString(), colors.unprocessed)
             StatRow(stringResource(R.string.stat_freed), Formats.bytes(ui.freedBytes), colors.complete)
         }
@@ -165,10 +174,17 @@ private fun StatsCard(ui: HomeUi) {
 }
 
 @Composable
-private fun StatRow(label: String, value: String, color: Color) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+private fun StatRow(label: String, value: String, color: Color, onClick: (() -> Unit)? = null) {
+    Row(
+        Modifier.fillMaxWidth().let { if (onClick != null) it.clickable(onClick = onClick) else it }.padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Text(label, style = MaterialTheme.typography.bodyMedium, color = color)
-        Text(value, style = MaterialTheme.typography.bodyMedium)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(value, style = MaterialTheme.typography.bodyMedium)
+            if (onClick != null) Icon(AppIcons.Chevron, contentDescription = null, modifier = Modifier.size(18.dp))
+        }
     }
 }
 

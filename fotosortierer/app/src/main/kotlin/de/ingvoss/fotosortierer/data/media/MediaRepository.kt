@@ -10,7 +10,9 @@ import de.ingvoss.fotosortierer.core.MediaStatus
 import de.ingvoss.fotosortierer.core.QueuePhase
 import de.ingvoss.fotosortierer.core.StatusCounts
 import de.ingvoss.fotosortierer.data.db.AppDatabase
+import de.ingvoss.fotosortierer.data.db.GroupCountsRow
 import de.ingvoss.fotosortierer.data.db.MediaStateEntity
+import de.ingvoss.fotosortierer.data.db.PlaceCountsRow
 import de.ingvoss.fotosortierer.data.db.SessionSummaryRow
 import de.ingvoss.fotosortierer.data.db.toRoom
 import kotlinx.coroutines.flow.Flow
@@ -30,6 +32,22 @@ class MediaRepository(private val db: AppDatabase) {
 
     fun counts(filter: MediaFilter): Flow<StatusCounts> =
         dao.observeCounts(MediaSql.counts(filter).toRoom()).map { it.toCounts() }
+
+    /** Monate der Medien in [scope] (z. B. nur die eines Ortes). */
+    fun months(scope: MediaFilter): Flow<List<GroupCountsRow>> =
+        dao.observeGroups(MediaSql.groupedMonths(scope).toRoom())
+
+    /** Tage des Monats, den [scopeWithMonth] angibt. */
+    fun days(scopeWithMonth: MediaFilter): Flow<List<GroupCountsRow>> =
+        dao.observeGroups(MediaSql.groupedDays(scopeWithMonth).toRoom())
+
+    /** Orte der Medien in [scope] (z. B. nur die eines Zeitraums). */
+    fun places(scope: MediaFilter): Flow<List<PlaceCountsRow>> =
+        dao.observePlaceGroups(MediaSql.groupedPlaces(scope).toRoom())
+
+    /** Anzahl der noch offenen Medien einer Warteschlange als Strom. */
+    fun queueCountFlow(filter: MediaFilter, phase: QueuePhase, phase2StartedAt: Long): Flow<Int> =
+        dao.observeInt(MediaSql.queueCount(filter, phase, phase2StartedAt).toRoom())
 
     fun sessionSummary(filter: MediaFilter, startedAt: Long): Flow<SessionSummaryRow> =
         dao.observeSessionSummary(MediaSql.sessionSummary(filter, startedAt).toRoom())

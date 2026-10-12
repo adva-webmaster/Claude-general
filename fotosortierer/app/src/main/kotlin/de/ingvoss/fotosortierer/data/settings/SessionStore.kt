@@ -30,6 +30,18 @@ data class SessionState(
     val phase2StartedAt: Long
 )
 
+private fun decodePhase(code: Int): QueuePhase = when (code) {
+    1 -> QueuePhase.ZURUECKGESTELLT
+    2 -> QueuePhase.ERNEUT
+    else -> QueuePhase.UNBEARBEITET
+}
+
+private fun encodePhase(phase: QueuePhase): Int = when (phase) {
+    QueuePhase.UNBEARBEITET -> 0
+    QueuePhase.ZURUECKGESTELLT -> 1
+    QueuePhase.ERNEUT -> 2
+}
+
 class SessionStore(private val context: Context) {
     private object Keys {
         val ACTIVE = booleanPreferencesKey("active")
@@ -47,7 +59,7 @@ class SessionStore(private val context: Context) {
             SessionState(
                 filter = FilterCodec.decode(prefs[Keys.FILTER]),
                 startedAt = prefs[Keys.STARTED] ?: 0L,
-                phase = if ((prefs[Keys.PHASE] ?: 0) == 1) QueuePhase.ZURUECKGESTELLT else QueuePhase.UNBEARBEITET,
+                phase = decodePhase(prefs[Keys.PHASE] ?: 0),
                 phase2StartedAt = prefs[Keys.PHASE2] ?: 0L
             )
         }
@@ -55,8 +67,17 @@ class SessionStore(private val context: Context) {
 
     suspend fun current(): SessionState? = state.first()
 
+    /**
+     * Beginnt eine Sitzung. Mit Statusangabe im Filter ([MediaFilter.statuses]) ist es ein erneutes Sortieren
+     * bereits entschiedener Medien ([QueuePhase.ERNEUT]); der Sitzungsbeginn ist dann der Stichtag.
+     */
     suspend fun start(filter: MediaFilter, now: Long): SessionState {
-        val session = SessionState(filter, now, QueuePhase.UNBEARBEITET, 0L)
+        val review = filter.statuses != null
+        val session = SessionState(
+            filter, now,
+            if (review) QueuePhase.ERNEUT else QueuePhase.UNBEARBEITET,
+            if (review) now else 0L
+        )
         write(session)
         return session
     }
@@ -82,7 +103,7 @@ class SessionStore(private val context: Context) {
             it[Keys.ACTIVE] = true
             it[Keys.FILTER] = FilterCodec.encode(session.filter)
             it[Keys.STARTED] = session.startedAt
-            it[Keys.PHASE] = if (session.phase == QueuePhase.ZURUECKGESTELLT) 1 else 0
+            it[Keys.PHASE] = encodePhase(session.phase)
             it[Keys.PHASE2] = session.phase2StartedAt
         }
     }

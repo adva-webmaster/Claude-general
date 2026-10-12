@@ -61,7 +61,6 @@ fun OsmPlacesMap(
     val colors = LocalFotoColors.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val currentOnTapped by rememberUpdatedState(onPlacesTapped)
-    val currentPlaces by rememberUpdatedState(places)
 
     val mapView = remember {
         configureOsmdroid(context, userAgent)
@@ -80,15 +79,9 @@ fun OsmPlacesMap(
     var fitted by remember { mutableStateOf(false) }
 
     DisposableEffect(mapView, overlay) {
-        overlay.onMarkerTapped = { ids ->
-            val members = currentPlaces.filter { it.clusterId in ids }
-            if (ids.size > 1 && mapView.zoomLevelDouble < MAX_ZOOM - 1.0) {
-                val box = BoundingBox.fromGeoPoints(members.map { GeoPoint(it.latitude, it.longitude) })
-                mapView.zoomToBoundingBox(box, true, ZOOM_PADDING_PX)
-            } else {
-                currentOnTapped(ids)
-            }
-        }
+        // Ein Tipp auf einen Marker (auch auf einen Cluster mit Zahl) öffnet die Medien dieser Orte. Zoomen geht
+        // weiterhin mit Zwei-Finger-Geste, Doppeltipp und den Zoom-Tasten der Karte.
+        overlay.onMarkerTapped = { ids -> currentOnTapped(ids) }
         mapView.overlays.add(overlay)
         mapView.overlays.add(CopyrightOverlay(context))
         onDispose {

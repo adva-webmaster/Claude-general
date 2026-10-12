@@ -165,6 +165,16 @@ Namen/API, Room 2.8.5 ist die etablierte stabile Linie.
 - **„Datenbank neu aufbauen“** verwirft Standorte/Orte/Ortsnamen und gleicht neu ab; Entscheidungen bleiben.
 - **Build-Dateien:** Plugins stehen mit `apply false` im Wurzel-`build.gradle.kts` (ein Classloader für Kotlin/
   AGP/KSP/Compose). Im Kern-Modus liest Gradle stattdessen `build-core.gradle.kts` (siehe `settings.gradle.kts`).
+- **Karte ↔ Kalender (Scopes):** Kalender-Routen tragen einen Ortsfilter (`calendar/{scope}/…`), die Karte einen
+  Zeitfilter (`places/{scope}`); das Token ist ein `FilterCodec`-Filter. Monats-/Tages-/Ortsaggregationen laufen dafür
+  als dynamische Abfragen (`MediaSql.groupedMonths/groupedDays/groupedPlaces`). `MediaFilter` kennt dafür `localYear`
+  und `clusterIds` (mehrere Orte, z. B. ein Kartencluster).
+- **Erneutes Sortieren:** Hat der Filter eine Statusangabe, ist die Sitzung ein Review (`QueuePhase.ERNEUT`): alle
+  Medien dieser Status mit `statusChangedAt < Sitzungsbeginn`; in der Sitzung Entschiedenes fällt heraus (keine
+  Endlosschleife, auch bei gleichem Status). Rückgängig stellt `statusChangedAt` wieder her.
+- **Keine "eingefrorenen" Handler:** Handler, die den aktuellen Zustand brauchen (Aktionstasten der Sortieransicht,
+  Reiterwechsel), lesen ihn über `rememberUpdatedState` – ein beim ersten Mal gemerktes Lambda bediente sonst die
+  längst abgeflogene erste Karte (Tasten wirkten nur einmal).
 - **Navigation:** Untere Leiste (Start, Kalender, Orte, Papierkorb, Einstellungen), ab 600 dp Breite
   `NavigationRail`. Sortieren, Detail und Einführung sind Vollbild.
 - **Manifest:** `allowBackup=false` (Entscheidungen sichert der JSON-Export); von osmdroid mitgebrachte

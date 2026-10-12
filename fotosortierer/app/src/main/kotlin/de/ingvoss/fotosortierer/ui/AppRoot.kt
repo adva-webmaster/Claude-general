@@ -16,10 +16,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -47,39 +49,49 @@ import de.ingvoss.fotosortierer.ui.trash.TrashScreen
 object Routes {
     const val ONBOARDING = "onboarding"
     const val HOME = "home"
-    const val CALENDAR = "calendar"
-    const val YEAR = "calendar/year/{year}"
-    const val MONTH = "calendar/month/{month}"
-    const val PLACES = "places"
+    const val CALENDAR = "calendar/{scope}"
+    const val YEAR = "calendar/{scope}/year/{year}"
+    const val MONTH = "calendar/{scope}/month/{month}"
+    const val PLACES = "places/{scope}"
     const val TRASH = "trash"
     const val SETTINGS = "settings"
     const val FILTER = "filter/{filter}"
     const val SORT = "sort/{filter}/{resume}"
 
-    fun year(year: Int) = "calendar/year/$year"
-    fun month(month: String) = "calendar/month/$month"
+    // "scope" schränkt Kalender (auf Orte) bzw. Karte (auf einen Zeitraum) ein; "-" = keine Einschränkung.
+    fun calendar(scope: MediaFilter) = "calendar/${FilterCodec.encode(scope)}"
+    fun year(scope: MediaFilter, year: Int) = "calendar/${FilterCodec.encode(scope)}/year/$year"
+    fun month(scope: MediaFilter, month: String) = "calendar/${FilterCodec.encode(scope)}/month/$month"
+    fun places(scope: MediaFilter) = "places/${FilterCodec.encode(scope)}"
     fun filter(filter: MediaFilter) = "filter/${FilterCodec.encode(filter)}"
     fun sort(filter: MediaFilter, resume: Boolean) = "sort/${FilterCodec.encode(filter)}/${if (resume) 1 else 0}"
 }
 
-private class TopLevel(val route: String, val labelRes: Int, val icon: ImageVector)
+/** [key] kennzeichnet den Bereich, [target] ist seine Startseite ohne Einschränkung. */
+private class TopLevel(val key: String, val target: String, val labelRes: Int, val icon: ImageVector)
+
+private const val KEY_HOME = "home"
+private const val KEY_CALENDAR = "calendar"
+private const val KEY_PLACES = "places"
+private const val KEY_TRASH = "trash"
+private const val KEY_SETTINGS = "settings"
 
 private val topLevelDestinations = listOf(
-    TopLevel(Routes.HOME, R.string.nav_home, AppIcons.Home),
-    TopLevel(Routes.CALENDAR, R.string.nav_calendar, AppIcons.Calendar),
-    TopLevel(Routes.PLACES, R.string.nav_places, AppIcons.Pin),
-    TopLevel(Routes.TRASH, R.string.nav_trash, AppIcons.Trash),
-    TopLevel(Routes.SETTINGS, R.string.nav_settings_short, AppIcons.Settings)
+    TopLevel(KEY_HOME, Routes.HOME, R.string.nav_home, AppIcons.Home),
+    TopLevel(KEY_CALENDAR, Routes.calendar(MediaFilter.ALL), R.string.nav_calendar, AppIcons.Calendar),
+    TopLevel(KEY_PLACES, Routes.places(MediaFilter.ALL), R.string.nav_places, AppIcons.Pin),
+    TopLevel(KEY_TRASH, Routes.TRASH, R.string.nav_trash, AppIcons.Trash),
+    TopLevel(KEY_SETTINGS, Routes.SETTINGS, R.string.nav_settings_short, AppIcons.Settings)
 )
 
 /** Welchem Hauptbereich gehört die aktuelle Route an? null = Vollbild (Onboarding, Sortieren, Detail). */
 private fun topLevelOf(route: String?): String? = when {
     route == null -> null
-    route == Routes.HOME -> Routes.HOME
-    route.startsWith("calendar") -> Routes.CALENDAR
-    route == Routes.PLACES -> Routes.PLACES
-    route == Routes.TRASH -> Routes.TRASH
-    route == Routes.SETTINGS -> Routes.SETTINGS
+    route == Routes.HOME -> KEY_HOME
+    route.startsWith("calendar") -> KEY_CALENDAR
+    route.startsWith("places") -> KEY_PLACES
+    route == Routes.TRASH -> KEY_TRASH
+    route == Routes.SETTINGS -> KEY_SETTINGS
     else -> null
 }
 
@@ -91,21 +103,29 @@ fun AppRoot(startWithOnboarding: Boolean) {
     val current = topLevelOf(entry?.destination?.route)
     val wide = LocalConfiguration.current.screenWidthDp >= WIDE_LAYOUT_DP
 
-    fun navigateTop(route: String) {
-        // Wer den Reiter antippt, in dem er schon ist, kehrt zur obersten Ebene zurück (z. B. Kalender: Tag → Jahre).
-        if (current == route) {
-            navController.popBackStack(route, inclusive = false)
-            return
-        }
-        navController.navigate(route) {
-            popUpTo(Routes.HOME) { saveState = true }
-            launchSingleTop = true
-            restoreState = true
+    // Stabil und mit stets aktuellem Bereich: Ein "eingefrorener" Handler würde den Reiterwechsel falsch beurteilen.
+    val currentKey by rememberUpdatedState(current)
+    val navigateTop: (String) -> Unit = remember(navController) {
+        { key ->
+            val target = topLevelDestinations.first { it.key == key }.target
+            if (currentKey == key) {
+                // Wer den Reiter antippt, in dem er schon ist, kehrt zu dessen Startseite (ohne Einschränkung) zurück.
+                navController.navigate(target) {
+                    popUpTo(Routes.HOME) { inclusive = false }
+                    launchSingleTop = true
+                }
+            } else {
+                navController.navigate(target) {
+                    popUpTo(Routes.HOME) { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            }
         }
     }
 
     val host: @Composable (Modifier) -> Unit = { modifier ->
-        AppNavHost(navController, startWithOnboarding, ::navigateTop, modifier)
+        AppNavHost(navController, startWithOnboarding, navigateTop, modifier)
     }
 
     if (wide && current != null) {
@@ -113,8 +133,8 @@ fun AppRoot(startWithOnboarding: Boolean) {
             NavigationRail {
                 topLevelDestinations.forEach { item ->
                     NavigationRailItem(
-                        selected = current == item.route,
-                        onClick = { navigateTop(item.route) },
+                        selected = current == item.key,
+                        onClick = { navigateTop(item.key) },
                         icon = { Icon(item.icon, contentDescription = null) },
                         label = { Text(stringResource(item.labelRes)) }
                     )
@@ -130,8 +150,8 @@ fun AppRoot(startWithOnboarding: Boolean) {
                     NavigationBar {
                         topLevelDestinations.forEach { item ->
                             NavigationBarItem(
-                                selected = current == item.route,
-                                onClick = { navigateTop(item.route) },
+                                selected = current == item.key,
+                                onClick = { navigateTop(item.key) },
                                 icon = { Icon(item.icon, contentDescription = null) },
                                 label = { Text(stringResource(item.labelRes)) }
                             )
@@ -153,6 +173,9 @@ private fun AppNavHost(
     modifier: Modifier
 ) {
     val start = remember { if (startWithOnboarding) Routes.ONBOARDING else Routes.HOME }
+    val scopeArg = listOf(navArgument("scope") { type = NavType.StringType })
+    fun NavBackStackEntry.scope(): MediaFilter = FilterCodec.decode(arguments?.getString("scope"))
+
     NavHost(navController = navController, startDestination = start, modifier = modifier) {
         composable(Routes.ONBOARDING) {
             OnboardingScreen(onDone = {
@@ -165,35 +188,58 @@ private fun AppNavHost(
         composable(Routes.HOME) {
             HomeScreen(
                 onContinue = { filter, resume -> navController.navigate(Routes.sort(filter, resume)) },
-                onOpenCalendar = { navigateTop(Routes.CALENDAR) },
-                onOpenPlaces = { navigateTop(Routes.PLACES) },
-                onOpenTrash = { navigateTop(Routes.TRASH) },
-                onOpenOnboarding = { navController.navigate(Routes.ONBOARDING) }
+                onOpenCalendar = { navigateTop(KEY_CALENDAR) },
+                onOpenPlaces = { navigateTop(KEY_PLACES) },
+                onOpenTrash = { navigateTop(KEY_TRASH) },
+                onOpenOnboarding = { navController.navigate(Routes.ONBOARDING) },
+                onOpenFilter = { navController.navigate(Routes.filter(it)) }
             )
         }
-        composable(Routes.CALENDAR) {
-            CalendarYearsScreen(onOpenYear = { navController.navigate(Routes.year(it)) })
+        composable(Routes.CALENDAR, arguments = scopeArg) { backStack ->
+            val scope = remember(backStack) { backStack.scope() }
+            CalendarYearsScreen(
+                scope = scope,
+                onOpenYear = { navController.navigate(Routes.year(scope, it)) },
+                onShowMap = { navController.navigate(Routes.places(it)) },
+                onClearScope = { navigateTop(KEY_CALENDAR) }
+            )
         }
-        composable(Routes.YEAR, arguments = listOf(navArgument("year") { type = NavType.IntType })) { backStack ->
+        composable(
+            Routes.YEAR,
+            arguments = scopeArg + listOf(navArgument("year") { type = NavType.IntType })
+        ) { backStack ->
+            val scope = remember(backStack) { backStack.scope() }
             CalendarMonthsScreen(
+                scope = scope,
                 year = backStack.arguments?.getInt("year") ?: 1970,
                 onBack = { navController.popBackStack() },
-                onOpenMonth = { navController.navigate(Routes.month(it)) }
+                onOpenMonth = { navController.navigate(Routes.month(scope, it)) },
+                onSortYear = { navController.navigate(Routes.sort(it, false)) },
+                onShowMap = { navController.navigate(Routes.places(it)) }
             )
         }
-        composable(Routes.MONTH, arguments = listOf(navArgument("month") { type = NavType.StringType })) { backStack ->
-            val month = backStack.arguments?.getString("month").orEmpty()
+        composable(
+            Routes.MONTH,
+            arguments = scopeArg + listOf(navArgument("month") { type = NavType.StringType })
+        ) { backStack ->
+            val scope = remember(backStack) { backStack.scope() }
             CalendarDaysScreen(
-                month = month,
+                scope = scope,
+                month = backStack.arguments?.getString("month").orEmpty(),
                 onBack = { navController.popBackStack() },
-                onOpenDay = { day -> navController.navigate(Routes.filter(MediaFilter(localDate = day))) },
-                onSortMonth = { filter -> navController.navigate(Routes.sort(filter, false)) }
+                onOpenDay = { navController.navigate(Routes.filter(it)) },
+                onSortMonth = { navController.navigate(Routes.sort(it, false)) },
+                onShowMap = { navController.navigate(Routes.places(it)) }
             )
         }
-        composable(Routes.PLACES) {
+        composable(Routes.PLACES, arguments = scopeArg) { backStack ->
+            val scope = remember(backStack) { backStack.scope() }
             PlacesScreen(
+                scope = scope,
                 onOpenFilter = { navController.navigate(Routes.filter(it)) },
-                onStartSorting = { navController.navigate(Routes.sort(it, false)) }
+                onStartSorting = { navController.navigate(Routes.sort(it, false)) },
+                onShowCalendar = { navController.navigate(Routes.calendar(it)) },
+                onClearScope = { navigateTop(KEY_PLACES) }
             )
         }
         composable(Routes.FILTER, arguments = listOf(navArgument("filter") { type = NavType.StringType })) { backStack ->
@@ -201,7 +247,9 @@ private fun AppNavHost(
             FilterDetailScreen(
                 filter = filter,
                 onBack = { navController.popBackStack() },
-                onStartSorting = { navController.navigate(Routes.sort(it, false)) }
+                onStartSorting = { navController.navigate(Routes.sort(it, false)) },
+                onShowMap = { navController.navigate(Routes.places(it)) },
+                onShowCalendar = { navController.navigate(Routes.calendar(it)) }
             )
         }
         composable(
@@ -218,7 +266,7 @@ private fun AppNavHost(
             SortScreen(
                 viewModel = viewModel,
                 onClose = { navController.popBackStack() },
-                onOpenTrash = { navigateTop(Routes.TRASH) }
+                onOpenTrash = { navigateTop(KEY_TRASH) }
             )
         }
         composable(Routes.TRASH) { TrashScreen() }

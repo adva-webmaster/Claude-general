@@ -37,10 +37,12 @@ data class ChangeEvent(val count: Int, val status: MediaStatus)
 class FilterDetailViewModel(private val container: AppContainer, val filter: MediaFilter) : ViewModel() {
     private val media = container.media
 
+    /** Zähler des ganzen Filters, unabhängig von einer Statusauswahl. */
     val counts: StateFlow<StatusCounts> =
-        media.counts(filter).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), StatusCounts.EMPTY)
+        media.counts(filter.copy(statuses = null)).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), StatusCounts.EMPTY)
 
-    private val _statusFilter = MutableStateFlow<MediaStatus?>(null)
+    // Kommt der Filter mit genau einem Status (z. B. Tipp auf "Behalten" in der Statistik), ist er vorgewählt.
+    private val _statusFilter = MutableStateFlow<MediaStatus?>(filter.statuses?.singleOrNull())
     val statusFilter: StateFlow<MediaStatus?> = _statusFilter
 
     private val activeFilter: Flow<MediaFilter> =

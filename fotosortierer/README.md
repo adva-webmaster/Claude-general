@@ -38,6 +38,12 @@ auf Deutsch. **Keine Werbung, keine Statistik, kein Tracking.**
   Anzahl, Fortschritt), Eintrag „Ohne Ort“. Orte entstehen aus GPS-Daten (Radius einstellbar, Standard 1 km);
   Namen per Android-Geocoder, ersatzweise Nominatim (höchstens 1 Anfrage/s), dauerhaft zwischengespeichert,
   sonst Koordinaten.
+- **Erneut sortieren:** Bereits entschiedene Medien lassen sich per Wischen noch einmal durchgehen – in der Detailansicht
+  eines Tages/Monats/Ortes („Alle erneut sortieren“ oder, nach Wahl eines Status-Filters, „Behalten erneut sortieren“ usw.),
+  ebenso über Antippen einer Zeile in der Statistik auf der Startseite.
+- **Karte ↔ Kalender:** Ein Tipp auf einen Marker oder Cluster öffnet die Medien aller darin liegenden Orte
+  (Sortieren, Ansehen, Kalender); gezoomt wird weiter per Geste. Für ein Jahr, einen Monat oder Tag lässt sich die Karte öffnen
+  (nur Orte mit Medien aus diesem Zeitraum), und von einem Ort aus der Kalender (nur Medien dieses Ortes).
 - **Korrektur:** Raster mit Statusrahmen je Tag/Monat/Ort, Status ändern per Antippen oder Mehrfachauswahl
   (langer Druck), mit „Rückgängig“.
 - **App-Papierkorb:** nur eine Markierung. Endgültig gelöscht wird **ausschließlich** über

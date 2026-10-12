@@ -49,10 +49,18 @@ data class SortUiState(
     val canUndo: Boolean = false,
     val deferredRemaining: Int = 0,
     val summary: SessionSummaryRow? = null,
-    val trashTotal: Int = 0
+    val trashTotal: Int = 0,
+    /** Erneutes Sortieren bereits entschiedener Medien (Filter mit Statusangabe). */
+    val review: Boolean = false,
+    val reviewTotal: Int = 0,
+    val reviewRemaining: Int = 0
 ) {
-    /** "14 von 48": bereits bearbeitete + die aktuelle Karte. */
-    val position: Int get() = (counts.processed + 1).coerceAtMost(counts.total.coerceAtLeast(1))
+    /** "14 von 48": normal = bereits bearbeitete + aktuelle Karte; beim erneuten Sortieren = erledigte + aktuelle. */
+    val headerPosition: Int
+        get() = if (review) (reviewTotal - reviewRemaining + 1).coerceIn(1, reviewTotal.coerceAtLeast(1))
+        else (counts.processed + 1).coerceAtMost(counts.total.coerceAtLeast(1))
+
+    val headerTotal: Int get() = if (review) reviewTotal else counts.total
 }
 
 private data class UndoEntry(val snapshot: StatusSnapshot, val phase: QueuePhase)
@@ -75,6 +83,7 @@ class SortViewModel(
     private val mutex = Mutex()
     private var session: SessionState? = null
     private var summaryJob: Job? = null
+    private var reviewTotal = 0
 
     private val _state = MutableStateFlow(SortUiState())
     val state: StateFlow<SortUiState> = _state.asStateFlow()
@@ -111,10 +120,19 @@ class SortViewModel(
             val items = media.queue(filter, s.phase, s.phase2StartedAt, oldestFirst, QUEUE_SIZE + pending.size)
                 .filter { it.uid !in pending }
                 .take(QUEUE_SIZE)
+            val review = s.phase == QueuePhase.ERNEUT
+            var remaining = 0
+            if (review) {
+                remaining = media.queueCount(filter, s.phase, s.phase2StartedAt)
+                if (reviewTotal == 0) reviewTotal = remaining
+            }
             if (items.isNotEmpty()) {
                 summaryJob?.cancel()
                 _state.update {
-                    it.copy(loading = false, stage = SortStage.SORTING, cards = items, phase = s.phase, canUndo = !undoStack.isEmpty)
+                    it.copy(
+                        loading = false, stage = SortStage.SORTING, cards = items, phase = s.phase,
+                        canUndo = !undoStack.isEmpty, review = review, reviewTotal = reviewTotal, reviewRemaining = remaining
+                    )
                 }
             } else {
                 showSummary(s)
@@ -123,7 +141,8 @@ class SortViewModel(
     }
 
     private suspend fun showSummary(s: SessionState) {
-        val deferred = media.queueCount(filter, QueuePhase.ZURUECKGESTELLT, Long.MAX_VALUE)
+        // Beim erneuten Sortieren gibt es keine zweite Phase für Zurückgestellte.
+        val deferred = if (s.phase == QueuePhase.ERNEUT) 0 else media.queueCount(filter, QueuePhase.ZURUECKGESTELLT, Long.MAX_VALUE)
         val trashTotal = media.trashCount()
         val stage = if (s.phase == QueuePhase.UNBEARBEITET && deferred > 0) SortStage.PHASE_DONE else SortStage.ALL_DONE
         _state.update {

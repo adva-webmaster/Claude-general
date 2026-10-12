@@ -54,4 +54,21 @@ class FilterCodecTest {
         assertEquals(MediaFilter.ALL, FilterCodec.decode("%%%"))
         assertEquals(MediaFilter.ALL, FilterCodec.decode("!!!"))
     }
+
+    @Test
+    fun jahrUndMehrereOrteUeberlebenDenRundlauf() {
+        val f = MediaFilter(localYear = "2026", clusterIds = setOf(5, 3, 9))
+        assertEquals(f, roundTrip(f))
+        assertEquals(MediaFilter(clusterIds = emptySet()), roundTrip(MediaFilter(clusterIds = emptySet())))
+    }
+
+    @Test
+    fun zeitUndOrtsbereichLassenSichTrennen() {
+        val f = MediaFilter(localMonth = "2026-03", clusterIds = setOf(1, 2), statuses = setOf(MediaStatus.BEHALTEN))
+        assertEquals(MediaFilter(localMonth = "2026-03"), f.timeScope())
+        assertEquals(MediaFilter(clusterIds = setOf(1, 2)), f.placeScope())
+        assertTrue(f.hasTimeScope && f.hasPlaceScope)
+        assertEquals(false, MediaFilter(album = "x").hasPlaceScope)
+        assertEquals(true, MediaFilter(withoutPlace = true).hasPlaceScope)
+    }
 }

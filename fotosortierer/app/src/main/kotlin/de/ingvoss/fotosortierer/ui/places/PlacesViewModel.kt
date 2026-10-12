@@ -3,6 +3,7 @@ package de.ingvoss.fotosortierer.ui.places
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.ingvoss.fotosortierer.AppContainer
+import de.ingvoss.fotosortierer.core.MediaFilter
 import de.ingvoss.fotosortierer.core.StatusCounts
 import de.ingvoss.fotosortierer.data.db.LocationProgressRow
 import kotlinx.coroutines.flow.SharingStarted
@@ -32,14 +33,15 @@ data class PlacesUi(
     val loaded: Boolean = false
 )
 
-class PlacesViewModel(container: AppContainer) : ViewModel() {
+/** Orte, optional eingeschränkt auf einen Zeitraum ([scope]: Jahr, Monat oder Tag): Zähler zählen dann nur dessen Medien. */
+class PlacesViewModel(container: AppContainer, scope: MediaFilter) : ViewModel() {
     private val dao = container.database.mediaDao()
     private val labels = container.labels
 
     val state: StateFlow<PlacesUi> = combine(
-        dao.observePlaces(),
+        container.media.places(scope),
         container.database.placeDao().observeAll(),
-        dao.observeNoPlace(),
+        container.media.counts(scope.copy(withoutPlace = true)),
         dao.observeLocationProgress(),
         container.locationAccess
     ) { rows, entities, noPlace, progress, locationAccess ->
@@ -57,6 +59,6 @@ class PlacesViewModel(container: AppContainer) : ViewModel() {
                 lastAt = row.lastAt
             )
         }
-        PlacesUi(items, noPlace.toCounts(), progress, locationAccess, loaded = true)
+        PlacesUi(items, noPlace, progress, locationAccess, loaded = true)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), PlacesUi())
 }

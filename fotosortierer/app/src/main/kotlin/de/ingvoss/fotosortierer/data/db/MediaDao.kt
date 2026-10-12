@@ -14,15 +14,6 @@ import kotlinx.coroutines.flow.Flow
 interface MediaDao {
     // ---- Aggregationen (SQL GROUP BY, siehe MediaSql) -------------------------------------------
 
-    @Query(MediaSql.Q_MONTHS)
-    fun observeMonths(): Flow<List<GroupCountsRow>>
-
-    @Query(MediaSql.Q_DAYS_OF_MONTH)
-    fun observeDays(month: String): Flow<List<GroupCountsRow>>
-
-    @Query(MediaSql.Q_PLACES)
-    fun observePlaces(): Flow<List<PlaceCountsRow>>
-
     @Query(MediaSql.Q_NO_PLACE)
     fun observeNoPlace(): Flow<GroupCountsRow>
 
@@ -48,6 +39,17 @@ interface MediaDao {
 
     @RawQuery(observedEntities = [MediaStateEntity::class])
     fun observeCounts(query: SupportSQLiteQuery): Flow<GroupCountsRow>
+
+    /** Gruppierungen (Monate/Tage) innerhalb eines Filters, siehe `MediaSql.groupedMonths` und `groupedDays`. */
+    @RawQuery(observedEntities = [MediaStateEntity::class])
+    fun observeGroups(query: SupportSQLiteQuery): Flow<List<GroupCountsRow>>
+
+    /** Orte innerhalb eines Filters, siehe `MediaSql.groupedPlaces`. */
+    @RawQuery(observedEntities = [MediaStateEntity::class])
+    fun observePlaceGroups(query: SupportSQLiteQuery): Flow<List<PlaceCountsRow>>
+
+    @RawQuery(observedEntities = [MediaStateEntity::class])
+    fun observeInt(query: SupportSQLiteQuery): Flow<Int>
 
     @RawQuery(observedEntities = [MediaStateEntity::class])
     fun observeSessionSummary(query: SupportSQLiteQuery): Flow<SessionSummaryRow>

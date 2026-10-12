@@ -8,7 +8,11 @@ package de.ingvoss.fotosortierer.core
 data class MediaFilter(
     val localDate: String? = null,
     val localMonth: String? = null,
+    /** Jahr, z. B. "2026" (alle Monate dieses Jahres). */
+    val localYear: String? = null,
     val clusterId: Long? = null,
+    /** Mehrere Orte auf einmal (z. B. alle Orte eines Kartenclusters). */
+    val clusterIds: Set<Long>? = null,
     /** Nur Medien ohne GPS-Position ("Ohne Ort"). */
     val withoutPlace: Boolean = false,
     val album: String? = null,
@@ -23,6 +27,20 @@ data class MediaFilter(
     /** Sitzung darf ZURUECKGESTELLTE enthalten? */
     val includesDeferred: Boolean
         get() = statuses == null || MediaStatus.ZURUECKGESTELLT in statuses
+
+    /** Schränkt das Ergebnis auf bestimmte Orte ein (einzelner Ort, mehrere Orte oder "Ohne Ort")? */
+    val hasPlaceScope: Boolean
+        get() = clusterId != null || clusterIds != null || withoutPlace
+
+    /** Schränkt das Ergebnis auf einen Zeitraum (Tag, Monat, Jahr) ein? */
+    val hasTimeScope: Boolean
+        get() = localDate != null || localMonth != null || localYear != null
+
+    /** Nur die Zeitbedingungen dieses Filters – für die Karte "dieses Jahr/diesen Monat/diesen Tag zeigen". */
+    fun timeScope() = MediaFilter(localDate = localDate, localMonth = localMonth, localYear = localYear)
+
+    /** Nur die Ortsbedingungen dieses Filters – für den Kalender "diesen Ort zeigen". */
+    fun placeScope() = MediaFilter(clusterId = clusterId, clusterIds = clusterIds, withoutPlace = withoutPlace)
 
     companion object {
         val ALL = MediaFilter()

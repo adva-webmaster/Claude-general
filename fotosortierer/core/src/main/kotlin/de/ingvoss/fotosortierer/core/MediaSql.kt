@@ -54,7 +54,17 @@ object MediaTable {
 data class SqlQuery(val sql: String, val args: List<Any>)
 
 /** Phase einer Sortiersitzung: erst UNBEARBEITET, danach ZURUECKGESTELLT. */
-enum class QueuePhase { UNBEARBEITET, ZURUECKGESTELLT }
+enum class QueuePhase {
+    UNBEARBEITET,
+    ZURUECKGESTELLT,
+
+    /**
+     * Erneutes Sortieren bereits entschiedener Medien: alle Medien mit den Status des Filters, die vor Beginn der
+     * Sitzung entschieden wurden. In dieser Sitzung neu Entschiedene fallen heraus – so endet die Sitzung auch,
+     * wenn jemand wieder denselben Status wählt.
+     */
+    ERNEUT
+}
 
 /**
  * Alle SQL-Bausteine für Aggregationen und Sitzungs-Warteschlangen. Die Aggregationen laufen in
@@ -125,7 +135,12 @@ object MediaSql {
         val parts = mutableListOf("hidden = 0")
         filter.localDate?.let { parts += "localDate = ?"; args += it }
         filter.localMonth?.let { parts += "localMonth = ?"; args += it }
+        filter.localYear?.let { parts += "localMonth LIKE ?"; args += "$it-%" }
         filter.clusterId?.let { parts += "clusterId = ?"; args += it }
+        filter.clusterIds?.let { ids ->
+            // IDs sind Long-Zahlen, deshalb gefahrlos direkt eingesetzt (kein Parameterlimit bei großen Clustern).
+            parts += if (ids.isEmpty()) "0 = 1" else "clusterId IN (" + ids.joinToString(",") + ")"
+        }
         if (filter.withoutPlace) parts += "latitude IS NULL"
         filter.album?.let { parts += "album = ?"; args += it }
         filter.kind?.let { parts += "kind = ?"; args += it.code }
@@ -174,6 +189,10 @@ object MediaSql {
     private fun phaseCondition(phase: QueuePhase, phase2StartedAt: Long, args: MutableList<Any>): String =
         when (phase) {
             QueuePhase.UNBEARBEITET -> "status = 0"
+            QueuePhase.ERNEUT -> {
+                args += phase2StartedAt
+                "statusChangedAt < ?"
+            }
             QueuePhase.ZURUECKGESTELLT -> {
                 // Erneut zurückgestellte Medien (statusChangedAt >= Beginn Phase 2) kommen in dieser
                 // Sitzung nicht noch einmal dran – sonst gäbe es eine Endlosschleife.
@@ -194,7 +213,7 @@ object MediaSql {
         limit: Int
     ): SqlQuery {
         val args = mutableListOf<Any>()
-        val parts = baseConditions(filter.copy(statuses = null), args)
+        val parts = queueConditions(filter, phase, args)
         parts += phaseCondition(phase, phase2StartedAt, args)
         return SqlQuery(
             "SELECT * FROM media_state WHERE ${parts.joinToString(" AND ")} ${order(ascending)} LIMIT $limit",
@@ -223,8 +242,47 @@ object MediaSql {
     /** Anzahl der Medien in der Warteschlange einer Phase. */
     fun queueCount(filter: MediaFilter, phase: QueuePhase, phase2StartedAt: Long): SqlQuery {
         val args = mutableListOf<Any>()
-        val parts = baseConditions(filter.copy(statuses = null), args)
+        val parts = queueConditions(filter, phase, args)
         parts += phaseCondition(phase, phase2StartedAt, args)
         return SqlQuery("SELECT COUNT(*) FROM media_state WHERE ${parts.joinToString(" AND ")}", args)
     }
+
+    /**
+     * Grundbedingungen einer Warteschlange. Beim normalen Sortieren ersetzt die Phase die Statusbedingung des
+     * Filters; beim erneuten Sortieren ([QueuePhase.ERNEUT]) gelten die Status des Filters (ohne Angabe: alle
+     * außer GELOESCHT).
+     */
+    private fun queueConditions(filter: MediaFilter, phase: QueuePhase, args: MutableList<Any>): MutableList<String> =
+        if (phase == QueuePhase.ERNEUT) {
+            baseConditions(filter, args).also { if (filter.statuses == null) it += "status != 4" }
+        } else {
+            baseConditions(filter.copy(statuses = null), args)
+        }
+
+    // ------------------------------------------------------------------------------------
+    // Gruppierungen innerhalb eines Filters (Kalender je Ort, Karte je Zeitraum)
+    // ------------------------------------------------------------------------------------
+
+    private fun grouped(select: String, filter: MediaFilter, extra: String?, groupBy: String, orderBy: String?): SqlQuery {
+        val args = mutableListOf<Any>()
+        val parts = baseConditions(filter.copy(statuses = null), args)
+        if (extra != null) parts += extra
+        val order = if (orderBy != null) " ORDER BY $orderBy" else ""
+        return SqlQuery("SELECT $select FROM media_state WHERE ${parts.joinToString(" AND ")} GROUP BY $groupBy$order", args)
+    }
+
+    /** Monate (mit Zählern) der Medien des Filters. */
+    fun groupedMonths(filter: MediaFilter): SqlQuery =
+        grouped("localMonth AS groupKey, $COUNT_COLUMNS", filter, null, "localMonth", "localMonth")
+
+    /** Tage (mit Zählern) der Medien des Filters; der Filter enthält normalerweise `localMonth`. */
+    fun groupedDays(filter: MediaFilter): SqlQuery =
+        grouped("localDate AS groupKey, $COUNT_COLUMNS", filter, null, "localDate", "localDate")
+
+    /** Orte (mit Zählern und Zeitraum) der Medien des Filters; nur Medien mit Position. */
+    fun groupedPlaces(filter: MediaFilter): SqlQuery =
+        grouped(
+            "clusterId AS clusterId, MIN(takenAtUtc) AS firstAt, MAX(takenAtUtc) AS lastAt, $COUNT_COLUMNS",
+            filter, "clusterId IS NOT NULL", "clusterId", null
+        )
 }

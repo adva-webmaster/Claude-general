@@ -5,6 +5,7 @@ import de.ingvoss.fotosortierer.R
 import de.ingvoss.fotosortierer.core.Geo
 import de.ingvoss.fotosortierer.core.MediaFilter
 import de.ingvoss.fotosortierer.core.MediaKind
+import de.ingvoss.fotosortierer.core.MediaStatus
 import de.ingvoss.fotosortierer.data.db.AppDatabase
 import de.ingvoss.fotosortierer.data.db.PlaceEntity
 import java.time.LocalDate
@@ -49,7 +50,15 @@ class FilterLabeler(private val context: Context, private val db: AppDatabase) {
         val parts = ArrayList<String>()
         filter.localDate?.let { parts += day(it) }
         filter.localMonth?.let { parts += month(it) }
+        filter.localYear?.let { parts += year(it.toIntOrNull() ?: 0) }
         filter.clusterId?.let { parts += place(db.placeDao().byId(it)) }
+        filter.clusterIds?.let { ids ->
+            parts += if (ids.size == 1) {
+                place(db.placeDao().byId(ids.first()))
+            } else {
+                context.resources.getQuantityString(R.plurals.places_count, ids.size, ids.size)
+            }
+        }
         if (filter.withoutPlace) parts += context.getString(R.string.places_no_place)
         filter.album?.let { parts += it }
         filter.kind?.let {
@@ -61,7 +70,21 @@ class FilterLabeler(private val context: Context, private val db: AppDatabase) {
                 }
             )
         }
+        filter.statuses?.let { set ->
+            // Beim erneuten Sortieren/Ansehen: welche Status? (alle vier = keine Einschränkung, nicht anzeigen)
+            if (set.size < MediaStatus.entries.size - 1) {
+                parts += set.sortedBy { it.code }.joinToString("/") { context.getString(statusRes(it)) }
+            }
+        }
         return if (parts.isEmpty()) context.getString(R.string.label_all_media) else parts.joinToString(" · ")
+    }
+
+    private fun statusRes(status: MediaStatus): Int = when (status) {
+        MediaStatus.UNBEARBEITET -> R.string.status_unprocessed
+        MediaStatus.BEHALTEN -> R.string.status_keep
+        MediaStatus.PAPIERKORB -> R.string.status_trash
+        MediaStatus.ZURUECKGESTELLT -> R.string.status_deferred
+        MediaStatus.GELOESCHT -> R.string.status_deleted
     }
 
     private fun parseDay(localDate: String): LocalDate? = try {

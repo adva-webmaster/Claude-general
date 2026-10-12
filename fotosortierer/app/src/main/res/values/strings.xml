@@ -19,6 +19,13 @@
     <string name="action_trash">Papierkorb</string>
     <string name="action_understood">Verstanden</string>
     <string name="action_undo">Rückgängig</string>
+    <string name="action_show_on_map">Auf Karte zeigen</string>
+    <string name="action_show_in_calendar">Im Kalender zeigen</string>
+    <string name="action_resort_all">Alle erneut sortieren (%1$d)</string>
+    <string name="action_resort_status">%1$s erneut sortieren (%2$d)</string>
+    <string name="scope_clear">Einschränkung aufheben</string>
+    <string name="scope_place">Ort: %1$s</string>
+    <string name="scope_selection">Auswahl: %1$s</string>
 
     <!-- Navigation -->
     <string name="nav_home">Start</string>
@@ -59,6 +66,10 @@
     <plurals name="deferred_count">
         <item quantity="one">%d zurückgestellt</item>
         <item quantity="other">%d zurückgestellt</item>
+    </plurals>
+    <plurals name="places_count">
+        <item quantity="one">%d Ort</item>
+        <item quantity="other">%d Orte</item>
     </plurals>
     <plurals name="places_naming">
         <item quantity="one">%d Ort wird noch benannt</item>
@@ -114,6 +125,7 @@
     <string name="calendar_empty_message">Sobald Fotos und Videos erfasst sind, erscheinen hier Jahre, Monate und Tage.</string>
     <string name="calendar_no_media">keine Medien</string>
     <string name="calendar_sort_month">Monat sortieren</string>
+    <string name="calendar_sort_year">Jahr sortieren</string>
     <string name="weekday_mo">Mo</string>
     <string name="weekday_di">Di</string>
     <string name="weekday_mi">Mi</string>
@@ -147,6 +159,8 @@
     <string name="places_sort_count">Anzahl</string>
     <string name="places_sort_progress">Fortschritt</string>
     <string name="places_show_media">Medien ansehen</string>
+    <string name="places_single_places">Einzelne Orte</string>
+    <string name="places_too_many">Mehr als %1$d Orte: Die Einzelliste wird nicht angezeigt. Die Aktionen oben gelten für alle zusammen; zum Auswählen einzelner Orte näher heranzoomen.</string>
 
     <!-- Papierkorb -->
     <string name="trash_empty_title">Papierkorb ist leer</string>

@@ -213,3 +213,15 @@ fun ConfirmDialog(
         dismissButton = { TextButton(onClick = onDismiss) { Text(dismissLabel) } }
     )
 }
+
+/** Zeigt eine aktive Einschränkung (z. B. "Ort: Kiel" oder "Zeitraum: März 2026"); Tippen hebt sie auf. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ScopeChip(text: String, onClear: () -> Unit, modifier: Modifier = Modifier) {
+    androidx.compose.material3.AssistChip(
+        onClick = onClear,
+        label = { Text(text, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) },
+        trailingIcon = { Icon(AppIcons.Close, contentDescription = stringResource(R.string.scope_clear), modifier = Modifier.size(18.dp)) },
+        modifier = modifier
+    )
+}
