@@ -21,6 +21,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -160,6 +161,27 @@ private fun PeriodCard(title: String, counts: StatusCounts, onClick: () -> Unit,
     }
 }
 
+/** "Sortieren" (falls etwas offen ist) und "Medien ansehen" nebeneinander, je halbe Breite. */
+@Composable
+private fun ActionRow(
+    canSort: Boolean,
+    sortLabel: String,
+    onSort: () -> Unit,
+    onShowMedia: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (canSort) {
+            Button(onClick = onSort, modifier = Modifier.weight(1f)) {
+                Text(sortLabel, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+            }
+        }
+        OutlinedButton(onClick = onShowMedia, modifier = Modifier.weight(1f)) {
+            Text(stringResource(R.string.action_show_media), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+        }
+    }
+}
+
 /** Schaltfläche "Auf Karte zeigen". */
 @Composable
 private fun MapAction(onClick: () -> Unit) {
@@ -177,6 +199,7 @@ fun CalendarMonthsScreen(
     onBack: () -> Unit,
     onOpenMonth: (String) -> Unit,
     onSortYear: (MediaFilter) -> Unit,
+    onShowMedia: (MediaFilter) -> Unit,
     onShowMap: (MediaFilter) -> Unit
 ) {
     val viewModel = containerViewModel(key = "cal-" + FilterCodec.encode(scope)) { CalendarViewModel(it, scope) }
@@ -195,11 +218,12 @@ fun CalendarMonthsScreen(
             if (total.total > 0) {
                 Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     ProgressSummary(total)
-                    if (total.open > 0) {
-                        Button(onClick = { onSortYear(yearFilter) }, modifier = Modifier.fillMaxWidth()) {
-                            Text(stringResource(R.string.calendar_sort_year))
-                        }
-                    }
+                    ActionRow(
+                        canSort = total.open > 0,
+                        sortLabel = stringResource(R.string.calendar_sort_year),
+                        onSort = { onSortYear(yearFilter) },
+                        onShowMedia = { onShowMedia(yearFilter) }
+                    )
                 }
             }
             LazyVerticalGrid(
@@ -253,6 +277,7 @@ fun CalendarDaysScreen(
     onBack: () -> Unit,
     onOpenDay: (MediaFilter) -> Unit,
     onSortMonth: (MediaFilter) -> Unit,
+    onShowMedia: (MediaFilter) -> Unit,
     onShowMap: (MediaFilter) -> Unit
 ) {
     val viewModel = containerViewModel(key = "cal-" + FilterCodec.encode(scope)) { CalendarViewModel(it, scope) }
@@ -271,12 +296,13 @@ fun CalendarDaysScreen(
         Column(Modifier.fillMaxSize().padding(padding).padding(horizontal = 12.dp)) {
             if (total.total > 0) {
                 ProgressSummary(total, Modifier.padding(vertical = 8.dp))
-                if (total.open > 0) {
-                    Button(
-                        onClick = { onSortMonth(scope.copy(localMonth = month)) },
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-                    ) { Text(stringResource(R.string.calendar_sort_month)) }
-                }
+                ActionRow(
+                    canSort = total.open > 0,
+                    sortLabel = stringResource(R.string.calendar_sort_month),
+                    onSort = { onSortMonth(scope.copy(localMonth = month)) },
+                    onShowMedia = { onShowMedia(scope.copy(localMonth = month)) },
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
             }
             if (yearMonth != null) {
                 WeekdayHeader()

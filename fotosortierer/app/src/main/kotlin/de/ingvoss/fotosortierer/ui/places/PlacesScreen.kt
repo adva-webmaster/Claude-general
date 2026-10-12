@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -48,6 +49,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.ingvoss.fotosortierer.R
@@ -328,12 +330,21 @@ private fun PlaceActions(
         Text(title, style = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge)
         if (subtitle != null) Text(subtitle, style = MaterialTheme.typography.bodySmall)
         ProgressSummary(counts)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // Zwei Tasten nebeneinander (je halbe Breite), "Im Kalender zeigen" darunter über die volle Breite –
+        // drei Tasten in einer Zeile pressen die letzte so schmal, dass ihr Text buchstabenweise umbricht.
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (counts.open > 0) {
-                Button(onClick = onSort) { Text(stringResource(R.string.action_start_sorting)) }
+                Button(onClick = onSort, modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.action_start_sorting), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
             }
-            OutlinedButton(onClick = onOpen) { Text(stringResource(R.string.places_show_media)) }
-            OutlinedButton(onClick = onCalendar) { Text(stringResource(R.string.action_show_in_calendar)) }
+            OutlinedButton(onClick = onOpen, modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.places_show_media), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+        OutlinedButton(onClick = onCalendar, modifier = Modifier.fillMaxWidth()) {
+            Icon(AppIcons.Calendar, contentDescription = null, modifier = Modifier.size(18.dp))
+            Text(stringResource(R.string.action_show_in_calendar), modifier = Modifier.padding(start = 8.dp), maxLines = 1)
         }
     }
 }

@@ -215,6 +215,7 @@ private fun AppNavHost(
                 onBack = { navController.popBackStack() },
                 onOpenMonth = { navController.navigate(Routes.month(scope, it)) },
                 onSortYear = { navController.navigate(Routes.sort(it, false)) },
+                onShowMedia = { navController.navigate(Routes.filter(it)) },
                 onShowMap = { navController.navigate(Routes.places(it)) }
             )
         }
@@ -229,6 +230,7 @@ private fun AppNavHost(
                 onBack = { navController.popBackStack() },
                 onOpenDay = { navController.navigate(Routes.filter(it)) },
                 onSortMonth = { navController.navigate(Routes.sort(it, false)) },
+                onShowMedia = { navController.navigate(Routes.filter(it)) },
                 onShowMap = { navController.navigate(Routes.places(it)) }
             )
         }

@@ -19,6 +19,7 @@
     <string name="action_trash">Papierkorb</string>
     <string name="action_understood">Verstanden</string>
     <string name="action_undo">Rückgängig</string>
+    <string name="action_show_media">Medien ansehen</string>
     <string name="action_show_on_map">Auf Karte zeigen</string>
     <string name="action_show_in_calendar">Im Kalender zeigen</string>
     <string name="action_resort_all">Alle erneut sortieren (%1$d)</string>
