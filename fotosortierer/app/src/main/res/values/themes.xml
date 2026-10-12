@@ -2,6 +2,9 @@
 <resources>
     <!-- Nur das Fenster (Start-Hintergrund, Systemleisten); die Oberfläche selbst zeichnet Compose. -->
     <style name="Theme.Fotosortierer" parent="android:Theme.DeviceDefault.DayNight">
+        <!-- Keine System-Titelleiste: die Oberfläche zeichnet Compose (sonst verdeckt sie die eigene Leiste und verschluckt die Systemleisten-Abstände). -->
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
         <item name="android:windowBackground">@color/window_background</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>

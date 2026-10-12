@@ -24,6 +24,7 @@ class NavOptionsBuilder {
 open class NavController {
     fun navigate(route: String, builder: NavOptionsBuilder.() -> Unit = {}) {}
     fun popBackStack(): Boolean = true
+    fun popBackStack(route: String, inclusive: Boolean, saveState: Boolean = false): Boolean = true
 }
 
 class NavHostController : NavController()

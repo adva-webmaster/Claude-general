@@ -26,6 +26,7 @@
     <string name="nav_places">Orte</string>
     <string name="nav_trash">Papierkorb</string>
     <string name="nav_settings">Einstellungen</string>
+    <string name="nav_settings_short">Optionen</string>
 
     <!-- Status und Zustände -->
     <string name="status_unprocessed">Unbearbeitet</string>

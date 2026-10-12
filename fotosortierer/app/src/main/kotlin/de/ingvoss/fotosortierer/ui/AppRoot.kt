@@ -69,7 +69,7 @@ private val topLevelDestinations = listOf(
     TopLevel(Routes.CALENDAR, R.string.nav_calendar, AppIcons.Calendar),
     TopLevel(Routes.PLACES, R.string.nav_places, AppIcons.Pin),
     TopLevel(Routes.TRASH, R.string.nav_trash, AppIcons.Trash),
-    TopLevel(Routes.SETTINGS, R.string.nav_settings, AppIcons.Settings)
+    TopLevel(Routes.SETTINGS, R.string.nav_settings_short, AppIcons.Settings)
 )
 
 /** Welchem Hauptbereich gehört die aktuelle Route an? null = Vollbild (Onboarding, Sortieren, Detail). */
@@ -92,6 +92,11 @@ fun AppRoot(startWithOnboarding: Boolean) {
     val wide = LocalConfiguration.current.screenWidthDp >= WIDE_LAYOUT_DP
 
     fun navigateTop(route: String) {
+        // Wer den Reiter antippt, in dem er schon ist, kehrt zur obersten Ebene zurück (z. B. Kalender: Tag → Jahre).
+        if (current == route) {
+            navController.popBackStack(route, inclusive = false)
+            return
+        }
         navController.navigate(route) {
             popUpTo(Routes.HOME) { saveState = true }
             launchSingleTop = true
