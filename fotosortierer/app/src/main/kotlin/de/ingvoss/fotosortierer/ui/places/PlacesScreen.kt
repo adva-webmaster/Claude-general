@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -32,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -45,6 +47,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -89,41 +92,37 @@ fun PlacesScreen(
         container.onLocationPermissionChanged()
     }
 
+    // Die Infos (Standort-Fortschritt, Auswahl-Hinweis, Berechtigung) ändern ihre Höhe ständig, solange noch Standorte
+    // gelesen werden. Läge diese Zeile über der Karte, würde die Karte bei jeder Änderung springen. Darum liegt sie
+    // bei der Karte als Überlagerung darüber (kein Einfluss auf die Kartengröße), in der Liste als erstes Element.
+    val info: @Composable (Modifier) -> Unit = { modifier ->
+        PlacesInfo(
+            ui = ui,
+            showScope = scope != MediaFilter.ALL,
+            scopeLabel = scopeLabel,
+            onClearScope = onClearScope,
+            onRequestPermission = { locationLauncher.launch(Manifest.permission.ACCESS_MEDIA_LOCATION) },
+            modifier = modifier
+        )
+    }
+
     Scaffold(topBar = { AppTopBar(stringResource(R.string.nav_places)) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
-            if (!ui.locationAccess) {
-                LocationBanner { locationLauncher.launch(Manifest.permission.ACCESS_MEDIA_LOCATION) }
-            } else if (ui.locations.total > 0) {
-                Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                    Text(
-                        stringResource(R.string.places_location_stats, ui.locations.withLocation, ui.locations.total, ui.locations.checked),
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    if (ui.locations.checked < ui.locations.total) {
-                        LinearProgressIndicator(
-                            progress = { ui.locations.checked.toFloat() / ui.locations.total },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
-            }
-            if (scope != MediaFilter.ALL) {
-                ScopeChip(stringResource(R.string.scope_selection, scopeLabel), onClearScope, Modifier.padding(horizontal = 16.dp))
-            }
             TabRow(selectedTabIndex = tab) {
                 Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text(stringResource(R.string.places_tab_map)) })
                 Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text(stringResource(R.string.places_tab_list)) })
             }
             if (tab == 0) {
-                Box(Modifier.fillMaxSize()) {
+                Box(Modifier.fillMaxSize().clipToBounds()) {
                     OsmPlacesMap(
                         places = ui.places,
                         selectedIds = selectedIds.toSet(),
                         onPlacesTapped = { selectedIds = it },
                         modifier = Modifier.fillMaxSize()
                     )
+                    info(Modifier.align(Alignment.TopStart).padding(8.dp))
                     if (ui.loaded && ui.places.isEmpty()) {
-                        Card(Modifier.align(Alignment.TopCenter).padding(16.dp)) {
+                        Card(Modifier.align(Alignment.BottomCenter).padding(16.dp)) {
                             Text(
                                 stringResource(R.string.places_map_empty),
                                 modifier = Modifier.padding(12.dp),
@@ -133,7 +132,7 @@ fun PlacesScreen(
                     }
                 }
             } else {
-                PlaceList(scope, ui, sort, { sort = it }, onOpenFilter, onShowCalendar)
+                PlaceList(scope, ui, sort, { sort = it }, onOpenFilter, onShowCalendar, header = { info(Modifier.fillMaxWidth()) })
             }
         }
     }
@@ -150,10 +149,51 @@ fun PlacesScreen(
     }
 }
 
+/** Standort-Fortschritt, Hinweis auf aktive Einschränkung und ggf. Berechtigungsbitte – kompakt und gut lesbar. */
+@Composable
+private fun PlacesInfo(
+    ui: PlacesUi,
+    showScope: Boolean,
+    scopeLabel: String,
+    onClearScope: () -> Unit,
+    onRequestPermission: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val showStats = ui.locationAccess && ui.locations.total > 0
+    if (ui.locationAccess && !showStats && !showScope) return
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        if (!ui.locationAccess) {
+            LocationBanner(onRequestPermission)
+        } else if (showStats) {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.94f),
+                tonalElevation = 2.dp
+            ) {
+                Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                    Text(
+                        stringResource(R.string.places_location_stats, ui.locations.withLocation, ui.locations.total, ui.locations.checked),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    if (ui.locations.checked < ui.locations.total) {
+                        LinearProgressIndicator(
+                            progress = { ui.locations.checked.toFloat() / ui.locations.total },
+                            modifier = Modifier.padding(top = 6.dp).fillMaxWidth()
+                        )
+                    }
+                }
+            }
+        }
+        if (showScope) {
+            ScopeChip(stringResource(R.string.scope_selection, scopeLabel), onClearScope)
+        }
+    }
+}
+
 @Composable
 private fun LocationBanner(onRequest: () -> Unit) {
     Card(
-        Modifier.fillMaxWidth().padding(12.dp),
+        Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
     ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -170,7 +210,8 @@ private fun PlaceList(
     sort: PlaceSort,
     onSort: (PlaceSort) -> Unit,
     onOpenFilter: (MediaFilter) -> Unit,
-    onShowCalendar: (MediaFilter) -> Unit
+    onShowCalendar: (MediaFilter) -> Unit,
+    header: @Composable () -> Unit
 ) {
     val zone = ZoneId.systemDefault()
     val labels = LocalContext.current.appContainer().labels
@@ -191,6 +232,7 @@ private fun PlaceList(
             FilterChip(sort == PlaceSort.PROGRESS, { onSort(PlaceSort.PROGRESS) }, { Text(stringResource(R.string.places_sort_progress)) })
         }
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            item(key = "info") { header() }
             if (ui.noPlace.total > 0) {
                 item(key = "no-place") {
                     PlaceRow(

@@ -178,7 +178,21 @@ fun AppTopBar(
     actions: @Composable () -> Unit = {}
 ) {
     TopAppBar(
-        title = { Text(title, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) },
+        colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.background,
+            scrolledContainerColor = MaterialTheme.colorScheme.background,
+            titleContentColor = MaterialTheme.colorScheme.onBackground,
+            actionIconContentColor = MaterialTheme.colorScheme.primary,
+            navigationIconContentColor = MaterialTheme.colorScheme.onBackground
+        ),
+        title = {
+            Text(
+                title,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.titleLarge
+            )
+        },
         navigationIcon = {
             if (onBack != null) {
                 IconButton(onClick = onBack) {

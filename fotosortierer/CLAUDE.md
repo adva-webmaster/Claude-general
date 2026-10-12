@@ -177,6 +177,8 @@ Namen/API, Room 2.8.5 ist die etablierte stabile Linie.
   längst abgeflogene erste Karte (Tasten wirkten nur einmal).
 - **Navigation:** Untere Leiste (Start, Kalender, Orte, Papierkorb, Einstellungen), ab 600 dp Breite
   `NavigationRail`. Sortieren, Detail und Einführung sind Vollbild.
+- **Design:** Markenfarben Dunkelrot (`BrandRed` #8E1B20 / hell #E4575C) und Anthrazit (#2B3035) stecken nur in den Material-Farbschemata (`ui/theme/Theme.kt`, auch Formen und Typografie). Die Statusfarben (Okabe–Ito) bleiben davon unberührt. Die Webseite des Nutzers war aus der Sandbox nicht erreichbar; exakte Hex-Werte lassen sich dort an einer Stelle tauschen.
+- **Karten-Kopfzeile:** Info-Leiste liegt als Überlagerung (`PlacesInfo`) über der Karte, damit sich die Kartenhöhe beim Bewegen nie ändert.
 - **Manifest:** `allowBackup=false` (Entscheidungen sichert der JSON-Export); von osmdroid mitgebrachte
   Berechtigungen `WRITE_EXTERNAL_STORAGE`/`ACCESS_WIFI_STATE` werden per `tools:node="remove"` entfernt.
 

@@ -8,9 +8,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -130,11 +133,16 @@ fun AppRoot(startWithOnboarding: Boolean) {
 
     if (wide && current != null) {
         Row(Modifier.fillMaxSize()) {
-            NavigationRail {
+            NavigationRail(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
                 topLevelDestinations.forEach { item ->
                     NavigationRailItem(
                         selected = current == item.key,
                         onClick = { navigateTop(item.key) },
+                        colors = NavigationRailItemDefaults.colors(
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            selectedTextColor = MaterialTheme.colorScheme.primary
+                        ),
                         icon = { Icon(item.icon, contentDescription = null) },
                         label = { Text(stringResource(item.labelRes)) }
                     )
@@ -147,11 +155,16 @@ fun AppRoot(startWithOnboarding: Boolean) {
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
             bottomBar = {
                 if (current != null) {
-                    NavigationBar {
+                    NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
                         topLevelDestinations.forEach { item ->
                             NavigationBarItem(
                                 selected = current == item.key,
                                 onClick = { navigateTop(item.key) },
+                                colors = NavigationBarItemDefaults.colors(
+                                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                                    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    selectedTextColor = MaterialTheme.colorScheme.primary
+                                ),
                                 icon = { Icon(item.icon, contentDescription = null) },
                                 label = { Text(stringResource(item.labelRes)) }
                             )
@@ -188,9 +201,6 @@ private fun AppNavHost(
         composable(Routes.HOME) {
             HomeScreen(
                 onContinue = { filter, resume -> navController.navigate(Routes.sort(filter, resume)) },
-                onOpenCalendar = { navigateTop(KEY_CALENDAR) },
-                onOpenPlaces = { navigateTop(KEY_PLACES) },
-                onOpenTrash = { navigateTop(KEY_TRASH) },
                 onOpenOnboarding = { navController.navigate(Routes.ONBOARDING) },
                 onOpenFilter = { navController.navigate(Routes.filter(it)) }
             )

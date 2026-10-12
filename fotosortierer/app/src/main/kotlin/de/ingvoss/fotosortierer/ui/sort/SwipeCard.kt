@@ -247,7 +247,7 @@ fun SwipeCard(
                 translationY = state.dragY
                 rotationZ = if (state.widthPx > 0f) (state.dragX / state.widthPx * MAX_TILT_DEGREES).coerceIn(-MAX_TILT_DEGREES, MAX_TILT_DEGREES) else 0f
             }
-            .clip(RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(28.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .pointerInput(Unit) {
                 detectTapGestures(

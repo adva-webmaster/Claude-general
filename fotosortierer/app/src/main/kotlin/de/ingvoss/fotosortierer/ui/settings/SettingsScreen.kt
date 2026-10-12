@@ -43,6 +43,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.ingvoss.fotosortierer.BuildConfig
 import de.ingvoss.fotosortierer.R
@@ -172,7 +173,13 @@ fun SettingsScreen() {
 @Composable
 private fun Section(title: String) {
     HorizontalDivider(Modifier.padding(top = 12.dp))
-    Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 8.dp, bottom = 4.dp))
+    Text(
+        title.uppercase(),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+        letterSpacing = 1.sp,
+        modifier = Modifier.padding(top = 10.dp, bottom = 4.dp)
+    )
 }
 
 @Composable

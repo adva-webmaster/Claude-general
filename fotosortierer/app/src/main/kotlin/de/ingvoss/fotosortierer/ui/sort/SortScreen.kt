@@ -276,7 +276,7 @@ private fun BackCard(card: MediaStateEntity, depth: Int) {
                 // Die vierte Karte liegt unsichtbar hinten und wird nur vorgeladen.
                 alpha = if (visible) 1f - 0.25f * (depth - 1) else 0f
             }
-            .clip(RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(28.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant)
     ) {
         MediaImage(card, Modifier.fillMaxSize(), ContentScale.Fit)

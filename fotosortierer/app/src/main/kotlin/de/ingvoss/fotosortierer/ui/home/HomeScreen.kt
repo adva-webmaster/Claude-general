@@ -1,6 +1,8 @@
 package de.ingvoss.fotosortierer.ui.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +17,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -27,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -45,14 +50,12 @@ import de.ingvoss.fotosortierer.ui.containerViewModel
 import de.ingvoss.fotosortierer.ui.onboarding.openAppSettings
 import de.ingvoss.fotosortierer.ui.theme.AppIcons
 import de.ingvoss.fotosortierer.ui.theme.LocalFotoColors
+import de.ingvoss.fotosortierer.ui.theme.brandGradient
 
 /** Startseite: Weitermachen, Gesamtstatistik, Fortschritt der Hintergrundarbeiten, Hinweise zum Zugriff. */
 @Composable
 fun HomeScreen(
     onContinue: (MediaFilter, Boolean) -> Unit,
-    onOpenCalendar: () -> Unit,
-    onOpenPlaces: () -> Unit,
-    onOpenTrash: () -> Unit,
     onOpenOnboarding: () -> Unit,
     onOpenFilter: (MediaFilter) -> Unit
 ) {
@@ -67,7 +70,11 @@ fun HomeScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Column(Modifier.widthIn(max = 640.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
+            Text(
+                stringResource(R.string.app_name),
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onBackground
+            )
 
             when (ui.access) {
                 AccessLevel.NONE -> AccessCard(
@@ -101,18 +108,6 @@ fun HomeScreen(
             }
 
             IndexingCard(ui)
-
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onOpenCalendar, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.nav_calendar))
-                }
-                OutlinedButton(onClick = onOpenPlaces, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.nav_places))
-                }
-                OutlinedButton(onClick = onOpenTrash, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.nav_trash))
-                }
-            }
         }
     }
 }
@@ -127,22 +122,39 @@ private fun AccessCard(message: String, actionLabel: String, onAction: () -> Uni
     }
 }
 
+/** Kopfbereich in den Markenfarben: Weitermachen bzw. Sortieren starten, mit der wichtigsten Aktion. */
 @Composable
 private fun ContinueCard(label: String, open: Int, hasSession: Boolean, onContinue: () -> Unit) {
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.extraLarge)
+            .background(brandGradient())
+            .padding(22.dp)
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 stringResource(if (hasSession) R.string.home_continue_session else R.string.home_start_sorting),
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.headlineSmall,
+                color = Color.White
             )
-            Text(label, style = MaterialTheme.typography.bodyMedium)
+            Text(label, style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.85f))
             if (open > 0) {
-                Text(pluralText(R.plurals.open_count, open), style = MaterialTheme.typography.bodyMedium)
-                Button(onClick = onContinue, modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    pluralText(R.plurals.open_count, open),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White
+                )
+                Spacer(Modifier.height(6.dp))
+                Button(
+                    onClick = onContinue,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color(0xFF8E1B20))
+                ) {
                     Text(stringResource(if (hasSession) R.string.action_continue_sorting else R.string.action_start_sorting))
                 }
             } else {
-                Text(stringResource(R.string.home_all_done), style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.home_all_done), style = MaterialTheme.typography.bodyMedium, color = Color.White)
             }
         }
     }
@@ -176,11 +188,14 @@ private fun StatsCard(ui: HomeUi, onOpenFilter: (MediaFilter) -> Unit) {
 @Composable
 private fun StatRow(label: String, value: String, color: Color, onClick: (() -> Unit)? = null) {
     Row(
-        Modifier.fillMaxWidth().let { if (onClick != null) it.clickable(onClick = onClick) else it }.padding(vertical = 4.dp),
+        Modifier.fillMaxWidth().let { if (onClick != null) it.clickable(onClick = onClick) else it }.padding(vertical = 6.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = color)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(10.dp).background(color, CircleShape))
+            Text(label, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = 10.dp))
+        }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(value, style = MaterialTheme.typography.bodyMedium)
             if (onClick != null) Icon(AppIcons.Chevron, contentDescription = null, modifier = Modifier.size(18.dp))
