@@ -78,16 +78,18 @@ fun PlacesScreen(onOpenFilter: (MediaFilter) -> Unit, onStartSorting: (MediaFilt
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (!ui.locationAccess) {
                 LocationBanner { locationLauncher.launch(Manifest.permission.ACCESS_MEDIA_LOCATION) }
-            } else if (ui.locations.total > 0 && ui.locations.checked < ui.locations.total) {
+            } else if (ui.locations.total > 0) {
                 Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                     Text(
-                        stringResource(R.string.home_locating, ui.locations.checked, ui.locations.total),
+                        stringResource(R.string.places_location_stats, ui.locations.withLocation, ui.locations.total, ui.locations.checked),
                         style = MaterialTheme.typography.bodySmall
                     )
-                    LinearProgressIndicator(
-                        progress = { ui.locations.checked.toFloat() / ui.locations.total },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    if (ui.locations.checked < ui.locations.total) {
+                        LinearProgressIndicator(
+                            progress = { ui.locations.checked.toFloat() / ui.locations.total },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
             TabRow(selectedTabIndex = tab) {

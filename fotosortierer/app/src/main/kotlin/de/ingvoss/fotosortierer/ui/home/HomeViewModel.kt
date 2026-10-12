@@ -24,7 +24,7 @@ data class HomeUi(
     /** Zähler des Filters, mit dem "Weitermachen" einsteigt. */
     val continueCounts: StatusCounts = StatusCounts.EMPTY,
     val sync: SyncState = SyncState(),
-    val locations: LocationProgressRow = LocationProgressRow(0, 0),
+    val locations: LocationProgressRow = LocationProgressRow(0, 0, 0),
     val access: AccessLevel = AccessLevel.NONE,
     val locationAccess: Boolean = false,
     val namesPending: Int = 0,

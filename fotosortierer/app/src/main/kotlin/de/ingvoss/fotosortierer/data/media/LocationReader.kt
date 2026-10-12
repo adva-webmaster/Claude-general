@@ -18,8 +18,18 @@ import de.ingvoss.fotosortierer.core.MediaKind
  */
 class LocationReader(private val context: Context) {
 
-    /** null = keine (gültige) Position gefunden oder Datei nicht lesbar. */
-    fun read(volume: String, mediaStoreId: Long, kind: MediaKind): LatLon? {
+    /** Ergebnis eines Leseversuchs. */
+    sealed interface Result {
+        data class Found(val position: LatLon) : Result
+
+        /** Datei gelesen, aber keine (gültige) Position enthalten – endgültig. */
+        data object None : Result
+
+        /** Lesen fehlgeschlagen (z. B. Berechtigung/Datei vorübergehend nicht zugreifbar) – später erneut versuchen. */
+        data object Failed : Result
+    }
+
+    fun read(volume: String, mediaStoreId: Long, kind: MediaKind): Result {
         return try {
             val base = if (kind == MediaKind.VIDEO) {
                 MediaStore.Video.Media.getContentUri(volume)
@@ -27,11 +37,15 @@ class LocationReader(private val context: Context) {
                 MediaStore.Images.Media.getContentUri(volume)
             }
             val original = MediaStore.setRequireOriginal(ContentUris.withAppendedId(base, mediaStoreId))
-            if (kind == MediaKind.VIDEO) readVideo(original) else readImage(original)
+            val position = if (kind == MediaKind.VIDEO) readVideo(original) else readImage(original)
+            if (position != null) Result.Found(position) else Result.None
+        } catch (e: java.io.FileNotFoundException) {
+            // Datei ist weg (zwischen Scan und Lesen gelöscht): nichts mehr zu holen.
+            Result.None
         } catch (e: Exception) {
-            // Datei verschwunden, beschädigt oder Berechtigung entzogen: ohne Position weiterarbeiten.
-            Log.d(TAG, "Position nicht lesbar: $mediaStoreId (${e.javaClass.simpleName})")
-            null
+            // Alles andere (Berechtigung, Ein-/Ausgabefehler, defekte Datei) nicht als "ohne Standort" festschreiben.
+            Log.w(TAG, "Position nicht lesbar: $mediaStoreId (${e.javaClass.simpleName}: ${e.message})")
+            Result.Failed
         }
     }
 

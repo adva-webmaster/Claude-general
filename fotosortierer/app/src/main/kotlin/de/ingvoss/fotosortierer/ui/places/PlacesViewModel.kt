@@ -27,7 +27,7 @@ enum class PlaceSort { NAME, COUNT, PROGRESS }
 data class PlacesUi(
     val places: List<PlaceItem> = emptyList(),
     val noPlace: StatusCounts = StatusCounts.EMPTY,
-    val locations: LocationProgressRow = LocationProgressRow(0, 0),
+    val locations: LocationProgressRow = LocationProgressRow(0, 0, 0),
     val locationAccess: Boolean = false,
     val loaded: Boolean = false
 )

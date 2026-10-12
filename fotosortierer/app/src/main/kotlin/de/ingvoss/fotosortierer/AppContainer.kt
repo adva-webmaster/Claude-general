@@ -90,6 +90,8 @@ class AppContainer(val app: Application) {
             if (syncer.sync()) {
                 scheduler.enqueueLocationIndexing()
                 scheduler.enqueueGeocoding()
+                // Zusätzlich sofort im Vordergrund lesen: WorkManager startet Hintergrundarbeit gern verzögert.
+                locationIndexer.run()
             }
         }
     }
@@ -98,6 +100,7 @@ class AppContainer(val app: Application) {
     fun onLocationPermissionChanged() {
         refreshAccess()
         scheduler.enqueueLocationIndexing()
+        appScope.launch { locationIndexer.run() }
     }
 
     fun refreshAccess() {

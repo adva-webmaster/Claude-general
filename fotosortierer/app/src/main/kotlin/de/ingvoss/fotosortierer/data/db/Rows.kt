@@ -64,7 +64,7 @@ data class KnownRow(
 data class LocationJobRow(val uid: Long, val volume: String, val mediaStoreId: Long, val kind: Int)
 
 /** Fortschritt des Standort-Indexierens. */
-data class LocationProgressRow(val total: Int, val checked: Int)
+data class LocationProgressRow(val total: Int, val checked: Int, val withLocation: Int)
 
 /** Medium mit Position für das Clustering. */
 data class GeoPointRow(val id: Long, val lat: Double, val lon: Double)

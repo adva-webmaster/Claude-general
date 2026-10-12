@@ -140,6 +140,7 @@
     <string name="places_empty_title">Keine Orte</string>
     <string name="places_empty_message">Orte entstehen aus Fotos mit Standortdaten.</string>
     <string name="places_no_location_access">Für Orte braucht die App Zugriff auf die Standortdaten in deinen Fotos.</string>
+    <string name="places_location_stats">%1$d von %2$d Medien haben einen Standort (gelesen: %3$d)</string>
     <string name="places_allow_location">Standortzugriff erlauben</string>
     <string name="places_sort">Sortierung</string>
     <string name="places_sort_name">Name</string>

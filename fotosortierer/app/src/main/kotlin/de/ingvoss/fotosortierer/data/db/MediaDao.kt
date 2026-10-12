@@ -116,9 +116,9 @@ interface MediaDao {
 
     @Query(
         "SELECT uid, volume, mediaStoreId, kind FROM media_state " +
-            "WHERE locationChecked = 0 AND status != 4 ORDER BY uid LIMIT :limit"
+            "WHERE locationChecked = 0 AND status != 4 AND uid > :afterUid ORDER BY uid LIMIT :limit"
     )
-    suspend fun locationJobs(limit: Int): List<LocationJobRow>
+    suspend fun locationJobs(afterUid: Long, limit: Int): List<LocationJobRow>
 
     @Query("UPDATE media_state SET latitude = :lat, longitude = :lon, locationChecked = 1, clusterId = NULL WHERE uid = :uid")
     suspend fun setLocation(uid: Long, lat: Double, lon: Double)
@@ -126,7 +126,11 @@ interface MediaDao {
     @Query("UPDATE media_state SET locationChecked = 1 WHERE uid = :uid")
     suspend fun markLocationChecked(uid: Long)
 
-    @Query("SELECT COUNT(*) AS total, COALESCE(SUM(locationChecked), 0) AS checked FROM media_state WHERE status != 4")
+    @Query(
+        "SELECT COUNT(*) AS total, COALESCE(SUM(locationChecked), 0) AS checked, " +
+            "COALESCE(SUM(CASE WHEN latitude IS NOT NULL THEN 1 ELSE 0 END), 0) AS withLocation " +
+            "FROM media_state WHERE status != 4"
+    )
     fun observeLocationProgress(): Flow<LocationProgressRow>
 
     @Query(

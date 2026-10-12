@@ -11,7 +11,9 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
 
 /**
@@ -27,14 +29,23 @@ class LocationIndexer(
     private val placeBuilder: PlaceBuilder,
     private val onPlacesCreated: () -> Unit
 ) {
-    suspend fun run() {
+    /** Es läuft nie mehr als ein Durchgang gleichzeitig (Vordergrund und Worker können sich überschneiden). */
+    private val runLock = Mutex()
+
+    suspend fun run() = runLock.withLock { runLocked() }
+
+    private suspend fun runLocked() {
         if (MediaAccess.level(context) == AccessLevel.NONE || !MediaAccess.hasLocationAccess(context)) return
         val dao = db.mediaDao()
         val radius = settings.current().clusterRadiusMeters.toDouble()
         val limiter = Semaphore(PARALLEL_READS)
+        // Medien, deren Lesen fehlschlug, bleiben unmarkiert (nächster Durchgang versucht es erneut). Damit dieser
+        // Durchgang nicht endlos an ihnen hängt, wandert eine Position (uid) durch die Liste.
+        var afterUid = 0L
         while (true) {
-            val jobs = dao.locationJobs(BATCH)
+            val jobs = dao.locationJobs(afterUid, BATCH)
             if (jobs.isEmpty()) break
+            afterUid = jobs.last().uid
             val results = coroutineScope {
                 jobs.map { job ->
                     async(Dispatchers.IO) {
@@ -43,9 +54,13 @@ class LocationIndexer(
                 }.awaitAll()
             }
             db.withTransaction {
-                for ((job, position) in results) {
-                    if (position != null) dao.setLocation(job.uid, position.latitude, position.longitude)
-                    else dao.markLocationChecked(job.uid)
+                for ((job, result) in results) {
+                    when (result) {
+                        is LocationReader.Result.Found ->
+                            dao.setLocation(job.uid, result.position.latitude, result.position.longitude)
+                        LocationReader.Result.None -> dao.markLocationChecked(job.uid)
+                        LocationReader.Result.Failed -> Unit
+                    }
                 }
             }
             placeBuilder.assignPending(radius)
@@ -57,6 +72,6 @@ class LocationIndexer(
 
     private companion object {
         const val BATCH = 200
-        const val PARALLEL_READS = 4
+        const val PARALLEL_READS = 6
     }
 }
