@@ -23,6 +23,10 @@ interface MediaDao {
     @Query(MediaSql.Q_ALBUMS)
     fun observeAlbums(): Flow<List<GroupCountsRow>>
 
+    /** Ordner mit Zählern der sichtbaren Medien (ausgeblendete Ordner haben keine sichtbaren Medien). */
+    @Query(MediaSql.Q_FOLDERS)
+    fun observeFolders(): Flow<List<GroupCountsRow>>
+
     @Query(MediaSql.Q_TRASH_BYTES)
     fun observeTrashBytes(): Flow<Long>
 

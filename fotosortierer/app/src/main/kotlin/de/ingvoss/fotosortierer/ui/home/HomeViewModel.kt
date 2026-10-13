@@ -3,6 +3,7 @@ package de.ingvoss.fotosortierer.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.ingvoss.fotosortierer.AppContainer
+import de.ingvoss.fotosortierer.core.FolderEntry
 import de.ingvoss.fotosortierer.core.MediaFilter
 import de.ingvoss.fotosortierer.core.QueuePhase
 import de.ingvoss.fotosortierer.core.StatusCounts
@@ -38,6 +39,11 @@ data class HomeUi(
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModel(private val container: AppContainer) : ViewModel() {
     private val dao = container.database.mediaDao()
+
+    /** Favorisierte Ordner mit Zählern für die Schnellwahl auf der Startseite. */
+    val favorites: StateFlow<List<FolderEntry>> = container.folders.overview
+        .map { it.favorites }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val state: StateFlow<HomeUi> = combine(
         combine(dao.observeOverall(), dao.observeTrashBytes(), dao.observeFreedBytes()) { overall, trash, freed ->

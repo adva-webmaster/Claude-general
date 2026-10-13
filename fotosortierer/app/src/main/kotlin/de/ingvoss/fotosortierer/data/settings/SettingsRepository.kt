@@ -30,6 +30,7 @@ class SettingsRepository(private val context: Context) {
         val VIDEOS = booleanPreferencesKey("show_videos")
         val SCREENSHOTS = booleanPreferencesKey("show_screenshots")
         val EXCLUDED_ALBUMS = stringSetPreferencesKey("excluded_albums")
+        val FAVORITE_ALBUMS = stringSetPreferencesKey("favorite_albums")
         val THEME = stringPreferencesKey("theme_mode")
         val HAPTICS = booleanPreferencesKey("haptics")
         val VIDEO_SOUND = booleanPreferencesKey("video_sound_default")
@@ -52,6 +53,7 @@ class SettingsRepository(private val context: Context) {
             showVideos = this[Keys.VIDEOS] ?: defaults.showVideos,
             showScreenshots = this[Keys.SCREENSHOTS] ?: defaults.showScreenshots,
             excludedAlbums = this[Keys.EXCLUDED_ALBUMS] ?: defaults.excludedAlbums,
+            favoriteAlbums = this[Keys.FAVORITE_ALBUMS] ?: defaults.favoriteAlbums,
             themeMode = this[Keys.THEME]?.let { name -> ThemeMode.entries.firstOrNull { it.name == name } }
                 ?: defaults.themeMode,
             haptics = this[Keys.HAPTICS] ?: defaults.haptics,
@@ -88,6 +90,18 @@ class SettingsRepository(private val context: Context) {
     suspend fun setShowVideos(value: Boolean) = edit { it[Keys.VIDEOS] = value }
     suspend fun setShowScreenshots(value: Boolean) = edit { it[Keys.SCREENSHOTS] = value }
     suspend fun setExcludedAlbums(albums: Set<String>) = edit { it[Keys.EXCLUDED_ALBUMS] = albums }
+
+    suspend fun setAlbumFavorite(name: String, favorite: Boolean) = edit { prefs ->
+        val current = prefs[Keys.FAVORITE_ALBUMS].orEmpty()
+        prefs[Keys.FAVORITE_ALBUMS] = if (favorite) current + name else current - name
+    }
+
+    /** Blendet einen Ordner aus bzw. wieder ein; ein ausgeblendeter Ordner ist kein Favorit mehr. */
+    suspend fun setAlbumHidden(name: String, hidden: Boolean) = edit { prefs ->
+        val excluded = prefs[Keys.EXCLUDED_ALBUMS].orEmpty()
+        prefs[Keys.EXCLUDED_ALBUMS] = if (hidden) excluded + name else excluded - name
+        if (hidden) prefs[Keys.FAVORITE_ALBUMS] = prefs[Keys.FAVORITE_ALBUMS].orEmpty() - name
+    }
     suspend fun setThemeMode(mode: ThemeMode) = edit { it[Keys.THEME] = mode.name }
     suspend fun setHaptics(value: Boolean) = edit { it[Keys.HAPTICS] = value }
     suspend fun setVideoSoundDefault(value: Boolean) = edit { it[Keys.VIDEO_SOUND] = value }
@@ -106,6 +120,7 @@ class SettingsRepository(private val context: Context) {
             it[Keys.VIDEOS] = value.showVideos
             it[Keys.SCREENSHOTS] = value.showScreenshots
             it[Keys.EXCLUDED_ALBUMS] = value.excludedAlbums
+            it[Keys.FAVORITE_ALBUMS] = value.favoriteAlbums
             it[Keys.THEME] = value.themeMode.name
             it[Keys.HAPTICS] = value.haptics
             it[Keys.VIDEO_SOUND] = value.videoSoundDefault

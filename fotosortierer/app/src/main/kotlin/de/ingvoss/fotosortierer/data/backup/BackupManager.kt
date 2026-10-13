@@ -132,6 +132,9 @@ class BackupManager(
         json.name("excludedAlbums").beginArray()
         s.excludedAlbums.forEach { json.value(it) }
         json.endArray()
+        json.name("favoriteAlbums").beginArray()
+        s.favoriteAlbums.forEach { json.value(it) }
+        json.endArray()
         json.name("theme").value(s.themeMode.name)
         json.name("haptics").value(s.haptics)
         json.name("videoSound").value(s.videoSoundDefault)
@@ -161,6 +164,13 @@ class BackupManager(
                     while (json.hasNext()) albums.add(json.nextString())
                     json.endArray()
                     s = s.copy(excludedAlbums = albums)
+                }
+                "favoriteAlbums" -> {
+                    val albums = LinkedHashSet<String>()
+                    json.beginArray()
+                    while (json.hasNext()) albums.add(json.nextString())
+                    json.endArray()
+                    s = s.copy(favoriteAlbums = albums)
                 }
                 "theme" -> {
                     val name = json.nextString()

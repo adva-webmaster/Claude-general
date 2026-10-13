@@ -115,6 +115,10 @@ object MediaSql {
             "COALESCE(SUM(CASE WHEN status = 4 THEN 1 ELSE 0 END), 0) AS geloescht " +
             "FROM media_state WHERE status != 4 GROUP BY album ORDER BY album COLLATE NOCASE"
 
+    /** Ordner (Alben) mit Zählern – nur sichtbare Medien; ausgeblendete Ordner kommen aus [Q_ALBUMS]. */
+    const val Q_FOLDERS =
+        "SELECT album AS groupKey, $COUNT_COLUMNS FROM media_state WHERE hidden = 0 GROUP BY album"
+
     /** Summe der Dateigrößen aller Medien im App-Papierkorb. */
     const val Q_TRASH_BYTES =
         "SELECT COALESCE(SUM(sizeBytes), 0) FROM media_state WHERE status = 2 AND hidden = 0"

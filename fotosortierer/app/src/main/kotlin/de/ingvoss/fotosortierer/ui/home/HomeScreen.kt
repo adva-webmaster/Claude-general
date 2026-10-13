@@ -22,10 +22,12 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
@@ -35,9 +37,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.ingvoss.fotosortierer.R
+import de.ingvoss.fotosortierer.core.FolderEntry
 import de.ingvoss.fotosortierer.core.Formats
 import de.ingvoss.fotosortierer.core.MediaFilter
 import de.ingvoss.fotosortierer.core.MediaStatus
@@ -57,10 +61,13 @@ import de.ingvoss.fotosortierer.ui.theme.brandGradient
 fun HomeScreen(
     onContinue: (MediaFilter, Boolean) -> Unit,
     onOpenOnboarding: () -> Unit,
-    onOpenFilter: (MediaFilter) -> Unit
+    onOpenFilter: (MediaFilter) -> Unit,
+    onOpenFolders: () -> Unit,
+    onOpenSettings: () -> Unit
 ) {
     val viewModel = containerViewModel { HomeViewModel(it) }
     val ui by viewModel.state.collectAsStateWithLifecycle()
+    val favorites by viewModel.favorites.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val labels = context.appContainer().labels
     val continueLabel by produceState(initialValue = "", ui.continueFilter) { value = labels.label(ui.continueFilter) }
@@ -70,11 +77,20 @@ fun HomeScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Column(Modifier.widthIn(max = 640.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Text(
-                stringResource(R.string.app_name),
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground
-            )
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(R.string.app_name),
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                IconButton(onClick = onOpenSettings) {
+                    Icon(
+                        AppIcons.Settings,
+                        contentDescription = stringResource(R.string.nav_settings),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
 
             when (ui.access) {
                 AccessLevel.NONE -> AccessCard(
@@ -103,6 +119,11 @@ fun HomeScreen(
                     open = ui.continueCounts.open,
                     hasSession = ui.session != null,
                     onContinue = { onContinue(ui.continueFilter, ui.session != null) }
+                )
+                FoldersCard(
+                    favorites = favorites,
+                    onOpenFolder = { onOpenFilter(MediaFilter(album = it.name)) },
+                    onOpenFolders = onOpenFolders
                 )
                 StatsCard(ui, onOpenFilter)
             }
@@ -159,6 +180,54 @@ private fun ContinueCard(label: String, open: Int, hasSession: Boolean, onContin
         }
     }
 }
+
+/** Schnellwahl: Favoriten-Ordner (mit offenen Medien) oder ein Weg zur Ordnerliste. */
+@Composable
+private fun FoldersCard(favorites: List<FolderEntry>, onOpenFolder: (FolderEntry) -> Unit, onOpenFolders: () -> Unit) {
+    Card {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                stringResource(if (favorites.isEmpty()) R.string.folders_home_title else R.string.folders_home_favorites),
+                style = MaterialTheme.typography.titleMedium
+            )
+            if (favorites.isEmpty()) {
+                Text(
+                    stringResource(R.string.folders_home_empty),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            favorites.take(MAX_HOME_FAVORITES).forEach { entry ->
+                Row(
+                    Modifier.fillMaxWidth().clickable(onClick = { onOpenFolder(entry) }).padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Icon(AppIcons.StarFilled, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                    Text(
+                        entry.name,
+                        style = MaterialTheme.typography.bodyLarge,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        if (entry.counts.open > 0) stringResource(R.string.folders_open_count, entry.counts.open)
+                        else stringResource(R.string.folders_all_done),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Icon(AppIcons.Chevron, contentDescription = null, modifier = Modifier.size(18.dp))
+                }
+            }
+            TextButton(onClick = onOpenFolders) {
+                Text(stringResource(if (favorites.isEmpty()) R.string.folders_home_choose else R.string.folders_home_all))
+            }
+        }
+    }
+}
+
+private const val MAX_HOME_FAVORITES = 4
 
 @Composable
 private fun StatsCard(ui: HomeUi, onOpenFilter: (MediaFilter) -> Unit) {

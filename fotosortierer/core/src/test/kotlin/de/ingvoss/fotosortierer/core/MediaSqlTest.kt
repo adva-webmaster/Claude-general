@@ -182,6 +182,18 @@ class MediaSqlTest {
     }
 
     @Test
+    fun ordnerListeZaehltNurSichtbareMedien() {
+        seed()
+        insert(Row(9, "2026-03-20", album = "Screenshots", hidden = true))
+        insert(Row(10, "2026-03-21", MediaStatus.BEHALTEN, album = "WhatsApp"))
+        val rows = query(MediaSql.Q_FOLDERS, emptyList()).associateBy { it["groupKey"] }
+        assertEquals(setOf("Camera", "WhatsApp"), rows.keys) // "Screenshots" hat nur ausgeblendete Medien
+        // Camera: ids 1-7 sichtbar (inkl. Tombstone id 7), id 8 ausgeblendet
+        assertEquals(StatusCounts(unbearbeitet = 2, behalten = 2, papierkorb = 1, zurueckgestellt = 1, geloescht = 1), rows.getValue("Camera").counts())
+        assertEquals(StatusCounts(behalten = 1), rows.getValue("WhatsApp").counts())
+    }
+
+    @Test
     fun filterKombinationenUndSortierung() {
         seed()
         val tag = query(MediaSql.list(MediaFilter(localDate = "2026-03-12")))

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="PluralsCandidate">
-    <string name="app_name">Fotosortierer</string>
+    <string name="app_name">PixelSweeper</string>
 
     <!-- Allgemeine Aktionen -->
     <string name="action_apply">Übernehmen</string>
@@ -32,9 +32,36 @@
     <string name="nav_home">Start</string>
     <string name="nav_calendar">Kalender</string>
     <string name="nav_places">Orte</string>
+    <string name="nav_folders">Ordner</string>
     <string name="nav_trash">Papierkorb</string>
     <string name="nav_settings">Einstellungen</string>
-    <string name="nav_settings_short">Optionen</string>
+
+    <!-- Ordner -->
+    <string name="folders_hint">Ordner lange antippen: als Favorit markieren oder ausblenden.</string>
+    <string name="folders_search">Ordner suchen</string>
+    <string name="folders_search_clear">Suche löschen</string>
+    <string name="folders_section_favorites">Favoriten</string>
+    <string name="folders_section_others">Weitere Ordner</string>
+    <string name="folders_section_hidden">Ausgeblendet (%1$d)</string>
+    <string name="folders_empty_title">Noch keine Ordner</string>
+    <string name="folders_empty_message">Sobald Fotos oder Videos erfasst sind, erscheinen ihre Ordner hier.</string>
+    <string name="folders_no_match">Kein Ordner passt zur Suche.</string>
+    <string name="folders_menu_label">Optionen für diesen Ordner</string>
+    <string name="folders_favorite_add">Als Favorit markieren</string>
+    <string name="folders_favorite_remove">Favorit entfernen</string>
+    <string name="folders_hide">Ausblenden</string>
+    <string name="folders_unhide">Wieder einblenden</string>
+    <string name="folders_hidden_message">„%1$s“ ausgeblendet</string>
+    <string name="folders_unhidden_message">„%1$s“ wieder eingeblendet</string>
+    <string name="folders_is_favorite">Favorit</string>
+    <string name="folders_is_hidden">ausgeblendet</string>
+    <string name="folders_home_title">Ordner</string>
+    <string name="folders_home_favorites">Favoriten</string>
+    <string name="folders_home_empty">Einen Ordner gezielt aufräumen? Ordner lange antippen macht ihn zum Favoriten.</string>
+    <string name="folders_home_all">Alle Ordner</string>
+    <string name="folders_home_choose">Ordner wählen</string>
+    <string name="folders_open_count">%1$d offen</string>
+    <string name="folders_all_done">erledigt</string>
 
     <!-- Status und Zustände -->
     <string name="status_unprocessed">Unbearbeitet</string>
@@ -78,7 +105,7 @@
     </plurals>
 
     <!-- Einführung und Berechtigungen -->
-    <string name="onboarding_title">Willkommen beim Fotosortierer</string>
+    <string name="onboarding_title">Willkommen bei PixelSweeper</string>
     <string name="onboarding_intro">Sortiere deine Fotos und Videos schnell per Wischgeste: behalten, in den Papierkorb legen oder auf später verschieben.</string>
     <string name="onboarding_how">Nach links wischen behält ein Foto, nach rechts kommt es in den Papierkorb, nach oben wird es zurückgestellt. Alles geht auch über Schaltflächen, und jede Entscheidung lässt sich rückgängig machen.</string>
     <string name="onboarding_safety">Es wird nichts ohne deine ausdrückliche Bestätigung gelöscht: Der Papierkorb der App ist nur eine Markierung. Endgültig entfernt wird erst, nachdem Android selbst nachgefragt hat. Die App sammelt keine Daten und enthält keine Werbung oder Statistik.</string>
@@ -212,7 +239,7 @@
     <string name="settings_backup_hint">Die Sicherung ist eine JSON-Datei mit deinen Entscheidungen und Einstellungen. Beim Import werden Medien über Name, Aufnahmezeit und Größe zugeordnet.</string>
     <string name="settings_export_done">%1$d Entscheidungen gesichert</string>
     <string name="settings_import_done">%1$d Entscheidungen übernommen, %2$d nicht zuzuordnen</string>
-    <string name="settings_import_invalid">Das ist keine gültige Sicherung des Fotosortierers.</string>
+    <string name="settings_import_invalid">Das ist keine gültige PixelSweeper-Sicherung.</string>
     <string name="settings_io_error">Die Datei konnte nicht gelesen oder geschrieben werden.</string>
     <string name="settings_rebuild">Datenbank neu aufbauen</string>
     <string name="settings_rebuild_message">Standorte, Orte und Ortsnamen werden verworfen und neu gelesen, alle Medien neu abgeglichen. Deine Entscheidungen bleiben erhalten. Das kann bei vielen Fotos eine Weile dauern.</string>

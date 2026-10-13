@@ -221,6 +221,40 @@ object AppIcons {
         }
     }
 
+    private fun PathBuilder.star() {
+        moveTo(12f, 3f); lineTo(14.7f, 9f); lineTo(21.2f, 9.6f); lineTo(16.3f, 13.9f); lineTo(17.8f, 20.3f)
+        lineTo(12f, 17f); lineTo(6.2f, 20.3f); lineTo(7.7f, 13.9f); lineTo(2.8f, 9.6f); lineTo(9.3f, 9f); close()
+    }
+
+    private fun PathBuilder.eye() {
+        moveTo(2.5f, 12f)
+        curveTo(5f, 7.5f, 8.5f, 6f, 12f, 6f)
+        curveTo(15.5f, 6f, 19f, 7.5f, 21.5f, 12f)
+        curveTo(19f, 16.5f, 15.5f, 18f, 12f, 18f)
+        curveTo(8.5f, 18f, 5f, 16.5f, 2.5f, 12f)
+        close()
+        circle(12f, 12f, 3f)
+    }
+
+    val Star: ImageVector by lazy { icon("Star") { line { star() } } }
+
+    val StarFilled: ImageVector by lazy { icon("StarFilled") { solid { star() } } }
+
+    val Eye: ImageVector by lazy { icon("Eye") { line { eye() } } }
+
+    val EyeOff: ImageVector by lazy {
+        icon("EyeOff") { line { eye(); moveTo(4f, 4f); lineTo(20f, 20f) } }
+    }
+
+    val Folder: ImageVector by lazy {
+        icon("Folder") {
+            line {
+                moveTo(3f, 6f); lineTo(10f, 6f); lineTo(12f, 8.5f); lineTo(21f, 8.5f)
+                lineTo(21f, 19f); lineTo(3f, 19f); close()
+            }
+        }
+    }
+
     val Open: ImageVector by lazy {
         icon("Open") {
             line {

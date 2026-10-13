@@ -1,4 +1,4 @@
-# CLAUDE.md – Fotosortierer
+# CLAUDE.md – PixelSweeper (Ordner/Branch: fotosortierer)
 
 Native Android-App (Kotlin, Jetpack Compose, Material 3) zum schnellen Aussortieren von Fotos und
 Videos per Wischgesten (Vorbild: „Slidebox"). UI-Sprache Deutsch (Standardsprache `de`, alle Texte in
@@ -175,8 +175,13 @@ Namen/API, Room 2.8.5 ist die etablierte stabile Linie.
 - **Keine "eingefrorenen" Handler:** Handler, die den aktuellen Zustand brauchen (Aktionstasten der Sortieransicht,
   Reiterwechsel), lesen ihn über `rememberUpdatedState` – ein beim ersten Mal gemerktes Lambda bediente sonst die
   längst abgeflogene erste Karte (Tasten wirkten nur einmal).
-- **Navigation:** Untere Leiste (Start, Kalender, Orte, Papierkorb, Einstellungen), ab 600 dp Breite
-  `NavigationRail`. Sortieren, Detail und Einführung sind Vollbild.
+- **Navigation:** Untere Leiste (Start, Kalender, Orte, Ordner, Papierkorb), ab 600 dp Breite
+  `NavigationRail`. Sortieren, Detail, Einführung und Einstellungen (Zahnrad auf der Startseite) sind Vollbild.
+- **Ordner:** Ein Ordner ist das Album (`album` = Bucket-Name); gleichnamige Ordner verschiedener Speicher werden
+  zusammengefasst (bewusst einfach gehalten, kein voller Pfad). Favoriten (`favoriteAlbums`) und Ausblenden
+  (`excludedAlbums`, setzt `hidden`) liegen in den Einstellungen und im JSON-Export; Ausblenden entfernt den
+  Favoritenstatus. Reihenfolge/Suche/Aufbau der Liste: `core/FolderOrder` (getestet), Datenstrom: `FolderRepository`.
+  Langtipp-Menü per `combinedClickable` + `DropdownMenu` in `ui/folders/FoldersScreen.kt`.
 - **Design:** Markenfarben Dunkelrot (`BrandRed` #8E1B20 / hell #E4575C) und Anthrazit (#2B3035) stecken nur in den Material-Farbschemata (`ui/theme/Theme.kt`, auch Formen und Typografie). Die Statusfarben (Okabe–Ito) bleiben davon unberührt. Die Webseite des Nutzers war aus der Sandbox nicht erreichbar; exakte Hex-Werte lassen sich dort an einer Stelle tauschen.
 - **Karten-Kopfzeile:** Info-Leiste liegt als Überlagerung (`PlacesInfo`) über der Karte, damit sich die Kartenhöhe beim Bewegen nie ändert.
 - **Manifest:** `allowBackup=false` (Entscheidungen sichert der JSON-Export); von osmdroid mitgebrachte
@@ -196,7 +201,7 @@ Namen/API, Room 2.8.5 ist die etablierte stabile Linie.
 ## Verifikation
 
 Ausgeführt und grün:
-- `./gradlew -Dfoto.coreOnly=true :core:test` – **129 Tests** (Statusaggregation, Zeitzonen/Tagesgrenzen/
+- `./gradlew -Dfoto.coreOnly=true :core:test` – **145 Tests** (Statusaggregation, Zeitzonen/Tagesgrenzen/
   Fallback, Sync-Planung, Clustering inkl. Performance mit 60 000 Punkten, Bildschirm-Clustering, Undo-Stapel,
   ISO-6709, Wischgeometrie und -belegung, Zoom-Rechnung, Filter-Codec, Monatsraster, Formate, Ortsnamen,
   Medien-Klassifizierer, Sicherungs-Zuordnung, alle SQL-Aggregationen/Warteschlangen gegen echtes SQLite via

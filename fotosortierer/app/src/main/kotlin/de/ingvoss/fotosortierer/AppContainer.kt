@@ -9,6 +9,7 @@ import de.ingvoss.fotosortierer.data.backup.BackupManager
 import de.ingvoss.fotosortierer.data.db.AppDatabase
 import de.ingvoss.fotosortierer.data.media.AccessLevel
 import de.ingvoss.fotosortierer.data.media.FilterLabeler
+import de.ingvoss.fotosortierer.data.media.FolderRepository
 import de.ingvoss.fotosortierer.data.media.GeocodingService
 import de.ingvoss.fotosortierer.data.media.LocationIndexer
 import de.ingvoss.fotosortierer.data.media.LocationReader
@@ -39,7 +40,7 @@ class AppContainer(val app: Application) {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     /** Nominatim verlangt einen identifizierenden User-Agent; auch osmdroid benutzt ihn für Kacheln. */
-    val userAgent: String = "Fotosortierer/${BuildConfig.VERSION_NAME} (Android; ${BuildConfig.APPLICATION_ID})"
+    val userAgent: String = "PixelSweeper/${BuildConfig.VERSION_NAME} (Android; ${BuildConfig.APPLICATION_ID})"
 
     val database: AppDatabase = AppDatabase.create(app)
     val settings = SettingsRepository(app)
@@ -55,6 +56,7 @@ class AppContainer(val app: Application) {
     val placeNamer = PlaceNamer(database, GeocodingService(app, userAgent))
 
     val media = MediaRepository(database)
+    val folders = FolderRepository(database, settings)
     val trash = TrashRepository(database, app.contentResolver)
     val backup = BackupManager(database, settings, app.contentResolver)
     val labels = FilterLabeler(app, database)

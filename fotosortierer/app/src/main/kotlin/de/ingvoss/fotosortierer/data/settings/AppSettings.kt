@@ -15,6 +15,8 @@ data class AppSettings(
     val showVideos: Boolean = true,
     val showScreenshots: Boolean = true,
     val excludedAlbums: Set<String> = emptySet(),
+    /** Favorisierte Ordner (Albumnamen): stehen in der Ordnerliste und auf der Startseite oben. */
+    val favoriteAlbums: Set<String> = emptySet(),
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val haptics: Boolean = true,
     val videoSoundDefault: Boolean = false,

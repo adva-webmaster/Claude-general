@@ -1,4 +1,6 @@
-# Fotosortierer
+# PixelSweeper
+
+_(Ordnername und Branch heißen weiterhin „fotosortierer“.)_
 
 Android-App zum schnellen Aussortieren von Fotos und Videos per Wischgeste (Vorbild: „Slidebox“).
 Kotlin · Jetpack Compose · Material 3 · Room · WorkManager · osmdroid (OpenStreetMap). Oberfläche komplett
@@ -11,11 +13,11 @@ auf Deutsch. **Keine Werbung, keine Statistik, kein Tracking.**
 > | Prüfung | Ergebnis |
 > |---|---|
 > | `./gradlew assembleDebug` (Debug-APK) | ✅ erfolgreich |
-> | `./gradlew test` (Unit-Tests `:core` und `:app`) | ✅ erfolgreich (129 Tests im Kern) |
+> | `./gradlew test` (Unit-Tests `:core` und `:app`) | ✅ erfolgreich (145 Tests im Kern) |
 > | `./gradlew lint` | ✅ 0 Fehler, 2 Hinweise (Framework-ExifInterface, `allowBackup`) |
 > | Test auf einem echten Gerät, Compose-Wischtest (`connectedDebugAndroidTest`) | ❌ nicht ausgeführt |
 >
-> **APK herunterladen:** GitHub → Reiter **Actions** → „Fotosortierer – APK bauen“ → letzter grüner Lauf auf dem Branch
+> **APK herunterladen:** GitHub → Reiter **Actions** → „Fotosortierer – APK bauen“ (Name des Workflows) → letzter grüner Lauf auf dem Branch
 > `fotosortierer` → unten bei **Artifacts** `fotosortierer-debug-apk` (ZIP mit `app-debug.apk`). Dafür muss man bei GitHub angemeldet sein.
 > Den Bau kann man dort auch selbst per „Run workflow“ neu starten.
 >
@@ -44,6 +46,11 @@ auf Deutsch. **Keine Werbung, keine Statistik, kein Tracking.**
 - **Karte ↔ Kalender:** Ein Tipp auf einen Marker oder Cluster öffnet die Medien aller darin liegenden Orte
   (Sortieren, Ansehen, Kalender); gezoomt wird weiter per Geste. Für ein Jahr, einen Monat oder Tag lässt sich die Karte öffnen
   (nur Orte mit Medien aus diesem Zeitraum), und von einem Ort aus der Kalender (nur Medien dieses Ortes).
+- **Ordner:** Eigener Reiter mit allen Ordnern (Albumnamen aus dem MediaStore), Fortschritt je Ordner und Suchfeld
+  (ab 8 Ordnern). **Langes Antippen** öffnet ein Menü: *Als Favorit markieren* (Favoriten stehen ganz oben und als
+  Schnellwahl auf der Startseite), *Ausblenden* (mit „Rückgängig“; ausgeblendete Ordner stehen eingeklappt am Ende und
+  lassen sich dort wieder einblenden). Ein Tipp öffnet die Ordneransicht mit Sortieren, Ansehen und erneutem Sortieren.
+  Einstellungen erreicht man über das Symbol oben rechts auf der Startseite.
 - **Korrektur:** Raster mit Statusrahmen je Tag/Monat/Ort, Status ändern per Antippen oder Mehrfachauswahl
   (langer Druck), mit „Rückgängig“.
 - **App-Papierkorb:** nur eine Markierung. Endgültig gelöscht wird **ausschließlich** über
@@ -122,7 +129,7 @@ Teilzugriff nichts als extern gelöscht markiert.
 - Der Tagesbeginn ist Mitternacht in der Gerätezeitzone. Die Architektur kennt einen einstellbaren
   Tagesbeginn (`CaptureTime`), die Oberfläche dafür gibt es nicht.
 - Nominatim (OpenStreetMap) verlangt einen identifizierenden User-Agent; er lautet
-  `Fotosortierer/<Version> (Android; <Application-ID>)`. Wer die App weitergibt, sollte eine Kontaktadresse
+  `PixelSweeper/<Version> (Android; <Application-ID>)`. Wer die App weitergibt, sollte eine Kontaktadresse
   ergänzen (`AppContainer.userAgent`). Die Kachelnutzung der OSM-Server ist nur für interaktive Karten
   gedacht, nicht für Massen-Downloads.
 - Videos im Raster werden über Coils Video-Decoder dargestellt; bei sehr vielen Videos kann das Scrollen

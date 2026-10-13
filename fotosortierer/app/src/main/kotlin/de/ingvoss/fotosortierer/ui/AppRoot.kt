@@ -39,6 +39,7 @@ import de.ingvoss.fotosortierer.ui.calendar.CalendarDaysScreen
 import de.ingvoss.fotosortierer.ui.calendar.CalendarMonthsScreen
 import de.ingvoss.fotosortierer.ui.calendar.CalendarYearsScreen
 import de.ingvoss.fotosortierer.ui.detail.FilterDetailScreen
+import de.ingvoss.fotosortierer.ui.folders.FoldersScreen
 import de.ingvoss.fotosortierer.ui.home.HomeScreen
 import de.ingvoss.fotosortierer.ui.onboarding.OnboardingScreen
 import de.ingvoss.fotosortierer.ui.places.PlacesScreen
@@ -56,6 +57,7 @@ object Routes {
     const val YEAR = "calendar/{scope}/year/{year}"
     const val MONTH = "calendar/{scope}/month/{month}"
     const val PLACES = "places/{scope}"
+    const val FOLDERS = "folders"
     const val TRASH = "trash"
     const val SETTINGS = "settings"
     const val FILTER = "filter/{filter}"
@@ -76,25 +78,25 @@ private class TopLevel(val key: String, val target: String, val labelRes: Int, v
 private const val KEY_HOME = "home"
 private const val KEY_CALENDAR = "calendar"
 private const val KEY_PLACES = "places"
+private const val KEY_FOLDERS = "folders"
 private const val KEY_TRASH = "trash"
-private const val KEY_SETTINGS = "settings"
 
 private val topLevelDestinations = listOf(
     TopLevel(KEY_HOME, Routes.HOME, R.string.nav_home, AppIcons.Home),
     TopLevel(KEY_CALENDAR, Routes.calendar(MediaFilter.ALL), R.string.nav_calendar, AppIcons.Calendar),
     TopLevel(KEY_PLACES, Routes.places(MediaFilter.ALL), R.string.nav_places, AppIcons.Pin),
-    TopLevel(KEY_TRASH, Routes.TRASH, R.string.nav_trash, AppIcons.Trash),
-    TopLevel(KEY_SETTINGS, Routes.SETTINGS, R.string.nav_settings_short, AppIcons.Settings)
+    TopLevel(KEY_FOLDERS, Routes.FOLDERS, R.string.nav_folders, AppIcons.Folder),
+    TopLevel(KEY_TRASH, Routes.TRASH, R.string.nav_trash, AppIcons.Trash)
 )
 
-/** Welchem Hauptbereich gehört die aktuelle Route an? null = Vollbild (Onboarding, Sortieren, Detail). */
+/** Welchem Hauptbereich gehört die aktuelle Route an? null = Vollbild (Onboarding, Sortieren, Detail, Einstellungen). */
 private fun topLevelOf(route: String?): String? = when {
     route == null -> null
     route == Routes.HOME -> KEY_HOME
     route.startsWith("calendar") -> KEY_CALENDAR
     route.startsWith("places") -> KEY_PLACES
+    route == Routes.FOLDERS -> KEY_FOLDERS
     route == Routes.TRASH -> KEY_TRASH
-    route == Routes.SETTINGS -> KEY_SETTINGS
     else -> null
 }
 
@@ -202,7 +204,9 @@ private fun AppNavHost(
             HomeScreen(
                 onContinue = { filter, resume -> navController.navigate(Routes.sort(filter, resume)) },
                 onOpenOnboarding = { navController.navigate(Routes.ONBOARDING) },
-                onOpenFilter = { navController.navigate(Routes.filter(it)) }
+                onOpenFilter = { navController.navigate(Routes.filter(it)) },
+                onOpenFolders = { navigateTop(KEY_FOLDERS) },
+                onOpenSettings = { navController.navigate(Routes.SETTINGS) { launchSingleTop = true } }
             )
         }
         composable(Routes.CALENDAR, arguments = scopeArg) { backStack ->
@@ -281,8 +285,11 @@ private fun AppNavHost(
                 onOpenTrash = { navigateTop(KEY_TRASH) }
             )
         }
+        composable(Routes.FOLDERS) {
+            FoldersScreen(onOpenFolder = { navController.navigate(Routes.filter(it)) })
+        }
         composable(Routes.TRASH) { TrashScreen() }
-        composable(Routes.SETTINGS) { SettingsScreen() }
+        composable(Routes.SETTINGS) { SettingsScreen(onBack = { navController.popBackStack() }) }
     }
 }
 

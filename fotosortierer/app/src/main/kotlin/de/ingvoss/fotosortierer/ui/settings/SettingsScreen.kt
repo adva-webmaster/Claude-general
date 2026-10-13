@@ -58,7 +58,7 @@ import de.ingvoss.fotosortierer.ui.onboarding.openAppSettings
 import de.ingvoss.fotosortierer.ui.sort.actionLabel
 
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(onBack: () -> Unit) {
     val viewModel = containerViewModel { SettingsViewModel(it) }
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val albums by viewModel.albums.collectAsStateWithLifecycle()
@@ -79,7 +79,7 @@ fun SettingsScreen() {
     }
 
     Scaffold(
-        topBar = { AppTopBar(stringResource(R.string.nav_settings)) },
+        topBar = { AppTopBar(stringResource(R.string.nav_settings), onBack = onBack) },
         snackbarHost = { SnackbarHost(snackbar) }
     ) { padding ->
         Column(
