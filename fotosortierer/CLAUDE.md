@@ -9,6 +9,22 @@ Videos per Wischgesten (Vorbild: „Slidebox"). UI-Sprache Deutsch (Standardspra
 > In der ursprünglichen Entwicklungsumgebung war `dl.google.com` gesperrt, daher entstanden zusätzlich die
 > Hilfsmittel in `tools/` (Kompilier-Prüfstand, Room-SQL-Prüfung). Auf einem Gerät wurde die App noch nicht getestet.
 
+## Offene Punkte für die nächste Revision (gemeldet beim Test auf dem Handy, Version 1.1.0)
+
+1. **Tageszahlen im Kalender abgeschnitten:** In der Monatsansicht (`CalendarDaysScreen`/`DayCell`, Zellen mit
+   `aspectRatio(0.8f)`) wird die Medienanzahl unter dem Statusring unten abgeschnitten (sichtbar sind nur die oberen
+   Pixel der Ziffern). Ursache vermutlich: Zelle zu niedrig für Tageszahl + Ring (24 dp) + Zahl. Zelle höher machen
+   oder Zahl in den Ring/neben den Tag legen; mit großer Systemschrift gegenprüfen.
+2. **Medien ohne Vorschau:** Einige Fotos/Videos zeigen im Raster keine Vorschau (Coil-Ladefehler). Zu klären: Welche
+   Dateien? (Format wie HEIC/AVIF, beschädigt/0 Byte, nur in der Cloud, inzwischen gelöscht, aber noch in der
+   Datenbank?) → Fehlerzustand im Raster/auf der Karte sichtbar machen (Platzhalter-Symbol) statt leerer Fläche;
+   bei Videos Vorschau über `MediaMetadataRetriever`/Coil-Video prüfen.
+3. **Absturz bei „In anderer App öffnen“:** In `FilterDetailScreen` (Aktion `detail_open_external`) wird nur
+   `ActivityNotFoundException` abgefangen. Vermutlich derselbe Auslöser wie bei Punkt 2 (Datei nicht mehr lesbar):
+   `SecurityException`/anderer Fehler beim `startActivity` bzw. in der Ziel-App. → Alle Ausnahmen abfangen, vorher
+   prüfen, ob der URI noch lesbar ist, und sonst eine Meldung („Datei nicht mehr verfügbar“) zeigen; betroffene Medien
+   beim nächsten Abgleich bereinigen. Den echten Absturz-Text per `adb logcat` bzw. Play-Konsole nachziehen.
+
 ## Modulstruktur
 
 ```
