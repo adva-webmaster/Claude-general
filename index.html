@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marlons Spiele</title>
+<style>
+  :root { --bg: #0B0E2E; --card: #1b2150; --text: #ffffff; --accent: #ffd54a; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; padding: 24px 16px 40px;
+    background: radial-gradient(circle at 20% 10%, #243079 0%, var(--bg) 60%);
+    color: var(--text); font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  }
+  h1 { text-align: center; font-size: clamp(2rem, 6vw, 3.2rem); margin: 8px 0 4px; }
+  p.sub { text-align: center; margin: 0 0 28px; opacity: .85; font-size: 1.15rem; }
+  .grid { max-width: 920px; margin: 0 auto; display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  a.game {
+    display: block; padding: 22px 20px; border-radius: 22px; background: var(--card);
+    color: var(--text); text-decoration: none; border: 3px solid transparent;
+    transition: transform .12s, border-color .12s;
+  }
+  a.game:hover, a.game:focus-visible { transform: scale(1.03); border-color: var(--accent); outline: none; }
+  a.game .icon { font-size: 3.2rem; display: block; margin-bottom: 6px; }
+  a.game .name { font-size: 1.5rem; font-weight: 700; display: block; }
+  a.game .info { opacity: .8; font-size: 1rem; margin-top: 4px; display: block; }
+  footer { text-align: center; margin-top: 32px; opacity: .6; font-size: .9rem; }
+</style>
+</head>
+<body>
+  <h1>Marlons Spiele</h1>
+  <p class="sub">Such dir ein Spiel aus!</p>
+  <div class="grid">
+    <a class="game" href="marlons-sternenreise/marlons-sternenreise.html">
+      <span class="icon">🚀</span><span class="name">Sternenreise</span><span class="info">Weltraum · 30 Missionen</span>
+    </a>
+    <a class="game" href="schule/marlons-schultag.html">
+      <span class="icon">🎒</span><span class="name">Schultag</span><span class="info">Schule · 12 Missionen</span>
+    </a>
+    <a class="game" href="fahrzeuge/marlons-fahrzeugwelt.html">
+      <span class="icon">🚗</span><span class="name">Fahrzeugwelt</span><span class="info">Fahrzeuge · 12 Missionen</span>
+    </a>
+    <a class="game" href="tiere/marlons-tierwelt.html">
+      <span class="icon">🦊</span><span class="name">Tierwelt</span><span class="info">Tiere · 12 Missionen</span>
+    </a>
+    <a class="game" href="baustelle/marlons-baustelle.html">
+      <span class="icon">👷</span><span class="name">Baustelle</span><span class="info">Baustelle · 12 Missionen</span>
+    </a>
+  </div>
+  <footer>Lernspiele zum Üben von Maus und Tastatur – ohne Zeitdruck, ohne Verlieren.</footer>
+</body>
+</html>

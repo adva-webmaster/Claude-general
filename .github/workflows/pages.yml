@@ -1,0 +1,50 @@
+name: Marlons Spiele – GitHub Pages
+
+on:
+  push:
+    branches: [claude/marlons-sternenreise-game-v4g9y0]
+    paths:
+      - "index.html"
+      - "marlons-sternenreise/**"
+      - "schule/**"
+      - "fahrzeuge/**"
+      - "tiere/**"
+      - "baustelle/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Seite zusammenstellen
+        run: |
+          mkdir _site
+          cp index.html _site/
+          for d in marlons-sternenreise schule fahrzeuge tiere baustelle; do
+            mkdir -p "_site/$d"
+            cp "$d"/*.html "_site/$d/"
+          done
+          touch _site/.nojekyll
+          find _site -type f
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

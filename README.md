@@ -4,6 +4,8 @@ Lernspiele für Marlon zum Üben von Maus- und Tastaturbedienung – ohne
 Zeitdruck, ohne Verlieren, ohne Frustration. Jedes Spiel ist eine
 einzelne HTML-Datei, läuft komplett offline per Doppelklick.
 
+**Direkt im Browser spielen:** https://adva-webmaster.github.io/Claude-general/
+
 ## 🚀 [Marlons Sternenreise](./marlons-sternenreise/)
 Weltraum-Thema. 30 Missionen in 6 Welten.
 
