@@ -9,6 +9,18 @@ Videos per Wischgesten (Vorbild: „Slidebox"). UI-Sprache Deutsch (Standardspra
 > In der ursprünglichen Entwicklungsumgebung war `dl.google.com` gesperrt, daher entstanden zusätzlich die
 > Hilfsmittel in `tools/` (Kompilier-Prüfstand, Room-SQL-Prüfung). Auf einem Gerät wurde die App noch nicht getestet.
 
+## Neu in 1.5.1: Lizenzen und Versionshinweise
+
+- **Lizenzseite** (`ui/about/AboutScreens.kt`, Route `licenses`, erreichbar unter Einstellungen → Über die App): VLC-Engine
+  (libVLC, **LGPL 2.1**) mit Urheber, Hinweis „unverändert und als eigene Datei eingebunden“, Quellcode-Links, Angebot zum
+  Neuzusammenbauen auf Anfrage (adva-unlimited.de), Patenthinweis; weitere Bausteine (Apache 2.0, OSM/ODbL); Volltexte der LGPL 2.1
+  und Apache 2.0 als `res/raw/license_*.txt` (aus `/usr/share/common-licenses`, wörtlich), in der App einblendbar. Ausführlich: `NOTICE.md`.
+  **Bei neuen Bibliotheken `NOTICE.md` und die Seite ergänzen.** Rechtlich offen und vom Betreiber zu klären: die Zusage zum
+  Bereitstellen der Dateien einhalten; Patentfrage vor gewerblicher Verbreitung prüfen.
+- **Versionshinweise mit Verlauf:** Seite `releasenotes`; Texte in `res/values/release_notes.xml` (ein `string-array` je Version),
+  Liste `RELEASES` in `AboutScreens.kt` (neueste zuerst, aktuelle Version trägt ein Kennzeichen „installiert“); gespiegelt in
+  `CHANGELOG.md`. **Bei jeder neuen Version beides ergänzen** (und `versionName`/`versionCode` in `app/build.gradle.kts`).
+
 ## Neu in 1.5.0
 
 - **Laufbalken** (`VideoSeekBar`, `VideoControl` in `ui/sort/VideoControl.kt`): Zeit links/rechts, Tippen springt, Ziehen spult

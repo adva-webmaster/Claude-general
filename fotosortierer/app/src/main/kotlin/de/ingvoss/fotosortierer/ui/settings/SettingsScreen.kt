@@ -59,7 +59,7 @@ import de.ingvoss.fotosortierer.ui.onboarding.openAppSettings
 import de.ingvoss.fotosortierer.ui.sort.actionLabel
 
 @Composable
-fun SettingsScreen(onBack: () -> Unit) {
+fun SettingsScreen(onBack: () -> Unit, onOpenReleaseNotes: () -> Unit, onOpenLicenses: () -> Unit) {
     val viewModel = containerViewModel { SettingsViewModel(it) }
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val albums by viewModel.albums.collectAsStateWithLifecycle()
@@ -148,6 +148,13 @@ fun SettingsScreen(onBack: () -> Unit) {
 
                 Section(stringResource(R.string.settings_section_about))
                 Text(stringResource(R.string.settings_about_version, BuildConfig.VERSION_NAME), style = MaterialTheme.typography.bodyMedium)
+                OutlinedButton(onClick = onOpenReleaseNotes, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.settings_about_release_notes))
+                }
+                OutlinedButton(onClick = onOpenLicenses, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.settings_about_licenses))
+                }
+                Text(stringResource(R.string.settings_about_vlc), style = MaterialTheme.typography.bodySmall)
                 Text(stringResource(R.string.settings_about_privacy), style = MaterialTheme.typography.bodySmall)
                 Text(stringResource(R.string.settings_about_osm), style = MaterialTheme.typography.bodySmall)
             }

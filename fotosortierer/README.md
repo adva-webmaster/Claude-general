@@ -40,6 +40,8 @@ Neuinstallation wieder importieren.
   Endlosschleife (Tippen = Pause, Lautsprecher-Taste = Ton, Fortschrittsbalken).
 - **Videos:** Laufbalken wie bei jedem Player (Tippen oder Ziehen springt). Formate, die Android nicht darstellt
   (z. B. AVI mit Motion-JPEG), spielt automatisch der eingebaute VLC-Abspieler (libvlc); dadurch ist die APK größer.
+- **Über die App:** Versionshinweise mit Verlauf (`CHANGELOG.md`) und eine Lizenzseite mit Hinweisen zu VLC (LGPL 2.1) und den
+  übrigen Bausteinen (`NOTICE.md`).
 - **Reihenfolge:** zuerst Unbearbeitete (älteste zuerst, umschaltbar), danach auf Wunsch die Zurückgestellten.
   Zusammenfassung am Ende mit „Papierkorb jetzt leeren“ und „Zurückgestellte jetzt durchgehen“. Jede
   Entscheidung wird sofort gespeichert; nach einem Neustart geht es genau dort weiter.

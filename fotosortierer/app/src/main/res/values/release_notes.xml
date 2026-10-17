@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Versionshinweise, neueste zuerst. Bei jeder neuen Version hier und in ReleaseNotes.kt ergänzen. -->
+<resources>
+    <string-array name="notes_1_5_1">
+        <item>Neue Seite „Lizenzen und Hinweise“: VLC-Abspieler (LGPL 2.1) mit Quellen, weitere verwendete Bausteine und die Lizenztexte</item>
+        <item>Neue Seite „Versionshinweise“ mit dem Verlauf aller Versionen</item>
+    </string-array>
+    <string-array name="notes_1_5_0">
+        <item>Laufbalken in Videos: Tippen oder Ziehen springt an die gewünschte Stelle, mit Zeitangaben</item>
+        <item>AVI-Videos und andere Formate, die Android nicht darstellt, spielen jetzt mit Bild: ein eingebauter VLC-Abspieler springt automatisch ein</item>
+        <item>Statt einer leeren Fläche zeigt die App ein Symbol, wenn eine Vorschau nicht lädt</item>
+        <item>Die App ist durch den VLC-Abspieler größer und läuft nur auf 64-Bit-Handys</item>
+    </string-array>
+    <string-array name="notes_1_4_0">
+        <item>Sicherung mit Auswahlseite: Entscheidungen, gelöschte Medien, Standorte mit Ortsnamen, Einstellungen und Ordner lassen sich beim Export und beim Import einzeln wählen</item>
+        <item>Gelöschte Medien werden mitgesichert und stellen „Gelöscht“ und „Freigegebener Speicher“ wieder her</item>
+        <item>„Standorte werden gelesen“ bleibt nicht mehr hängen: Wenige unlesbare Dateien gelten als ohne Standort</item>
+    </string-array>
+    <string-array name="notes_1_3_1">
+        <item>Feste Signatur: Neue Versionen lassen sich ab jetzt direkt über die installierte installieren (bei einem Konflikt einmalig vorher deinstallieren – Sicherung exportieren und danach importieren)</item>
+    </string-array>
+    <string-array name="notes_1_3_0">
+        <item>Verzeichnisbaum im Reiter „Ordner“: Ein beliebiges Verzeichnis samt allen Unterverzeichnissen zum Sortieren wählen, mit Suche</item>
+        <item>Die App heißt überall PixelSweeper (Texte, Sicherungsdatei, Download-Datei)</item>
+        <item>Die Datenbank speichert jetzt das Verzeichnis jedes Mediums; vorhandene Daten bleiben erhalten</item>
+    </string-array>
+    <string-array name="notes_1_2_0">
+        <item>Taste „Heute“ im Kalender; der heutige Tag und der aktuelle Monat sind markiert</item>
+        <item>Die Zahlen unter den Tagen im Kalender sind nicht mehr abgeschnitten</item>
+        <item>Auf anderem Weg gelöschte Fotos und Videos verschwinden beim Start aus der App und ihrer Datenbank</item>
+        <item>„In anderer App öffnen“ stürzt bei fehlenden Dateien nicht mehr ab</item>
+    </string-array>
+    <string-array name="notes_1_1_0">
+        <item>Neuer Reiter „Ordner“: Ordner lange antippen für Favorit oder Ausblenden; Favoriten als Schnellwahl auf der Startseite</item>
+        <item>Die Einstellungen erreichst du über das Zahnrad auf der Startseite</item>
+        <item>Neuer Name: PixelSweeper</item>
+    </string-array>
+    <string-array name="notes_1_0_0">
+        <item>Erste Version: Sortieren per Wischen (behalten, Papierkorb, zurückstellen) mit Rückgängig, Zoom und Videowiedergabe</item>
+        <item>Kalender (Jahr, Monat, Tag) und Orte mit OpenStreetMap-Karte, beide miteinander verknüpft</item>
+        <item>Korrektur-Raster, App-Papierkorb mit Löschbestätigung durch Android, erneutes Sortieren bereits entschiedener Medien</item>
+        <item>Sicherung und Wiederherstellung, Einstellungen, Orte aus GPS-Daten mit Ortsnamen</item>
+        <item>Design in Dunkelrot und Anthrazit; die Kopfzeile der Karte bleibt ruhig; die Sortier-Tasten reagieren bei jedem Foto</item>
+    </string-array>
+</resources>

@@ -35,6 +35,8 @@ import androidx.navigation.navArgument
 import de.ingvoss.fotosortierer.R
 import de.ingvoss.fotosortierer.core.FilterCodec
 import de.ingvoss.fotosortierer.core.MediaFilter
+import de.ingvoss.fotosortierer.ui.about.LicensesScreen
+import de.ingvoss.fotosortierer.ui.about.ReleaseNotesScreen
 import de.ingvoss.fotosortierer.ui.calendar.CalendarDaysScreen
 import de.ingvoss.fotosortierer.ui.calendar.CalendarMonthsScreen
 import de.ingvoss.fotosortierer.ui.calendar.CalendarYearsScreen
@@ -61,6 +63,8 @@ object Routes {
     const val FOLDERS = "folders"
     const val TRASH = "trash"
     const val SETTINGS = "settings"
+    const val RELEASE_NOTES = "releasenotes"
+    const val LICENSES = "licenses"
     const val FILTER = "filter/{filter}"
     const val SORT = "sort/{filter}/{resume}"
 
@@ -300,7 +304,15 @@ private fun AppNavHost(
             FoldersScreen(onOpenFolder = { navController.navigate(Routes.filter(it)) })
         }
         composable(Routes.TRASH) { TrashScreen() }
-        composable(Routes.SETTINGS) { SettingsScreen(onBack = { navController.popBackStack() }) }
+        composable(Routes.SETTINGS) {
+            SettingsScreen(
+                onBack = { navController.popBackStack() },
+                onOpenReleaseNotes = { navController.navigate(Routes.RELEASE_NOTES) },
+                onOpenLicenses = { navController.navigate(Routes.LICENSES) }
+            )
+        }
+        composable(Routes.RELEASE_NOTES) { ReleaseNotesScreen(onBack = { navController.popBackStack() }) }
+        composable(Routes.LICENSES) { LicensesScreen(onBack = { navController.popBackStack() }) }
     }
 }
 
