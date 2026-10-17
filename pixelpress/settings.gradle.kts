@@ -46,7 +46,7 @@ dependencyResolutionManagement {
 rootProject.name = "pixelpress"
 // Plugins werden einmal im Wurzelprojekt deklariert (apply false), damit Kotlin/AGP/KSP nur in einem
 // Classloader geladen werden. Im Kern-Modus gibt es kein AGP, daher eine eigene Wurzel-Build-Datei.
-rootProject.buildFileName = if (coreOnly) "build-core.gradle.kts" else "build.gradle.kts"
+rootProject.buildFileName = if (coreOnly) "build-core.gradle.kts" else "build-root.gradle.kts"
 include(":core")
 if (!coreOnly) {
     include(":app")

@@ -26,19 +26,8 @@ jobs:
           echo "Gewählt: $PKG"
           test -n "$PKG"
           sdkmanager "$PKG" "build-tools;37.0.0" || sdkmanager "$PKG"
-      - name: Versuch A (nur Kern-Modus)
-        continue-on-error: true
-        run: ./gradlew -Dpp.coreOnly=true :core:test --console=plain 2>&1 | tail -15
-      - name: Versuch B (help)
-        continue-on-error: true
-        run: ./gradlew help --console=plain 2>&1 | tail -15
-      - name: Versuch C (leere Wurzel-Build-Datei)
-        continue-on-error: true
-        run: |
-          cp build.gradle.kts /tmp/root.kts.bak
-          echo "// leer" > build.gradle.kts
-          ./gradlew help --console=plain 2>&1 | tail -15
-          cp /tmp/root.kts.bak build.gradle.kts
+      - name: Tests des Kerns
+        run: ./gradlew :core:test --console=plain
       - name: APK bauen
         run: ./gradlew assembleDebug --console=plain
       - name: Lint (nicht abbrechend)
