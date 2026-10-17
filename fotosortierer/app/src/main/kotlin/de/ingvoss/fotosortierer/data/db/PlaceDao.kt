@@ -50,4 +50,13 @@ interface PlaceDao {
 
     @Query("DELETE FROM geocode_cache")
     suspend fun clearCache()
+
+    @Query("SELECT * FROM geocode_cache")
+    suspend fun allCache(): List<GeocodeCacheEntity>
+
+    @Query("SELECT COUNT(*) FROM geocode_cache")
+    suspend fun cacheCount(): Int
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun putCaches(entries: List<GeocodeCacheEntity>)
 }

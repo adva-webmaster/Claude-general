@@ -13,7 +13,7 @@ auf Deutsch. **Keine Werbung, keine Statistik, kein Tracking.**
 > | Prüfung | Ergebnis |
 > |---|---|
 > | `./gradlew assembleDebug` (Debug-APK) | ✅ erfolgreich |
-> | `./gradlew test` (Unit-Tests `:core` und `:app`) | ✅ erfolgreich (160 Tests im Kern) |
+> | `./gradlew test` (Unit-Tests `:core` und `:app`) | ✅ erfolgreich (168 Tests im Kern) |
 > | `./gradlew lint` | ✅ 0 Fehler, 2 Hinweise (Framework-ExifInterface, `allowBackup`) |
 > | Test auf einem echten Gerät, Compose-Wischtest (`connectedDebugAndroidTest`) | ❌ nicht ausgeführt |
 >
@@ -71,7 +71,7 @@ Neuinstallation wieder importieren.
   `MediaStore.createTrashRequest` nach der Systembestätigung von Android (Blöcke zu höchstens 500 Medien);
   erst danach wird ein Block als gelöscht markiert. Einmaliger Hinweis auf den 30-Tage-System-Papierkorb.
 - **Start/Statistik, Einstellungen** (Wischbelegung, Reihenfolge, Ortsradius, Medientypen, Alben ausschließen,
-  Hell/Dunkel/System, Haptik, Videoton, Infozeile), **JSON-Export/-Import** der Entscheidungen, **Datenbank
+  Hell/Dunkel/System, Haptik, Videoton, Infozeile), **JSON-Export/-Import** mit Auswahlseite (Schalter je Abschnitt: Entscheidungen, gelöschte Medien samt Statistik, Standorte mit Ortsnamen, Einstellungen, Ordner), **Datenbank
   neu aufbauen**.
 
 ## Voraussetzungen

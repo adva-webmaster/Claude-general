@@ -9,6 +9,21 @@ Videos per Wischgesten (Vorbild: „Slidebox"). UI-Sprache Deutsch (Standardspra
 > In der ursprünglichen Entwicklungsumgebung war `dl.google.com` gesperrt, daher entstanden zusätzlich die
 > Hilfsmittel in `tools/` (Kompilier-Prüfstand, Room-SQL-Prüfung). Auf einem Gerät wurde die App noch nicht getestet.
 
+## Neu in 1.4.0
+
+- **Standorte-Lesen hängt nicht mehr:** Medien, deren Position sich nicht lesen ließ (`LocationReader.Result.Failed`),
+  blieben ewig „ungeprüft“ (Anzeige „8583 von 8597“). Jetzt: zweiter Versuch im selben Durchgang; wenige (≤ 10 %,
+  `LocationRetryPolicy`) dauerhaft Unlesbare gelten als ohne Standort, viele (allgemeines Problem, z. B. Berechtigung)
+  bleiben offen für den nächsten Durchgang.
+- **Sicherung Format 2 mit wählbaren Abschnitten** (`BackupSection`): Entscheidungen, **gelöschte Medien** (Tombstones mit
+  Datum/Größe/Album/Pfad – stellen „gelöscht“ und „Speicher freigegeben“ wieder her), Standorte + Ortsnamen
+  (`geocode_cache`), Einstellungen, Ordner (Favoriten/ausgeblendet). Export und Import zeigen eine Seite mit Schaltern
+  (`BackupSectionsDialog`); beim Import ist nur wählbar, was die Datei enthält (`BackupManager.read` liest zuerst, `apply`
+  wendet danach an). Gelöschte werden als Tombstones im künstlichen Volume `restored` mit negativen IDs angelegt (keine
+  Kollision, der Abgleich fasst sie nie an); Duplikate (gleicher Name/Zeit/Größe) werden mengenweise übersprungen
+  (`BackupPlanner.planDeleted`). Entscheidungen/Positionen ordnen nur vorhandene Medien zu (Tombstones ausgenommen).
+  Format-1-Dateien (nur Entscheidungen + Einstellungen) bleiben importierbar. Der Import setzt `trashHintShown` nicht mehr zurück.
+
 ## 1.3.1: feste Debug-Signatur
 
 GitHub-Runner sind frische Maschinen: Ohne feste Signatur erzeugt jeder Bau einen neuen Debug-Schlüssel, und Android
@@ -199,7 +214,7 @@ Namen/API, Room 2.8.5 ist die etablierte stabile Linie.
   mehreren Orten.
 - **Löschen:** `TrashViewModel` fragt Block für Block (`createTrashRequest`, je Volume, ≤ 500); `RESULT_OK` →
   `GELOESCHT`, sonst Abbruch ohne Änderung. Einmaliger Hinweisdialog (`trashHintShown`).
-- **Sicherung (JSON):** nur BEHALTEN/PAPIERKORB/ZURUECKGESTELLT + Einstellungen; Zuordnung beim Import über
+- **Sicherung (JSON, Format 2):** Abschnitte wählbar (siehe „Neu in 1.4.0“); Zuordnung beim Import über
   (Name, Aufnahmezeit, Größe), bei Mehrdeutigkeit zusätzlich (Volume, ID) – `BackupPlanner` in `:core`.
 - **„Datenbank neu aufbauen“** verwirft Standorte/Orte/Ortsnamen und gleicht neu ab; Entscheidungen bleiben.
 - **Build-Dateien:** Plugins stehen mit `apply false` im Wurzel-`build.gradle.kts` (ein Classloader für Kotlin/
@@ -243,7 +258,7 @@ Namen/API, Room 2.8.5 ist die etablierte stabile Linie.
 ## Verifikation
 
 Ausgeführt und grün:
-- `./gradlew -Dfoto.coreOnly=true :core:test` – **160 Tests** (Statusaggregation, Zeitzonen/Tagesgrenzen/
+- `./gradlew -Dfoto.coreOnly=true :core:test` – **168 Tests** (Statusaggregation, Zeitzonen/Tagesgrenzen/
   Fallback, Sync-Planung, Clustering inkl. Performance mit 60 000 Punkten, Bildschirm-Clustering, Undo-Stapel,
   ISO-6709, Wischgeometrie und -belegung, Zoom-Rechnung, Filter-Codec, Monatsraster, Formate, Ortsnamen,
   Medien-Klassifizierer, Sicherungs-Zuordnung, alle SQL-Aggregationen/Warteschlangen gegen echtes SQLite via
@@ -252,7 +267,7 @@ Ausgeführt und grün:
   Android-Framework (API 37), Coil, osmdroid und Stubs für die nur auf Google Maven liegenden Bibliotheken.
   Das beweist Syntax, Typen und interne Konsistenz – nicht die Übereinstimmung der Stubs mit den echten
   Bibliotheken.
-- `tools/room-sql-check.py`: prüft alle 37 `@Query`-Texte der DAOs gegen echtes SQLite (gültiges SQL, Parameter
+- `tools/room-sql-check.py`: prüft alle 45 `@Query`-Texte der DAOs gegen echtes SQLite (gültiges SQL, Parameter
   ↔ Funktionsparameter, Ergebnisspalten ⊇ Konstruktorparameter der Ergebnisklasse) – Ersatz für die
   Compile-Zeit-Prüfung von Room.
 - XML-Ressourcen wohlgeformt; jede im Code verwendete `R.string`/`R.plurals` existiert.

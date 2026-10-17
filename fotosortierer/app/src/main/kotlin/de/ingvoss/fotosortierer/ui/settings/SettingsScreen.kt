@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.ingvoss.fotosortierer.BuildConfig
 import de.ingvoss.fotosortierer.R
+import de.ingvoss.fotosortierer.core.BackupSection
 import de.ingvoss.fotosortierer.core.SwipeAction
 import de.ingvoss.fotosortierer.core.SwipeDirection
 import de.ingvoss.fotosortierer.data.settings.AppSettings
@@ -71,11 +72,13 @@ fun SettingsScreen(onBack: () -> Unit) {
     LaunchedEffect(viewModel) {
         viewModel.messages.collect { snackbar.showSnackbar(resources.getString(it.resId, *it.args.toTypedArray())) }
     }
+    val exportSummary by viewModel.exportSummary.collectAsStateWithLifecycle()
+    val importData by viewModel.importData.collectAsStateWithLifecycle()
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) viewModel.export(uri)
     }
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) viewModel.import(uri)
+        if (uri != null) viewModel.readImport(uri)
     }
 
     Scaffold(
@@ -129,7 +132,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                 SwitchRow(stringResource(R.string.settings_info_line), settings.showInfoLine, viewModel::setInfoLine)
 
                 Section(stringResource(R.string.settings_section_data))
-                OutlinedButton(onClick = { exportLauncher.launch("pixelsweeper-sicherung.json") }, modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(onClick = { viewModel.prepareExport() }, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.settings_export))
                 }
                 OutlinedButton(onClick = { importLauncher.launch(arrayOf("*/*")) }, modifier = Modifier.fillMaxWidth()) {
@@ -159,6 +162,39 @@ fun SettingsScreen(onBack: () -> Unit) {
             onConfirm = { viewModel.setExcludedAlbums(it); albumDialog = false }
         )
     }
+    exportSummary?.let { summary ->
+        BackupSectionsDialog(
+            title = stringResource(R.string.backup_export_title),
+            confirmLabel = stringResource(R.string.backup_export_confirm),
+            rows = backupRows(
+                available = BackupSection.entries.toSet(),
+                decisions = summary.decisions,
+                deleted = summary.deleted,
+                locations = summary.locations,
+                placeNames = summary.placeNames
+            ),
+            onConfirm = { sections ->
+                viewModel.chooseExport(sections)
+                exportLauncher.launch("pixelsweeper-sicherung.json")
+            },
+            onDismiss = viewModel::cancelExport
+        )
+    }
+    importData?.let { data ->
+        BackupSectionsDialog(
+            title = stringResource(R.string.backup_import_title),
+            confirmLabel = stringResource(R.string.backup_import_confirm),
+            rows = backupRows(
+                available = data.sections,
+                decisions = data.decisions.size,
+                deleted = data.deleted.size,
+                locations = data.locations.size,
+                placeNames = data.placeNames.size
+            ),
+            onConfirm = viewModel::applyImport,
+            onDismiss = viewModel::cancelImport
+        )
+    }
     if (rebuildDialog) {
         ConfirmDialog(
             title = stringResource(R.string.settings_rebuild),
@@ -168,6 +204,96 @@ fun SettingsScreen(onBack: () -> Unit) {
             onDismiss = { rebuildDialog = false }
         )
     }
+}
+
+private class BackupRow(val section: BackupSection, val title: String, val subtitle: String, val available: Boolean)
+
+/** Zeilen der Auswahlseite für Export und Import; [available] = Abschnitte, die es gibt (beim Import: in der Datei). */
+@Composable
+private fun backupRows(
+    available: Set<BackupSection>,
+    decisions: Int,
+    deleted: Int,
+    locations: Int,
+    placeNames: Int
+): List<BackupRow> {
+    val missing = stringResource(R.string.backup_not_in_file)
+    fun subtitle(section: BackupSection, text: String) = if (section in available) text else missing
+    return listOf(
+        BackupRow(
+            BackupSection.DECISIONS, stringResource(R.string.backup_decisions),
+            subtitle(BackupSection.DECISIONS, stringResource(R.string.backup_decisions_info, decisions)),
+            BackupSection.DECISIONS in available
+        ),
+        BackupRow(
+            BackupSection.DELETED, stringResource(R.string.backup_deleted),
+            subtitle(BackupSection.DELETED, stringResource(R.string.backup_deleted_info, deleted)),
+            BackupSection.DELETED in available
+        ),
+        BackupRow(
+            BackupSection.LOCATIONS, stringResource(R.string.backup_locations),
+            subtitle(BackupSection.LOCATIONS, stringResource(R.string.backup_locations_info, locations, placeNames)),
+            BackupSection.LOCATIONS in available
+        ),
+        BackupRow(
+            BackupSection.SETTINGS, stringResource(R.string.backup_settings),
+            subtitle(BackupSection.SETTINGS, stringResource(R.string.backup_settings_info)),
+            BackupSection.SETTINGS in available
+        ),
+        BackupRow(
+            BackupSection.FOLDERS, stringResource(R.string.backup_folders),
+            subtitle(BackupSection.FOLDERS, stringResource(R.string.backup_folders_info)),
+            BackupSection.FOLDERS in available
+        )
+    )
+}
+
+/** Auswahlseite mit Schaltern: Was soll gesichert bzw. wiederhergestellt werden? */
+@Composable
+private fun BackupSectionsDialog(
+    title: String,
+    confirmLabel: String,
+    rows: List<BackupRow>,
+    onConfirm: (Set<BackupSection>) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var selected by remember { mutableStateOf(rows.filter { it.available }.map { it.section }.toSet()) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                rows.forEach { row ->
+                    val on = row.section in selected
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .toggleable(value = on, enabled = row.available, role = Role.Switch) { checked ->
+                                selected = if (checked) selected + row.section else selected - row.section
+                            }
+                            .padding(vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                row.title,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = if (row.available) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                row.subtitle,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(checked = on, onCheckedChange = null, enabled = row.available)
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = { onConfirm(selected) }, enabled = selected.isNotEmpty()) { Text(confirmLabel) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } }
+    )
 }
 
 @Composable

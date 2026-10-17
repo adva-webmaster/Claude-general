@@ -8,12 +8,18 @@ import de.ingvoss.fotosortierer.AppContainer
 import de.ingvoss.fotosortierer.R
 import de.ingvoss.fotosortierer.core.SwipeAction
 import de.ingvoss.fotosortierer.core.SwipeDirection
+import de.ingvoss.fotosortierer.core.BackupSection
+import de.ingvoss.fotosortierer.data.backup.BackupData
+import de.ingvoss.fotosortierer.data.backup.BackupSummary
+import de.ingvoss.fotosortierer.data.backup.ImportResult
 import de.ingvoss.fotosortierer.data.backup.InvalidBackupException
 import de.ingvoss.fotosortierer.data.db.GroupCountsRow
 import de.ingvoss.fotosortierer.data.settings.AppSettings
 import de.ingvoss.fotosortierer.data.settings.ThemeMode
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -80,10 +86,38 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         container.appScope.launch { repo.setShowInfoLine(value) }
     }
 
+    // ---- Sicherung: Auswahlseiten für Export und Import ---------------------------------------
+
+    private var pendingExport: Set<BackupSection> = emptySet()
+    private val _exportSummary = MutableStateFlow<BackupSummary?>(null)
+
+    /** Gesetzt, solange die Auswahlseite für den Export offen ist (mit den Anzahlen je Abschnitt). */
+    val exportSummary: StateFlow<BackupSummary?> = _exportSummary.asStateFlow()
+
+    private val _importData = MutableStateFlow<BackupData?>(null)
+
+    /** Gesetzt, solange die Auswahlseite für den Import offen ist (gelesene Datei). */
+    val importData: StateFlow<BackupData?> = _importData.asStateFlow()
+
+    fun prepareExport() {
+        viewModelScope.launch { _exportSummary.value = container.backup.summary() }
+    }
+
+    fun cancelExport() {
+        _exportSummary.value = null
+    }
+
+    /** Merkt die Auswahl; danach fragt die Oberfläche nach dem Zielort und ruft [export] auf. */
+    fun chooseExport(sections: Set<BackupSection>) {
+        pendingExport = sections
+        _exportSummary.value = null
+    }
+
     fun export(target: Uri) {
+        val sections = pendingExport
         container.appScope.launch {
             val message = try {
-                SettingsMessage(R.string.settings_export_done, listOf(container.backup.export(target)))
+                SettingsMessage(R.string.settings_export_done, listOf(container.backup.export(target, sections)))
             } catch (e: IOException) {
                 SettingsMessage(R.string.settings_io_error)
             }
@@ -91,19 +125,56 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
-    fun import(source: Uri) {
+    /** Liest die Datei und öffnet die Auswahlseite; verändert noch nichts. */
+    fun readImport(source: Uri) {
+        viewModelScope.launch {
+            try {
+                _importData.value = container.backup.read(source)
+            } catch (e: InvalidBackupException) {
+                _messages.send(SettingsMessage(R.string.settings_import_invalid))
+            } catch (e: IOException) {
+                _messages.send(SettingsMessage(R.string.settings_io_error))
+            }
+        }
+    }
+
+    fun cancelImport() {
+        _importData.value = null
+    }
+
+    fun applyImport(sections: Set<BackupSection>) {
+        val data = _importData.value ?: return
+        _importData.value = null
         container.appScope.launch {
             val message = try {
-                val result = container.backup.import(source)
+                val result = container.backup.apply(data, sections)
                 container.onVisibilitySettingsChanged()
-                container.onClusterRadiusChanged(repo.current().clusterRadiusMeters)
-                SettingsMessage(R.string.settings_import_done, listOf(result.applied, result.unmatched))
-            } catch (e: InvalidBackupException) {
-                SettingsMessage(R.string.settings_import_invalid)
+                if (BackupSection.LOCATIONS in sections || BackupSection.SETTINGS in sections) {
+                    container.onClusterRadiusChanged(repo.current().clusterRadiusMeters)
+                }
+                importMessage(result)
             } catch (e: IOException) {
                 SettingsMessage(R.string.settings_io_error)
             }
             _messages.send(message)
+        }
+    }
+
+    private fun importMessage(result: ImportResult): SettingsMessage {
+        val app = container.app
+        val parts = buildList {
+            if (result.decisionsApplied > 0 || result.decisionsUnmatched > 0) {
+                add(app.getString(R.string.backup_part_decisions, result.decisionsApplied, result.decisionsUnmatched))
+            }
+            if (result.deletedAdded > 0) add(app.getString(R.string.backup_part_deleted, result.deletedAdded))
+            if (result.locationsApplied > 0) add(app.getString(R.string.backup_part_locations, result.locationsApplied))
+            if (result.settingsApplied) add(app.getString(R.string.backup_part_settings))
+            if (result.foldersApplied) add(app.getString(R.string.backup_part_folders))
+        }
+        return if (parts.isEmpty()) {
+            SettingsMessage(R.string.settings_import_nothing)
+        } else {
+            SettingsMessage(R.string.settings_import_done, listOf(parts.joinToString(", ")))
         }
     }
 

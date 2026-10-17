@@ -82,6 +82,27 @@ interface MediaDao {
     @Query("UPDATE media_state SET status = :status, statusChangedAt = :at WHERE uid IN (:uids)")
     suspend fun setStatusFor(uids: List<Long>, status: Int, at: Long)
 
+    // ---- Sicherung --------------------------------------------------------------------------
+
+    @Query("SELECT * FROM media_state WHERE status = 4")
+    suspend fun deletedMedia(): List<MediaStateEntity>
+
+    @Query("SELECT * FROM media_state WHERE latitude IS NOT NULL AND status != 4")
+    suspend fun mediaWithLocation(): List<MediaStateEntity>
+
+    @Query("SELECT COUNT(*) FROM media_state WHERE status IN (1, 2, 3)")
+    suspend fun countDecisions(): Int
+
+    @Query("SELECT COUNT(*) FROM media_state WHERE status = 4")
+    suspend fun countDeleted(): Int
+
+    @Query("SELECT COUNT(*) FROM media_state WHERE latitude IS NOT NULL AND status != 4")
+    suspend fun countWithLocation(): Int
+
+    /** Kleinste vergebene ID eines Volumes (für künstliche, negative IDs wiederhergestellter Tombstones). */
+    @Query("SELECT COALESCE(MIN(mediaStoreId), 0) FROM media_state WHERE volume = :volume")
+    suspend fun minMediaStoreId(volume: String): Long
+
     /** Entfernt Medien endgültig aus der Datenbank (auf anderem Weg gelöschte Dateien). */
     @Query("DELETE FROM media_state WHERE uid IN (:uids)")
     suspend fun deleteByUids(uids: List<Long>)

@@ -203,4 +203,62 @@ class BackupPlannerTest {
         val plan = BackupPlanner.plan(listOf(item(1, "x.jpg", 1, 1, MediaStatus.BEHALTEN)), emptyList())
         assertEquals(1, plan.unmatched)
     }
+
+    private fun deleted(id: Long, name: String, taken: Long, size: Long) = BackupDeleted(
+        "external_primary", id, name, "Camera", "DCIM/Camera/", MediaKind.FOTO, taken, "2026-03-01", "2026-03", size, 0, 99
+    )
+
+    private fun knownWithStatus(uid: Long, name: String, taken: Long, size: Long, status: MediaStatus) = KnownMedia(
+        uid, "external_primary", uid, status, MediaKind.FOTO, name, "Camera", size, 0, taken, "2026-03-01", "2026-03"
+    )
+
+    @Test
+    fun geloeschteWerdenAngelegtWennSieNichtExistieren() {
+        val plan = BackupPlanner.planDeleted(listOf(deleted(1, "a.jpg", 1000, 10), deleted(2, "b.jpg", 2000, 20)), emptyList())
+        assertEquals(2, plan.toInsert.size)
+        assertEquals(0, plan.alreadyKnown)
+    }
+
+    @Test
+    fun geloeschteDieEsSchonGibtWerdenNichtDoppeltAngelegt() {
+        val known = listOf(
+            knownWithStatus(1, "a.jpg", 1000, 10, MediaStatus.GELOESCHT), // bereits Tombstone
+            knownWithStatus(2, "b.jpg", 2000, 20, MediaStatus.UNBEARBEITET) // inzwischen wieder da (z. B. aus System-Papierkorb)
+        )
+        val plan = BackupPlanner.planDeleted(
+            listOf(deleted(1, "a.jpg", 1000, 10), deleted(2, "b.jpg", 2000, 20), deleted(3, "c.jpg", 3000, 30)),
+            known
+        )
+        assertEquals(listOf("c.jpg"), plan.toInsert.map { it.displayName })
+        assertEquals(2, plan.alreadyKnown)
+    }
+
+    @Test
+    fun gleicheFingerabdruecke_zaehlenMengenweise() {
+        val known = listOf(knownWithStatus(1, "a.jpg", 1000, 10, MediaStatus.GELOESCHT))
+        val plan = BackupPlanner.planDeleted(listOf(deleted(1, "a.jpg", 1000, 10), deleted(2, "a.jpg", 1000, 10)), known)
+        assertEquals(1, plan.toInsert.size)
+        assertEquals(1, plan.alreadyKnown)
+    }
+
+    @Test
+    fun positionenWerdenWieEntscheidungenZugeordnet() {
+        val known = listOf(known(7, 555, "a.jpg", 1000, 10), known(8, 556, "b.jpg", 2000, 20))
+        val plan = BackupPlanner.planLocations(
+            listOf(
+                BackupLocation("external_primary", 1, "a.jpg", 1000, 10, 54.3, 10.1),
+                BackupLocation("external_primary", 2, "x.jpg", 9, 9, 1.0, 2.0)
+            ),
+            known
+        )
+        assertEquals(listOf(LocationMatch(7, 54.3, 10.1)), plan.matches)
+        assertEquals(1, plan.unmatched)
+    }
+
+    @Test
+    fun abschnittsschluesselSindEindeutigUndUmkehrbar() {
+        assertEquals(BackupSection.entries.size, BackupSection.entries.map { it.key }.toSet().size)
+        for (section in BackupSection.entries) assertEquals(section, BackupSection.fromKey(section.key))
+        assertEquals(null, BackupSection.fromKey("gibtsnicht"))
+    }
 }

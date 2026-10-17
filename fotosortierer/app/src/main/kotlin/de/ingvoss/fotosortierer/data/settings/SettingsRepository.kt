@@ -108,6 +108,26 @@ class SettingsRepository(private val context: Context) {
     suspend fun setShowInfoLine(value: Boolean) = edit { it[Keys.INFO_LINE] = value }
     suspend fun setTrashHintShown() = edit { it[Keys.TRASH_HINT] = true }
 
+    /**
+     * Übernimmt importierte Einstellungen teilweise: [general] = alles außer den Ordnerlisten, [folders] = Favoriten und
+     * ausgeblendete Ordner. Was nicht gewählt ist (und der Hinweis-Merker für den Papierkorb), bleibt unverändert.
+     */
+    suspend fun applyImported(imported: AppSettings, general: Boolean, folders: Boolean) {
+        val base = current()
+        var merged = base
+        if (general) {
+            merged = imported.copy(
+                favoriteAlbums = base.favoriteAlbums,
+                excludedAlbums = base.excludedAlbums,
+                trashHintShown = base.trashHintShown
+            )
+        }
+        if (folders) {
+            merged = merged.copy(favoriteAlbums = imported.favoriteAlbums, excludedAlbums = imported.excludedAlbums)
+        }
+        replaceAll(merged)
+    }
+
     /** Überschreibt alle Einstellungen (Import). */
     suspend fun replaceAll(value: AppSettings) {
         context.settingsStore.edit {
