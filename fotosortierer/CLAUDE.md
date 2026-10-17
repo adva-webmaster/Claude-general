@@ -9,6 +9,15 @@ Videos per Wischgesten (Vorbild: „Slidebox"). UI-Sprache Deutsch (Standardspra
 > In der ursprünglichen Entwicklungsumgebung war `dl.google.com` gesperrt, daher entstanden zusätzlich die
 > Hilfsmittel in `tools/` (Kompilier-Prüfstand, Room-SQL-Prüfung). Auf einem Gerät wurde die App noch nicht getestet.
 
+## 1.3.1: feste Debug-Signatur
+
+GitHub-Runner sind frische Maschinen: Ohne feste Signatur erzeugt jeder Bau einen neuen Debug-Schlüssel, und Android
+meldet beim Update „Konflikt mit der bestehenden App“. Darum liegt `app/debug.keystore` (Standard-Debug-Zugangsdaten
+`android`/`androiddebugkey`, absichtlich eingecheckt) im Repository und ist in `app/build.gradle.kts` als
+`signingConfigs.debug` eingetragen. Einmalig nötig: Versionen mit anderer Signatur (alle bis 1.3.0) vorher deinstallieren
+(Entscheidungen vorher per Einstellungen → Sicherung exportieren sichern). Für Play später einen eigenen Upload-Schlüssel
+verwenden, nicht diesen.
+
 ## Neu in 1.3.0
 
 - **Verzeichnisbaum:** Spalte `media_state.relativePath` (MediaStore `RELATIVE_PATH`, normalisiert wie `Pictures/Urlaub/`;

@@ -20,9 +20,20 @@ android {
         applicationId = appId
         minSdk = 30
         targetSdk = 37
-        versionCode = 4
-        versionName = "1.3.0"
+        versionCode = 5
+        versionName = "1.3.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        // Feste Debug-Signatur (liegt bewusst im Repository; ein Debug-Schlüssel ist nicht geheim). Sonst erzeugt jeder
+        // GitHub-Bau einen neuen Zufallsschlüssel, und Android lehnt Updates ab ("Konflikt mit vorhandener App").
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
     }
 
     buildTypes {

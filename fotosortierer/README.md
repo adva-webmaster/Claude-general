@@ -24,6 +24,13 @@ auf Deutsch. **Keine Werbung, keine Statistik, kein Tracking.**
 > Die App wurde noch nicht auf einem Gerät ausprobiert – Fehler im Zusammenspiel (z. B. Berechtigungsdialog, Karte,
 > Löschen) sind möglich. Hilfsmittel aus der Entwicklung ohne Android-SDK (`tools/`) bleiben als Zusatzprüfung erhalten.
 
+## Installieren und Aktualisieren
+
+Die Debug-APK ist ab Version 1.3.1 mit einem festen Schlüssel signiert und lässt sich ab dann ohne Deinstallation
+aktualisieren. Frühere Versionen (bis 1.3.0) waren bei jedem Bau anders signiert: Wer sie installiert hat, muss
+**einmalig deinstallieren** – vorher unter *Einstellungen → Sicherung exportieren* die Entscheidungen sichern und nach der
+Neuinstallation wieder importieren.
+
 ## Funktionen
 
 - **Sortieren per Wischen:** Karte nach links = *Behalten*, rechts = *Papierkorb*, oben = *Zurückstellen*
