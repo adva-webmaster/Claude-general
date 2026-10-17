@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="release_notes_1_0_0">
+        <item>Erste Version: AVI- und MOV-Videos eines Verzeichnisses (auf Wunsch samt Unterverzeichnissen) in MP4 umwandeln, die MP4 liegt neben dem Original</item>
+        <item>Nur umpacken, wenn möglich (H.264/H.265): schnell und ohne Qualitätsverlust; sonst Neuberechnung mit wählbarer Qualität</item>
+        <item>Plausibilitätsprüfung nach jeder Umwandlung (Dateigröße und Länge); geprüfte Originale lassen sich nach dem Durchlauf löschen</item>
+        <item>Läuft im Hintergrund mit Benachrichtigung und Abbrechen-Taste</item>
+    </string-array>
+</resources>

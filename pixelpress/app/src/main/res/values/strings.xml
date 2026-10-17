@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PixelPress</string>
+
+    <string name="action_info">Info</string>
+    <string name="action_back">Zurück</string>
+    <string name="action_cancel">Abbrechen</string>
+    <string name="action_start">Umwandeln starten (%1$d)</string>
+
+    <string name="access_title">Zugriff auf alle Dateien nötig</string>
+    <string name="access_message">PixelPress liest die AVI- und MOV-Dateien in deinem Verzeichnis direkt, legt die MP4 daneben und löscht auf Wunsch das Original. Dafür braucht die App „Zugriff auf alle Dateien“. Es öffnet sich die Einstellungsseite; schalte dort den Zugriff für PixelPress ein und komm zurück.</string>
+    <string name="access_button">Zugriff erlauben</string>
+
+    <string name="directory_title">Verzeichnis</string>
+    <string name="directory_none">Noch keins gewählt</string>
+    <string name="directory_choose">Verzeichnis wählen</string>
+    <string name="directory_scanning">Suche läuft …</string>
+    <string name="directory_found">%1$d Dateien gefunden (%2$s), davon %3$d schon umgewandelt</string>
+    <string name="error_directory_unsupported">Dieses Verzeichnis lässt sich nicht verwenden. Bitte einen Ordner auf dem Telefon oder der SD-Karte wählen.</string>
+
+    <string name="options_title">Einstellungen</string>
+    <string name="option_recursive">Unterverzeichnisse einbeziehen</string>
+    <string name="option_skip_existing">Vorhandene MP4 überspringen</string>
+    <string name="option_skip_existing_info">Liegt neben dem Original schon eine MP4 gleichen Namens, wird es nicht noch einmal umgewandelt.</string>
+    <string name="option_copy">Wenn möglich nur umpacken</string>
+    <string name="option_copy_info">Enthält die Datei schon H.264- oder H.265-Video, wird nur der Container gewechselt: sehr schnell und ohne Qualitätsverlust. Sonst wird neu berechnet.</string>
+    <string name="option_quality">Qualität bei Neuberechnung</string>
+    <string name="quality_fast">Schnell</string>
+    <string name="quality_balanced">Ausgewogen</string>
+    <string name="quality_high">Hoch</string>
+    <string name="option_delete">Originale nach dem Durchlauf löschen</string>
+    <string name="option_delete_info">Nur bei Dateien, deren MP4 die Prüfung bestanden hat (Größe im erwartbaren Bereich, gleiche Länge). Vorher fragt die App noch einmal nach.</string>
+
+    <string name="list_selected">%1$d von %2$d ausgewählt</string>
+    <string name="list_select_all">Alle</string>
+    <string name="list_select_none">Keine</string>
+
+    <string name="state_waiting">%1$s · wartet</string>
+    <string name="state_percent">%1$d %%</string>
+    <string name="mode_copy">umpacken</string>
+    <string name="mode_transcode">umwandeln</string>
+    <string name="state_done">%1$s → %2$s (%3$d %%) · geprüft</string>
+    <string name="state_original_deleted">Original gelöscht</string>
+    <string name="state_failed">Fehler: %1$s</string>
+    <string name="state_cancelled">abgebrochen</string>
+    <string name="item_skipped_exists">übersprungen: MP4 gibt es schon</string>
+
+    <string name="item_error_missing">Die Datei gibt es nicht mehr.</string>
+    <string name="item_error_no_video">Keine Videospur gefunden (Datei beschädigt?).</string>
+    <string name="item_error_output_exists">Die Zieldatei gibt es schon; nichts überschrieben.</string>
+    <string name="item_error_rename">Die fertige MP4 ließ sich nicht umbenennen.</string>
+    <string name="item_delete_unsafe">Original nicht gelöscht: Die MP4 fehlt oder hat sich verändert.</string>
+    <string name="item_delete_failed">Original ließ sich nicht löschen.</string>
+
+    <string name="reason_ok">in Ordnung</string>
+    <string name="reason_input_unreadable">Prüfung nicht bestanden: Original nicht lesbar. Die MP4 wurde verworfen.</string>
+    <string name="reason_output_missing">Prüfung nicht bestanden: Die MP4 ist leer. Sie wurde verworfen, das Original bleibt.</string>
+    <string name="reason_too_small">Prüfung nicht bestanden: Die MP4 ist auffallend klein. Sie wurde verworfen, das Original bleibt.</string>
+    <string name="reason_too_large">Prüfung nicht bestanden: Die MP4 ist auffallend groß. Sie wurde verworfen, das Original bleibt.</string>
+    <string name="reason_duration">Prüfung nicht bestanden: Die Länge weicht ab. Die MP4 wurde verworfen, das Original bleibt.</string>
+
+    <string name="summary_title">Durchlauf beendet</string>
+    <string name="summary_counts">%1$d umgewandelt und geprüft, %2$d mit Fehler, %3$d abgebrochen</string>
+    <string name="summary_deleted">%1$d Originale gelöscht</string>
+    <string name="summary_delete_button">%1$d Originale löschen (%2$s)</string>
+
+    <string name="delete_title">Originale löschen?</string>
+    <string name="delete_message">%1$d Originale (%2$s) sind sicher umgewandelt und geprüft. Jetzt löschen? Das lässt sich nicht rückgängig machen.</string>
+    <string name="delete_confirm">Löschen</string>
+    <string name="delete_keep">Behalten</string>
+
+    <string name="bar_preparing">Wird vorbereitet … (beim ersten Mal dauert das einen Moment)</string>
+    <string name="bar_progress">Datei %1$d von %2$d</string>
+
+    <string name="error_ffmpeg_missing">Die Umwandlungsprogramme fehlen. PixelPress läuft nur auf 64-Bit-Handys (arm64).</string>
+    <string name="error_ffmpeg_unpack">Die Umwandlungsprogramme ließen sich nicht entpacken: %1$s</string>
+
+    <string name="notification_channel">Umwandeln</string>
+    <string name="notification_preparing">Wird vorbereitet …</string>
+    <string name="notification_progress">%1$d von %2$d umgewandelt</string>
+
+    <string name="info_title">Info</string>
+    <string name="info_version">Version %1$s</string>
+    <string name="info_intro">PixelPress wandelt AVI- und MOV-Videos in MP4 um und legt die neue Datei neben das Original. Ohne Werbung und ohne Tracking; alles passiert auf deinem Telefon.</string>
+    <string name="info_notes_title">Versionshinweise</string>
+    <string name="info_license_title">Lizenzen und Hinweise</string>
+    <string name="info_license_text">Zum Umwandeln benutzt PixelPress FFmpeg 7.1 (mit x264, x265, LAME und weiteren Bibliotheken), als eigenes Programm aus dem Paket des Projekts youtubedl-android (Bau aus dem Termux-Projekt). Dieses Paket steht unter der GNU General Public License, Version 3 (GPL v3); die Programme werden unverändert verwendet. Den Quellcode von FFmpeg, x264 und den übrigen Bestandteilen findest du über die Links unten. Es gibt keine Gewährleistung. Für Videoformate können Patente Dritter bestehen; die Nutzung erfolgt auf eigene Verantwortung.</string>
+    <string name="info_link_ffmpeg">FFmpeg (ffmpeg.org)</string>
+    <string name="info_link_x264">x264 (videolan.org)</string>
+    <string name="info_link_termux">Bauanleitung und Quellen (Termux)</string>
+    <string name="info_link_package">Paket (youtubedl-android)</string>
+    <string name="info_show_gpl">Lizenztext GPL v3 anzeigen</string>
+    <string name="info_hide_gpl">Lizenztext GPL v3 ausblenden</string>
+</resources>
