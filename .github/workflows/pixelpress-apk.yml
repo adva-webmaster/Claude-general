@@ -27,7 +27,9 @@ jobs:
           test -n "$PKG"
           sdkmanager "$PKG" "build-tools;37.0.0" || sdkmanager "$PKG"
       - name: Tests des Kerns
-        run: ./gradlew :core:test --console=plain --stacktrace
+        run: |
+          set -o pipefail
+          ./gradlew :core:test --console=plain --stacktrace 2>&1 | grep -vE '^\s+at (org\.gradle|java\.|jdk\.|kotlin\.)'
       - name: APK bauen
         run: ./gradlew assembleDebug --console=plain
       - name: Lint (nicht abbrechend)
