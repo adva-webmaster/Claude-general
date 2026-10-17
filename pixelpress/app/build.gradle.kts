@@ -86,7 +86,7 @@ dependencies {
 
     // Nur die Programmdateien (libffmpeg.so, libffprobe.so, libffmpeg.zip.so) werden gebraucht; der Java-Teil des Pakets
     // gehört zu youtubedl-android und wird nicht benutzt (daher ohne weitere Abhängigkeiten).
-    implementation(libs.ffmpeg.package) { isTransitive = false }
+    implementation(libs.ffmpeg.binaries) { isTransitive = false }
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 
