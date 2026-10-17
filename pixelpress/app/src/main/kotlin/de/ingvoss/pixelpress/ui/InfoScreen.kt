@@ -61,10 +61,16 @@ fun InfoScreen(onBack: () -> Unit) {
             }
             item {
                 InfoCard(stringResource(R.string.info_notes_title)) {
-                    resources.getStringArray(R.array.release_notes_1_0_0).forEach { note ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("•")
-                            Text(note, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                    listOf(
+                        "1.0.1" to R.array.release_notes_1_0_1,
+                        "1.0.0" to R.array.release_notes_1_0_0
+                    ).forEach { (version, notes) ->
+                        Text(version, style = MaterialTheme.typography.titleSmall)
+                        resources.getStringArray(notes).forEach { note ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("•")
+                                Text(note, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                            }
                         }
                     }
                 }

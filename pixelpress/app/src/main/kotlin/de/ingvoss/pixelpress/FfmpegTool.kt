@@ -13,17 +13,30 @@ sealed interface ConvertResult {
     data class Failed(val message: String) : ConvertResult
 }
 
+class ProbeResult(val info: StreamInfo, val error: String?)
+
 /** Aufrufe von ffprobe (Codecs, Dauer) und ffmpeg (Umwandeln mit Fortschritt). */
 class FfmpegTool(private val runtime: FfmpegRuntime) {
 
-    /** Codecs und Dauer einer Datei; bei Fehlern leere Angaben. */
-    suspend fun probe(path: String): StreamInfo {
+    /** Codecs und Dauer einer Datei. Scheitert ffprobe, steht der Grund in [ProbeResult.error]. */
+    suspend fun probe(path: String): ProbeResult {
         val text = StringBuilder()
+        val errors = ArrayDeque<String>()
         return try {
-            val code = runtime.run(runtime.ffprobe, FfmpegCommand.probeArgs(path), { text.appendLine(it) }, { })
-            if (code == 0) ProbeParser.parse(text.toString()) else StreamInfo(null, null, null)
+            val code = runtime.run(runtime.ffprobe, FfmpegCommand.probeArgs(path), { text.appendLine(it) }) { line ->
+                synchronized(errors) {
+                    errors.addLast(line)
+                    if (errors.size > 3) errors.removeFirst()
+                }
+            }
+            if (code == 0) {
+                ProbeResult(ProbeParser.parse(text.toString()), null)
+            } else {
+                val reason = synchronized(errors) { errors.joinToString(" ") }.takeLast(240)
+                ProbeResult(StreamInfo(null, null, null), "Code $code: $reason")
+            }
         } catch (e: IOException) {
-            StreamInfo(null, null, null)
+            ProbeResult(StreamInfo(null, null, null), e.message ?: e.javaClass.simpleName)
         }
     }
 

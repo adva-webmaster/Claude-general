@@ -8,6 +8,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.zip.ZipFile
@@ -28,34 +29,50 @@ class FfmpegRuntime(private val context: Context) {
     /** Entpackt die Bibliotheken, falls noch nicht geschehen. Liefert null bei Erfolg, sonst einen Fehlertext. */
     suspend fun prepare(): String? = withContext(Dispatchers.IO) {
         val zip = File(nativeDir, "libffmpeg.zip.so")
-        if (!zip.exists() || !ffmpeg.exists() || !ffprobe.exists()) {
+        val extraZip = File(nativeDir, "libpython.zip.so")
+        if (!zip.exists() || !extraZip.exists() || !ffmpeg.exists() || !ffprobe.exists()) {
             return@withContext context.getString(R.string.error_ffmpeg_missing)
         }
         val marker = File(rootDir, "ready")
-        val stamp = "${zip.length()}-${zip.lastModified()}"
-        if (marker.exists() && marker.readText() == stamp && libDir.isDirectory) return@withContext null
-        try {
-            rootDir.deleteRecursively()
-            libDir.mkdirs()
-            unpack(zip)
-            marker.writeText(stamp)
-            null
-        } catch (e: Exception) {
-            if (e is CancellationException) throw e
-            Log.w(TAG, "Entpacken fehlgeschlagen", e)
-            rootDir.deleteRecursively()
-            context.getString(R.string.error_ffmpeg_unpack, e.message ?: e.javaClass.simpleName)
+        val stamp = "2-${zip.length()}-${zip.lastModified()}-${extraZip.length()}-${extraZip.lastModified()}"
+        if (!(marker.exists() && marker.readText() == stamp && libDir.isDirectory)) {
+            try {
+                rootDir.deleteRecursively()
+                libDir.mkdirs()
+                unpack(zip, null)
+                unpack(extraZip, EXTRA_LIBS)
+                marker.writeText(stamp)
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                Log.w(TAG, "Entpacken fehlgeschlagen", e)
+                rootDir.deleteRecursively()
+                return@withContext context.getString(R.string.error_ffmpeg_unpack, e.message ?: e.javaClass.simpleName)
+            }
+        }
+        selfTest()
+    }
+
+    /** Startet ffprobe einmal mit `-version`. Liefert null bei Erfolg, sonst den Fehlertext (z. B. "library not found"). */
+    private suspend fun selfTest(): String? {
+        val lines = ArrayList<String>()
+        return try {
+            val code = run(ffprobe, listOf("-version"), { lines += it }, { lines += it })
+            if (code == 0) null else context.getString(R.string.error_ffmpeg_start, "Code $code: " + lines.takeLast(4).joinToString(" "))
+        } catch (e: IOException) {
+            context.getString(R.string.error_ffmpeg_start, e.message ?: e.javaClass.simpleName)
         }
     }
 
     /**
-     * Entpackt alle Bibliotheken (`*.so*`). Verknüpfungen (z. B. `libavcodec.so.61` → `libavcodec.so.61.19.101`) liegen im ZIP
+     * Entpackt Bibliotheken (`*.so*`), bei [only] nur die mit diesen Dateinamen. Verknüpfungen (z. B. `libavcodec.so.61` → `libavcodec.so.61.19.101`) liegen im ZIP
      * als kurze Textdatei mit dem Zielnamen; sie werden als echte symbolische Verknüpfungen angelegt.
      */
-    private fun unpack(zipFile: File) {
+    private fun unpack(zipFile: File, only: Set<String>?) {
         val base = rootDir.canonicalFile
         ZipFile(zipFile).use { zip ->
-            val entries = zip.entries().asSequence().filter { !it.isDirectory && it.name.contains(".so") }.toList()
+            val entries = zip.entries().asSequence()
+                .filter { !it.isDirectory && it.name.contains(".so") && (only == null || it.name.substringAfterLast('/') in only) }
+                .toList()
             val names = entries.map { it.name }.toSet()
             val links = ArrayList<Pair<File, String>>()
             for (entry in entries) {
@@ -106,6 +123,12 @@ class FfmpegRuntime(private val context: Context) {
     private companion object {
         const val TAG = "FfmpegRuntime"
         const val MAX_LINK_TEXT = 200L
+
+        /** Aus dem Python-Paket nötig: FFmpegs Bibliotheken (x265, ssh, unistring, fontconfig) hängen von diesen fünf ab. */
+        val EXTRA_LIBS = setOf(
+            "libc++_shared.so", "libcrypto.so.3", "libandroid-support.so", "libandroid-posix-semaphore.so",
+            "libexpat.so.1", "libexpat.so.1.11.1"
+        )
         val LINK_TARGET = Regex("[A-Za-z0-9._+-]+")
     }
 }

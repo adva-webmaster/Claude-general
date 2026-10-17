@@ -46,6 +46,7 @@
     <string name="item_skipped_exists">übersprungen: MP4 gibt es schon</string>
 
     <string name="item_error_missing">Die Datei gibt es nicht mehr.</string>
+    <string name="item_error_probe">Die Datei ließ sich nicht untersuchen (%1$s).</string>
     <string name="item_error_no_video">Keine Videospur gefunden (Datei beschädigt?).</string>
     <string name="item_error_output_exists">Die Zieldatei gibt es schon; nichts überschrieben.</string>
     <string name="item_error_rename">Die fertige MP4 ließ sich nicht umbenennen.</string>
@@ -73,6 +74,7 @@
     <string name="bar_progress">Datei %1$d von %2$d</string>
 
     <string name="error_ffmpeg_missing">Die Umwandlungsprogramme fehlen. PixelPress läuft nur auf 64-Bit-Handys (arm64).</string>
+    <string name="error_ffmpeg_start">Die Umwandlungsprogramme starten nicht: %1$s</string>
     <string name="error_ffmpeg_unpack">Die Umwandlungsprogramme ließen sich nicht entpacken: %1$s</string>
 
     <string name="notification_channel">Umwandeln</string>

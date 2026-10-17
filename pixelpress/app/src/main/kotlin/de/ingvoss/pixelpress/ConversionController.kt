@@ -144,7 +144,12 @@ class ConversionController(private val app: Application) {
                 updateItem(index) { it.copy(state = ItemState.FAILED, message = app.getString(R.string.item_error_missing)) }
                 return
             }
-            val info = tool.probe(source.path)
+            val probe = tool.probe(source.path)
+            val info = probe.info
+            if (probe.error != null) {
+                updateItem(index) { it.copy(state = ItemState.FAILED, message = app.getString(R.string.item_error_probe, probe.error)) }
+                return
+            }
             if (info.videoCodec == null) {
                 updateItem(index) { it.copy(state = ItemState.FAILED, message = app.getString(R.string.item_error_no_video)) }
                 return
@@ -183,7 +188,7 @@ class ConversionController(private val app: Application) {
             }
             if (result is ConvertResult.Failed) return Outcome(false, mode, null, result.message, 0)
             val outputBytes = part.length()
-            val outInfo = tool.probe(part.path)
+            val outInfo = tool.probe(part.path).info
             val inputBytes = File(source.path).length()
             val verdict = Plausibility.check(mode, inputBytes, outputBytes, info.durationMs, outInfo.durationMs)
             if (!verdict.ok) return Outcome(false, mode, verdict, reasonText(verdict), outputBytes)

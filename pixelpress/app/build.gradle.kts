@@ -18,8 +18,8 @@ android {
         applicationId = appId
         minSdk = 30
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.0.1"
         // Das FFmpeg-Paket bringt Programme für alle Prozessorarten mit (~140 MB). Heutige Handys sind arm64.
         ndk { abiFilters += "arm64-v8a" }
     }
@@ -87,6 +87,9 @@ dependencies {
     // Nur die Programmdateien (libffmpeg.so, libffprobe.so, libffmpeg.zip.so) werden gebraucht; der Java-Teil des Pakets
     // gehört zu youtubedl-android und wird nicht benutzt (daher ohne weitere Abhängigkeiten).
     implementation(libs.ffmpeg.binaries) { isTransitive = false }
+    // Die FFmpeg-Bibliotheken brauchen fünf weitere Bibliotheken (libc++_shared, libcrypto, libexpat, libandroid-support,
+    // libandroid-posix-semaphore), die im Python-Paket desselben Projekts liegen. Nur diese fünf werden benutzt.
+    implementation(libs.ytdl.python) { isTransitive = false }
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 
