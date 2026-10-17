@@ -21,7 +21,10 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.size.Size as CoilSize
 import de.ingvoss.fotosortierer.data.db.MediaStateEntity
+import de.ingvoss.fotosortierer.ui.appContainer
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * Bild (oder Video-Standbild) eines Mediums. Coil lädt auf die Größe des Layouts herunterskaliert; nur beim
@@ -36,6 +39,8 @@ fun MediaImage(
     contentDescription: String? = media.displayName
 ) {
     val context = LocalContext.current
+    val container = context.appContainer()
+    val reported = remember(media.uid) { AtomicBoolean(false) }
     val request = remember(media.uid, highRes) {
         ImageRequest.Builder(context)
             .data(media.contentUri())
@@ -46,7 +51,13 @@ fun MediaImage(
         model = request,
         contentDescription = contentDescription,
         modifier = modifier,
-        contentScale = contentScale
+        contentScale = contentScale,
+        // Lädt die Vorschau nicht, fehlt vielleicht die Datei (auf anderem Weg gelöscht): dann aus der Datenbank entfernen.
+        onError = {
+            if (reported.compareAndSet(false, true)) {
+                container.appScope.launch { container.mediaCleaner.purgeIfMissing(media.uid) }
+            }
+        }
     )
 }
 

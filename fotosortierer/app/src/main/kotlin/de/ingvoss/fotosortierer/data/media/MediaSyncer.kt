@@ -4,7 +4,9 @@ import android.content.Context
 import android.util.Log
 import androidx.room.withTransaction
 import de.ingvoss.fotosortierer.core.KnownMedia
+import de.ingvoss.fotosortierer.core.MediaKey
 import de.ingvoss.fotosortierer.core.MediaKind
+import de.ingvoss.fotosortierer.core.MissingFileGuard
 import de.ingvoss.fotosortierer.core.MediaStatus
 import de.ingvoss.fotosortierer.core.ScannedMedia
 import de.ingvoss.fotosortierer.core.SyncPlanner
@@ -26,8 +28,9 @@ import java.time.ZoneId
  * Gleicht den MediaStore mit der Datenbank ab:
  *  - neue Medien → UNBEARBEITET (ein neues Medium in einem erledigten Tag macht den Tag automatisch
  *    wieder "teilweise", weil Tagesstatus aus den Medien abgeleitet wird),
- *  - verschwundene Medien → Tombstone (GELOESCHT), außer ihr Volume ist gerade nicht eingehängt oder
- *    der Zugriff ist nur teilweise,
+ *  - auf anderem Weg gelöschte Medien (nicht mehr im MediaStore, oder Datei fehlt trotz Eintrag) → Zeile wird
+ *    aus der Datenbank entfernt, außer ihr Volume ist gerade nicht eingehängt oder der Zugriff ist nur teilweise.
+ *    Nur von der App selbst gelöschte Medien bleiben als Tombstone (GELOESCHT) in der Statistik,
  *  - geänderte Metadaten → aktualisieren, wiederaufgetauchte Tombstones → UNBEARBEITET.
  * Es läuft immer höchstens ein Abgleich gleichzeitig.
  */
@@ -42,12 +45,19 @@ class MediaSyncer(
     private val _state = MutableStateFlow(SyncState())
     val state: StateFlow<SyncState> = _state
 
-    /** @return true, wenn ein Abgleich stattgefunden hat (false bei fehlendem Zugriff oder Fehler). */
-    suspend fun sync(): Boolean = mutex.withLock {
-        withContext(Dispatchers.IO) { doSync() }
+    @Volatile
+    private var lastVerifiedAt = 0L
+
+    /**
+     * @param verifyFiles zusätzlich prüfen, ob die Dateien der gelisteten Medien noch existieren (nur bei vollem
+     *   Zugriff und höchstens alle [VERIFY_INTERVAL_MS]).
+     * @return true, wenn ein Abgleich stattgefunden hat (false bei fehlendem Zugriff oder Fehler).
+     */
+    suspend fun sync(verifyFiles: Boolean = false): Boolean = mutex.withLock {
+        withContext(Dispatchers.IO) { doSync(verifyFiles) }
     }
 
-    private suspend fun doSync(): Boolean {
+    private suspend fun doSync(verifyFiles: Boolean): Boolean {
         val access = MediaAccess.level(context)
         if (access == AccessLevel.NONE) return false
         _state.update { it.copy(running = true, scanned = 0, lastError = null) }
@@ -62,10 +72,22 @@ class MediaSyncer(
             val dao = db.mediaDao()
             val known = dao.allKnown().map { it.toKnown() }
             // Bei Teilzugriff fehlen nicht ausgewählte Medien im Scan – sie dürfen nicht als gelöscht gelten.
-            val tombstoneVolumes = if (access == AccessLevel.FULL) volumes else emptySet()
-            val plan = SyncPlanner.plan(known, scanned, tombstoneVolumes)
+            val goneVolumes = if (access == AccessLevel.FULL) volumes else emptySet()
             val current = settings.current()
             val now = System.currentTimeMillis()
+            val missingFiles = HashSet<MediaKey>()
+            if (verifyFiles && access == AccessLevel.FULL && now - lastVerifiedAt > VERIFY_INTERVAL_MS) {
+                for (volume in volumes) {
+                    val check = scanner.checkFiles(volume)
+                    if (MissingFileGuard.trusted(check.checked, check.missing.size)) {
+                        missingFiles += check.missing
+                    } else {
+                        Log.w(TAG, "Dateiprüfung ${volume}: ${check.missing.size} von ${check.checked} fehlen – ignoriert")
+                    }
+                }
+                lastVerifiedAt = now
+            }
+            val plan = SyncPlanner.plan(known, scanned, goneVolumes, missingFiles)
             db.withTransaction {
                 for (chunk in plan.inserts.chunked(INSERT_CHUNK)) {
                     dao.insertAll(chunk.map { it.toEntity(current) })
@@ -85,9 +107,10 @@ class MediaSyncer(
                     )
                     dao.setStatus(r.uid, MediaStatus.UNBEARBEITET.code, now)
                 }
-                for (chunk in plan.tombstones.map { it.uid }.chunked(UID_CHUNK)) {
-                    dao.setStatusFor(chunk, MediaStatus.GELOESCHT.code, now)
+                for (chunk in plan.removals.map { it.uid }.chunked(UID_CHUNK)) {
+                    dao.deleteByUids(chunk)
                 }
+                if (plan.removals.isNotEmpty()) db.placeDao().deleteEmpty()
             }
             _state.update {
                 it.copy(running = false, lastSyncAt = now, lastInserted = plan.inserts.size + plan.revivals.size)
@@ -154,5 +177,6 @@ class MediaSyncer(
         const val TAG = "MediaSyncer"
         const val INSERT_CHUNK = 500
         const val UID_CHUNK = 500
+        const val VERIFY_INTERVAL_MS = 30 * 60 * 1000L
     }
 }

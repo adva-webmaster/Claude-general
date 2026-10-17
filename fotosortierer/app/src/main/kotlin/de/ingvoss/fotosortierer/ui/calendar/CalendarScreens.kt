@@ -1,12 +1,18 @@
 package de.ingvoss.fotosortierer.ui.calendar
 
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.draw.clip
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -89,7 +95,8 @@ fun CalendarYearsScreen(
     scope: MediaFilter,
     onOpenYear: (Int) -> Unit,
     onShowMap: (MediaFilter) -> Unit,
-    onClearScope: () -> Unit
+    onClearScope: () -> Unit,
+    onToday: () -> Unit
 ) {
     val viewModel = containerViewModel(key = "cal-" + FilterCodec.encode(scope)) { CalendarViewModel(it, scope) }
     val months by viewModel.months.collectAsStateWithLifecycle()
@@ -99,6 +106,7 @@ fun CalendarYearsScreen(
     Scaffold(
         topBar = {
             AppTopBar(stringResource(R.string.nav_calendar), actions = {
+                TodayAction(onToday)
                 MapAction { onShowMap(scope) }
             })
         }
@@ -200,7 +208,8 @@ fun CalendarMonthsScreen(
     onOpenMonth: (String) -> Unit,
     onSortYear: (MediaFilter) -> Unit,
     onShowMedia: (MediaFilter) -> Unit,
-    onShowMap: (MediaFilter) -> Unit
+    onShowMap: (MediaFilter) -> Unit,
+    onToday: () -> Unit
 ) {
     val viewModel = containerViewModel(key = "cal-" + FilterCodec.encode(scope)) { CalendarViewModel(it, scope) }
     val months by viewModel.months.collectAsStateWithLifecycle()
@@ -211,7 +220,10 @@ fun CalendarMonthsScreen(
 
     Scaffold(
         topBar = {
-            AppTopBar(labels.year(year), onBack = onBack, actions = { MapAction { onShowMap(yearFilter) } })
+            AppTopBar(labels.year(year), onBack = onBack, actions = {
+                TodayAction(onToday)
+                MapAction { onShowMap(yearFilter) }
+            })
         }
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
@@ -233,10 +245,11 @@ fun CalendarMonthsScreen(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                val thisMonth = YearMonth.now()
                 items(MonthLayout.months(year)) { month ->
                     val key = month.toString()
                     val counts = byKey[key]?.toCounts() ?: StatusCounts.EMPTY
-                    MonthTile(month, counts, onClick = { onOpenMonth(key) })
+                    MonthTile(month, counts, isCurrent = month == thisMonth, onClick = { onOpenMonth(key) })
                 }
             }
         }
@@ -244,15 +257,17 @@ fun CalendarMonthsScreen(
 }
 
 @Composable
-private fun MonthTile(month: YearMonth, counts: StatusCounts, onClick: () -> Unit) {
+private fun MonthTile(month: YearMonth, counts: StatusCounts, isCurrent: Boolean, onClick: () -> Unit) {
     val name = month.month.getDisplayName(TextStyle.FULL, Locale.GERMANY)
     val enabled = counts.total > 0
-    val summary = if (enabled) stringResource(R.string.progress_x_of_y, counts.processed, counts.total) else stringResource(R.string.calendar_no_media)
+    val baseSummary = if (enabled) stringResource(R.string.progress_x_of_y, counts.processed, counts.total) else stringResource(R.string.calendar_no_media)
+    val summary = if (isCurrent) baseSummary + ", " + stringResource(R.string.calendar_this_month) else baseSummary
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .let { if (enabled) it.clickable(onClick = onClick) else it }
             .semantics(mergeDescendants = true) { contentDescription = "$name, $summary" },
+        border = if (isCurrent) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
         colors = CardDefaults.cardColors(
             containerColor = if (counts.state == ProgressState.VOLLSTAENDIG) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
             else MaterialTheme.colorScheme.surfaceVariant
@@ -278,7 +293,8 @@ fun CalendarDaysScreen(
     onOpenDay: (MediaFilter) -> Unit,
     onSortMonth: (MediaFilter) -> Unit,
     onShowMedia: (MediaFilter) -> Unit,
-    onShowMap: (MediaFilter) -> Unit
+    onShowMap: (MediaFilter) -> Unit,
+    onToday: () -> Unit
 ) {
     val viewModel = containerViewModel(key = "cal-" + FilterCodec.encode(scope)) { CalendarViewModel(it, scope) }
     val daysFlow = remember(month) { viewModel.days(month) }
@@ -290,7 +306,11 @@ fun CalendarDaysScreen(
 
     Scaffold(
         topBar = {
-            AppTopBar(labels.month(month), onBack = onBack, actions = { MapAction { onShowMap(scope.copy(localMonth = month)) } })
+            AppTopBar(labels.month(month), onBack = onBack, actions = {
+                // Im laufenden Monat ist "heute" schon zu sehen (markiert).
+                if (month != YearMonth.now().toString()) TodayAction(onToday)
+                MapAction { onShowMap(scope.copy(localMonth = month)) }
+            })
         }
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).padding(horizontal = 12.dp)) {
@@ -305,6 +325,7 @@ fun CalendarDaysScreen(
                 )
             }
             if (yearMonth != null) {
+                val today = remember { LocalDate.now() }
                 WeekdayHeader()
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(7),
@@ -315,9 +336,9 @@ fun CalendarDaysScreen(
                 ) {
                     items(MonthLayout.cells(yearMonth)) { date ->
                         if (date == null) {
-                            Box(Modifier.aspectRatio(0.8f))
+                            Box(Modifier.heightIn(min = DAY_CELL_MIN_HEIGHT))
                         } else {
-                            DayCell(date, byDate[date.toString()]?.toCounts() ?: StatusCounts.EMPTY) { onOpenDay(scope.copy(localDate = date.toString())) }
+                            DayCell(date, date == today, byDate[date.toString()]?.toCounts() ?: StatusCounts.EMPTY) { onOpenDay(scope.copy(localDate = date.toString())) }
                         }
                     }
                 }
@@ -345,35 +366,50 @@ private fun WeekdayHeader() {
     }
 }
 
+/** Mindesthöhe einer Tageszelle: Tageszahl, Statusmarke und Anzahl müssen sichtbar bleiben (auch bei großer Schrift). */
+private val DAY_CELL_MIN_HEIGHT = 78.dp
+
 @Composable
-private fun DayCell(date: LocalDate, counts: StatusCounts, onOpen: () -> Unit) {
+private fun DayCell(date: LocalDate, isToday: Boolean, counts: StatusCounts, onOpen: () -> Unit) {
     val enabled = counts.total > 0
     val labels = LocalContext.current.appContainer().labels
     val dayName = labels.dayShort(date.toString())
-    val description = if (enabled) {
+    val baseDescription = if (enabled) {
         dayName + ", " + stringResource(R.string.progress_x_of_y, counts.processed, counts.total)
     } else {
         dayName + ", " + stringResource(R.string.calendar_no_media)
     }
+    val description = if (isToday) baseDescription + ", " + stringResource(R.string.calendar_today_marker) else baseDescription
+    val shape = RoundedCornerShape(12.dp)
     Column(
         Modifier
-            .aspectRatio(0.8f)
+            .fillMaxWidth()
+            .heightIn(min = DAY_CELL_MIN_HEIGHT)
+            .clip(shape)
+            .let { if (isToday) it.border(2.dp, MaterialTheme.colorScheme.primary, shape) else it }
             .let { if (enabled) it.clickable(onClick = onOpen) else it }
             .semantics(mergeDescendants = true) { contentDescription = description }
-            .padding(2.dp),
+            .padding(vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         Text(
             date.dayOfMonth.toString(),
             style = MaterialTheme.typography.bodyMedium,
-            color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+            fontWeight = if (isToday) FontWeight.Bold else null,
+            color = if (enabled || isToday) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
         )
         if (enabled) {
             StateMark(counts.state, counts.fraction, markSize = 24.dp, hasDeferred = counts.hasDeferred)
             Text(counts.total.toString(), style = MaterialTheme.typography.labelSmall, modifier = Modifier.clearAndSetSemantics { })
         }
     }
+}
+
+/** "Heute": springt zum Monat mit dem heutigen Tag. */
+@Composable
+private fun TodayAction(onClick: () -> Unit) {
+    TextButton(onClick = onClick) { Text(stringResource(R.string.calendar_today)) }
 }
 
 @Composable

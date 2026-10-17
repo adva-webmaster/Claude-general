@@ -17,6 +17,7 @@ import de.ingvoss.fotosortierer.data.media.MediaAccess
 import de.ingvoss.fotosortierer.data.media.MediaRepository
 import de.ingvoss.fotosortierer.data.media.MediaStoreScanner
 import de.ingvoss.fotosortierer.data.media.MediaSyncer
+import de.ingvoss.fotosortierer.data.media.MissingMediaCleaner
 import de.ingvoss.fotosortierer.data.media.PlaceBuilder
 import de.ingvoss.fotosortierer.data.media.PlaceNamer
 import de.ingvoss.fotosortierer.data.media.TrashRepository
@@ -56,6 +57,7 @@ class AppContainer(val app: Application) {
     val placeNamer = PlaceNamer(database, GeocodingService(app, userAgent))
 
     val media = MediaRepository(database)
+    val mediaCleaner = MissingMediaCleaner(app, database)
     val folders = FolderRepository(database, settings)
     val trash = TrashRepository(database, app.contentResolver)
     val backup = BackupManager(database, settings, app.contentResolver)
@@ -89,7 +91,8 @@ class AppContainer(val app: Application) {
     fun onActivityStart() {
         refreshAccess()
         appScope.launch {
-            if (syncer.sync()) {
+            // Beim Start zusätzlich prüfen, ob Dateien auf anderem Weg gelöscht wurden (Karteileichen im MediaStore).
+            if (syncer.sync(verifyFiles = true)) {
                 scheduler.enqueueLocationIndexing()
                 scheduler.enqueueGeocoding()
                 // Zusätzlich sofort im Vordergrund lesen: WorkManager startet Hintergrundarbeit gern verzögert.

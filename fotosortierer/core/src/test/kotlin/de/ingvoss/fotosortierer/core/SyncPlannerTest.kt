@@ -29,7 +29,7 @@ class SyncPlannerTest {
     /** Wendet einen Plan auf eine In-Memory-"Datenbank" an (Spiegel der Logik der App). */
     private fun apply(db: List<KnownMedia>, plan: SyncPlan): List<KnownMedia> {
         val result = db.associateBy { it.uid }.toMutableMap()
-        for (t in plan.tombstones) result[t.uid] = result.getValue(t.uid).copy(status = MediaStatus.GELOESCHT)
+        for (r in plan.removals) result.remove(r.uid)
         for (u in plan.updates) {
             val s = u.scanned
             result[u.uid] = result.getValue(u.uid).copy(
@@ -63,7 +63,7 @@ class SyncPlannerTest {
     fun neueMedienWerdenAufgenommen() {
         val plan = SyncPlanner.plan(emptyList(), listOf(scanned(1), scanned(2)), setOf(prim))
         assertEquals(2, plan.inserts.size)
-        assertTrue(plan.updates.isEmpty() && plan.tombstones.isEmpty() && plan.revivals.isEmpty())
+        assertTrue(plan.updates.isEmpty() && plan.removals.isEmpty() && plan.revivals.isEmpty())
     }
 
     @Test
@@ -74,21 +74,21 @@ class SyncPlannerTest {
     }
 
     @Test
-    fun verschwundeneMedienWerdenTombstone() {
+    fun verschwundeneMedienWerdenAusDerDatenbankEntfernt() {
         val a = scanned(1)
         val b = scanned(2)
         val plan = SyncPlanner.plan(listOf(known(a), known(b)), listOf(a), setOf(prim))
-        assertEquals(listOf(2L), plan.tombstones.map { it.mediaStoreId })
+        assertEquals(listOf(2L), plan.removals.map { it.mediaStoreId })
     }
 
     @Test
-    fun bereitsGeloeschteWerdenNichtErneutTombstone() {
+    fun tombstonesBleibenStehenAuchWennSieFehlen() {
         val a = scanned(1)
         val b = scanned(2)
         val plan = SyncPlanner.plan(
             listOf(known(a), known(b, MediaStatus.GELOESCHT)), listOf(a), setOf(prim)
         )
-        assertTrue(plan.tombstones.isEmpty())
+        assertTrue(plan.removals.isEmpty())
     }
 
     @Test
@@ -97,10 +97,10 @@ class SyncPlannerTest {
         val onSd = scanned(7, volume = sd)
         // SD-Karte ist ausgeworfen: nur "external_primary" wurde gescannt
         val plan = SyncPlanner.plan(listOf(known(onPhone), known(onSd)), listOf(onPhone), setOf(prim))
-        assertTrue(plan.tombstones.isEmpty())
-        // Ist die SD-Karte da und das Medium weg, wird es Tombstone
+        assertTrue(plan.removals.isEmpty())
+        // Ist die SD-Karte da und das Medium weg, wird es entfernt
         val plan2 = SyncPlanner.plan(listOf(known(onPhone), known(onSd)), listOf(onPhone), setOf(prim, sd))
-        assertEquals(listOf(7L), plan2.tombstones.map { it.mediaStoreId })
+        assertEquals(listOf(7L), plan2.removals.map { it.mediaStoreId })
     }
 
     @Test
@@ -115,7 +115,7 @@ class SyncPlannerTest {
     @Test
     fun leererScanLoeschtNichts() {
         val plan = SyncPlanner.plan(listOf(known(scanned(1)), known(scanned(2))), emptyList(), setOf(prim))
-        assertTrue(plan.tombstones.isEmpty())
+        assertTrue(plan.removals.isEmpty())
     }
 
     @Test
@@ -184,11 +184,60 @@ class SyncPlannerTest {
     }
 
     @Test
-    fun alleMedienEinesTagesGeloeschtZaehltAlsVollstaendig() {
+    fun alleMedienEinesTagesExternGeloeschtLaesstDenTagVerschwinden() {
         val a = scanned(1)
         val b = scanned(2)
         var db = listOf(known(a), known(b))
         db = apply(db, SyncPlanner.plan(db, listOf(scanned(99, iso = "2026-05-01T10:00:00Z")), setOf(prim)))
-        assertEquals(ProgressState.VOLLSTAENDIG, dayState(db, "2026-03-12"))
+        assertEquals(ProgressState.LEER, dayState(db, "2026-03-12"))
+        assertTrue(db.none { it.localDate == "2026-03-12" })
+    }
+
+    @Test
+    fun dateiFehltObwohlMediaStoreSieNochListetWirdEntfernt() {
+        val a = scanned(1)
+        val b = scanned(2)
+        val db = listOf(known(a, MediaStatus.BEHALTEN), known(b))
+        val plan = SyncPlanner.plan(db, listOf(a, b), setOf(prim), missingFiles = setOf(b.key))
+        assertEquals(listOf(2L), plan.removals.map { it.mediaStoreId })
+        assertTrue(plan.inserts.isEmpty() && plan.updates.isEmpty())
+        assertEquals(listOf(1L), apply(db, plan).map { it.mediaStoreId })
+    }
+
+    @Test
+    fun fehlendeDateiWirdNichtNeuAufgenommenAktualisiertOderWiederbelebt() {
+        val neu = scanned(5)
+        val geaendert = scanned(6, album = "Neu")
+        val tombstone = scanned(7)
+        val db = listOf(
+            known(scanned(6, album = "Alt")),
+            known(tombstone, MediaStatus.GELOESCHT)
+        )
+        val plan = SyncPlanner.plan(
+            db, listOf(neu, geaendert, tombstone), setOf(prim),
+            missingFiles = setOf(neu.key, geaendert.key, tombstone.key)
+        )
+        assertTrue(plan.inserts.isEmpty())
+        assertTrue(plan.updates.isEmpty())
+        assertTrue(plan.revivals.isEmpty())
+        assertEquals(listOf(6L), plan.removals.map { it.mediaStoreId }) // Tombstone 7 bleibt unangetastet
+    }
+
+    @Test
+    fun fehlendeDateiWirdAuchBeiTeilzugriffEntferntAberNichtsAnderes() {
+        // Teilzugriff: keine Volumes für "verschwunden" – nur die ausdrücklich fehlende Datei geht.
+        val a = scanned(1)
+        val b = scanned(2)
+        val plan = SyncPlanner.plan(listOf(known(a), known(b)), listOf(a), emptySet(), missingFiles = setOf(a.key))
+        assertEquals(listOf(1L), plan.removals.map { it.mediaStoreId })
+    }
+
+    @Test
+    fun schutzVorMassenhaftFehlendenDateien() {
+        assertTrue(MissingFileGuard.trusted(checked = 100, missing = 0))
+        assertTrue(MissingFileGuard.trusted(checked = 100, missing = 50))
+        assertTrue(!MissingFileGuard.trusted(checked = 100, missing = 51))
+        assertTrue(!MissingFileGuard.trusted(checked = 1, missing = 1))
+        assertTrue(MissingFileGuard.trusted(checked = 0, missing = 0))
     }
 }

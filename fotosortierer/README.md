@@ -13,7 +13,7 @@ auf Deutsch. **Keine Werbung, keine Statistik, kein Tracking.**
 > | Prüfung | Ergebnis |
 > |---|---|
 > | `./gradlew assembleDebug` (Debug-APK) | ✅ erfolgreich |
-> | `./gradlew test` (Unit-Tests `:core` und `:app`) | ✅ erfolgreich (145 Tests im Kern) |
+> | `./gradlew test` (Unit-Tests `:core` und `:app`) | ✅ erfolgreich (149 Tests im Kern) |
 > | `./gradlew lint` | ✅ 0 Fehler, 2 Hinweise (Framework-ExifInterface, `allowBackup`) |
 > | Test auf einem echten Gerät, Compose-Wischtest (`connectedDebugAndroidTest`) | ❌ nicht ausgeführt |
 >
@@ -43,6 +43,9 @@ auf Deutsch. **Keine Werbung, keine Statistik, kein Tracking.**
 - **Erneut sortieren:** Bereits entschiedene Medien lassen sich per Wischen noch einmal durchgehen – in der Detailansicht
   eines Tages/Monats/Ortes („Alle erneut sortieren“ oder, nach Wahl eines Status-Filters, „Behalten erneut sortieren“ usw.),
   ebenso über Antippen einer Zeile in der Statistik auf der Startseite.
+- **Heute-Sprung:** Im Kalender springt die Taste „Heute“ zum aktuellen Monat; der heutige Tag ist umrandet.
+- **Aufräumen:** Auf anderem Weg gelöschte Fotos/Videos (z. B. mit einem Dateimanager) verschwinden beim nächsten
+  App-Start aus der App und ihrer Datenbank; nicht ladbare Vorschauen lösen die Prüfung sofort aus.
 - **Karte ↔ Kalender:** Ein Tipp auf einen Marker oder Cluster öffnet die Medien aller darin liegenden Orte
   (Sortieren, Ansehen, Kalender); gezoomt wird weiter per Geste. Für ein Jahr, einen Monat oder Tag lässt sich die Karte öffnen
   (nur Orte mit Medien aus diesem Zeitraum), und von einem Ort aus der Kalender (nur Medien dieses Ortes).

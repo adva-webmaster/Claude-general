@@ -152,6 +152,9 @@
     <string name="calendar_empty_title">Noch keine Medien</string>
     <string name="calendar_empty_message">Sobald Fotos und Videos erfasst sind, erscheinen hier Jahre, Monate und Tage.</string>
     <string name="calendar_no_media">keine Medien</string>
+    <string name="calendar_today">Heute</string>
+    <string name="calendar_today_marker">heute</string>
+    <string name="calendar_this_month">aktueller Monat</string>
     <string name="calendar_sort_month">Monat sortieren</string>
     <string name="calendar_sort_year">Jahr sortieren</string>
     <string name="weekday_mo">Mo</string>
@@ -171,6 +174,9 @@
     <string name="detail_open_item">Medium ansehen und Entscheidung ändern</string>
     <string name="detail_select_item">Medium auswählen</string>
     <string name="detail_open_external">In anderer App öffnen</string>
+    <string name="detail_file_missing">Die Datei gibt es nicht mehr. Sie wurde aus der Liste entfernt.</string>
+    <string name="detail_no_viewer">Keine App zum Öffnen gefunden.</string>
+    <string name="detail_file_unavailable">Die Datei lässt sich nicht öffnen.</string>
 
     <!-- Orte -->
     <string name="places_tab_map">Karte</string>

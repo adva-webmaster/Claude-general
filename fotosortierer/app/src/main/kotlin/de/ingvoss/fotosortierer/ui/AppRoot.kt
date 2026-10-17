@@ -48,6 +48,7 @@ import de.ingvoss.fotosortierer.ui.sort.SortScreen
 import de.ingvoss.fotosortierer.ui.sort.SortViewModel
 import de.ingvoss.fotosortierer.ui.theme.AppIcons
 import de.ingvoss.fotosortierer.ui.trash.TrashScreen
+import java.time.YearMonth
 
 /** Navigationsrouten (String-Routen; Filter werden als URL-sicheres Token übergeben). */
 object Routes {
@@ -190,6 +191,13 @@ private fun AppNavHost(
     val start = remember { if (startWithOnboarding) Routes.ONBOARDING else Routes.HOME }
     val scopeArg = listOf(navArgument("scope") { type = NavType.StringType })
     fun NavBackStackEntry.scope(): MediaFilter = FilterCodec.decode(arguments?.getString("scope"))
+    // "Heute": zum Monat mit dem heutigen Tag; die Kalender-Startseite bleibt darunter, "Zurück" führt zu den Jahren.
+    fun openToday(scope: MediaFilter) {
+        navController.navigate(Routes.month(scope, YearMonth.now().toString())) {
+            popUpTo(Routes.CALENDAR) { inclusive = false }
+            launchSingleTop = true
+        }
+    }
 
     NavHost(navController = navController, startDestination = start, modifier = modifier) {
         composable(Routes.ONBOARDING) {
@@ -215,7 +223,8 @@ private fun AppNavHost(
                 scope = scope,
                 onOpenYear = { navController.navigate(Routes.year(scope, it)) },
                 onShowMap = { navController.navigate(Routes.places(it)) },
-                onClearScope = { navigateTop(KEY_CALENDAR) }
+                onClearScope = { navigateTop(KEY_CALENDAR) },
+                onToday = { openToday(scope) }
             )
         }
         composable(
@@ -230,7 +239,8 @@ private fun AppNavHost(
                 onOpenMonth = { navController.navigate(Routes.month(scope, it)) },
                 onSortYear = { navController.navigate(Routes.sort(it, false)) },
                 onShowMedia = { navController.navigate(Routes.filter(it)) },
-                onShowMap = { navController.navigate(Routes.places(it)) }
+                onShowMap = { navController.navigate(Routes.places(it)) },
+                onToday = { openToday(scope) }
             )
         }
         composable(
@@ -245,7 +255,8 @@ private fun AppNavHost(
                 onOpenDay = { navController.navigate(Routes.filter(it)) },
                 onSortMonth = { navController.navigate(Routes.sort(it, false)) },
                 onShowMedia = { navController.navigate(Routes.filter(it)) },
-                onShowMap = { navController.navigate(Routes.places(it)) }
+                onShowMap = { navController.navigate(Routes.places(it)) },
+                onToday = { openToday(scope) }
             )
         }
         composable(Routes.PLACES, arguments = scopeArg) { backStack ->

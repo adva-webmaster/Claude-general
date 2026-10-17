@@ -105,6 +105,10 @@ class SortViewModel(
         viewModelScope.launch {
             media.counts(filter.copy(statuses = null)).collect { counts -> _state.update { it.copy(counts = counts) } }
         }
+        // Eine Karte wurde entfernt, weil ihre Datei fehlt (auf anderem Weg gelöscht) → Warteschlange neu laden.
+        viewModelScope.launch {
+            container.mediaCleaner.purged.collect { load() }
+        }
         // Reihenfolge in den Einstellungen geändert → Warteschlange neu laden.
         viewModelScope.launch {
             settings.map { it.oldestFirst }.distinctUntilChanged().drop(1).collect { load() }

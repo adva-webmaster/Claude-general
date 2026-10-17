@@ -2,6 +2,7 @@ package de.ingvoss.fotosortierer.ui.detail
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -46,6 +47,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -76,6 +78,7 @@ import de.ingvoss.fotosortierer.ui.formatTaken
 import de.ingvoss.fotosortierer.ui.sort.MediaImage
 import de.ingvoss.fotosortierer.ui.theme.AppIcons
 import de.ingvoss.fotosortierer.ui.theme.LocalFotoColors
+import kotlinx.coroutines.launch
 
 @Composable
 fun statusLabel(status: MediaStatus): String = stringResource(
@@ -344,6 +347,8 @@ private fun StatusButton(status: MediaStatus, modifier: Modifier, onClick: (Medi
 @Composable
 private fun CorrectionDialog(media: MediaStateEntity, onDismiss: () -> Unit, onSetStatus: (MediaStatus) -> Unit) {
     val context = LocalContext.current
+    val container = context.appContainer()
+    val scope = rememberCoroutineScope()
     val noDate = stringResource(R.string.label_no_date)
     Dialog(onDismissRequest = onDismiss) {
         Card {
@@ -372,13 +377,24 @@ private fun CorrectionDialog(media: MediaStateEntity, onDismiss: () -> Unit, onS
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     TextButton(onClick = {
-                        val intent = Intent(Intent.ACTION_VIEW)
-                            .setDataAndType(media.contentUri(), if (media.isVideo) "video/*" else "image/*")
-                            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        try {
-                            context.startActivity(intent)
-                        } catch (e: ActivityNotFoundException) {
-                            // Keine passende App installiert: nichts zu tun.
+                        scope.launch {
+                            // Fehlt die Datei (auf anderem Weg gelöscht), nicht öffnen, sondern aus der Liste entfernen.
+                            if (container.mediaCleaner.purgeIfMissing(media.uid)) {
+                                Toast.makeText(context, R.string.detail_file_missing, Toast.LENGTH_LONG).show()
+                                onDismiss()
+                                return@launch
+                            }
+                            val intent = Intent(Intent.ACTION_VIEW)
+                                .setDataAndType(media.contentUri(), if (media.isVideo) "video/*" else "image/*")
+                                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            try {
+                                context.startActivity(intent)
+                            } catch (e: ActivityNotFoundException) {
+                                Toast.makeText(context, R.string.detail_no_viewer, Toast.LENGTH_LONG).show()
+                            } catch (e: SecurityException) {
+                                // Android verweigert die Freigabe, z. B. weil die Datei nicht mehr lesbar ist.
+                                Toast.makeText(context, R.string.detail_file_unavailable, Toast.LENGTH_LONG).show()
+                            }
                         }
                     }) {
                         Icon(AppIcons.Open, contentDescription = null, modifier = Modifier.size(18.dp))

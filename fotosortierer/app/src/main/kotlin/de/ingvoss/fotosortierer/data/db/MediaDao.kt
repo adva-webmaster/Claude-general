@@ -78,6 +78,10 @@ interface MediaDao {
     @Query("UPDATE media_state SET status = :status, statusChangedAt = :at WHERE uid IN (:uids)")
     suspend fun setStatusFor(uids: List<Long>, status: Int, at: Long)
 
+    /** Entfernt Medien endgültig aus der Datenbank (auf anderem Weg gelöschte Dateien). */
+    @Query("DELETE FROM media_state WHERE uid IN (:uids)")
+    suspend fun deleteByUids(uids: List<Long>)
+
     @Query("UPDATE media_state SET status = :status, statusChangedAt = :at WHERE uid = :uid")
     suspend fun setStatus(uid: Long, status: Int, at: Long)
 

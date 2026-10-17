@@ -4,8 +4,13 @@ import android.content.Context
 import android.provider.MediaStore
 import de.ingvoss.fotosortierer.core.CaptureTime
 import de.ingvoss.fotosortierer.core.MediaClassifier
+import de.ingvoss.fotosortierer.core.MediaKey
 import de.ingvoss.fotosortierer.core.ScannedMedia
+import java.io.File
 import java.time.ZoneId
+
+/** Ergebnis der Dateiprüfung eines Volumes: [checked] geprüfte Einträge, davon [missing] ohne Datei. */
+class FileCheck(val checked: Int, val missing: Set<MediaKey>)
 
 /** Liest Fotos und Videos aller Volumes aus dem MediaStore (ohne Kopien, ohne EXIF). */
 class MediaStoreScanner(private val context: Context) {
@@ -24,6 +29,35 @@ class MediaStoreScanner(private val context: Context) {
             // Sehr alte/abweichende MediaProvider kennen die Spalte DURATION in der Files-Tabelle nicht.
             query(volume, zone, withDuration = false, onProgress = onProgress)
         }
+    }
+
+    /**
+     * Prüft, ob die Dateien der im MediaStore gelisteten Medien noch existieren. Der MediaStore kennt nach dem
+     * Löschen mit manchen Dateimanagern noch Einträge ohne Datei; sie lassen sich nicht öffnen und haben keine Vorschau.
+     * Einträge ohne Pfadangabe werden übersprungen.
+     */
+    @Suppress("DEPRECATION") // DATA ist als Pfad zum Lesen weiter verfügbar; es gibt keinen Ersatz für diese Prüfung
+    fun checkFiles(volume: String): FileCheck {
+        val collection = MediaStore.Files.getContentUri(volume)
+        val projection = arrayOf(MediaStore.Files.FileColumns._ID, MediaStore.MediaColumns.DATA)
+        val selection = "${MediaStore.Files.FileColumns.MEDIA_TYPE} IN (?, ?)"
+        val args = arrayOf(
+            MediaClassifier.MEDIA_TYPE_IMAGE.toString(),
+            MediaClassifier.MEDIA_TYPE_VIDEO.toString()
+        )
+        var checked = 0
+        val missing = HashSet<MediaKey>()
+        context.contentResolver.query(collection, projection, selection, args, null)?.use { cursor ->
+            val iId = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns._ID)
+            val iData = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA)
+            while (cursor.moveToNext()) {
+                val path = cursor.getString(iData)
+                if (path.isNullOrEmpty()) continue
+                checked++
+                if (!File(path).exists()) missing += MediaKey(volume, cursor.getLong(iId))
+            }
+        }
+        return FileCheck(checked, missing)
     }
 
     private fun query(volume: String, zone: ZoneId, withDuration: Boolean, onProgress: (Int) -> Unit): List<ScannedMedia> {

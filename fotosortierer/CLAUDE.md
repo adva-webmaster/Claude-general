@@ -9,21 +9,14 @@ Videos per Wischgesten (Vorbild: „Slidebox"). UI-Sprache Deutsch (Standardspra
 > In der ursprünglichen Entwicklungsumgebung war `dl.google.com` gesperrt, daher entstanden zusätzlich die
 > Hilfsmittel in `tools/` (Kompilier-Prüfstand, Room-SQL-Prüfung). Auf einem Gerät wurde die App noch nicht getestet.
 
-## Offene Punkte für die nächste Revision (gemeldet beim Test auf dem Handy, Version 1.1.0)
+## Behoben in 1.2.0 (gemeldet beim Test auf dem Handy mit 1.1.0)
 
-1. **Tageszahlen im Kalender abgeschnitten:** In der Monatsansicht (`CalendarDaysScreen`/`DayCell`, Zellen mit
-   `aspectRatio(0.8f)`) wird die Medienanzahl unter dem Statusring unten abgeschnitten (sichtbar sind nur die oberen
-   Pixel der Ziffern). Ursache vermutlich: Zelle zu niedrig für Tageszahl + Ring (24 dp) + Zahl. Zelle höher machen
-   oder Zahl in den Ring/neben den Tag legen; mit großer Systemschrift gegenprüfen.
-2. **Medien ohne Vorschau:** Einige Fotos/Videos zeigen im Raster keine Vorschau (Coil-Ladefehler). Zu klären: Welche
-   Dateien? (Format wie HEIC/AVIF, beschädigt/0 Byte, nur in der Cloud, inzwischen gelöscht, aber noch in der
-   Datenbank?) → Fehlerzustand im Raster/auf der Karte sichtbar machen (Platzhalter-Symbol) statt leerer Fläche;
-   bei Videos Vorschau über `MediaMetadataRetriever`/Coil-Video prüfen.
-3. **Absturz bei „In anderer App öffnen“:** In `FilterDetailScreen` (Aktion `detail_open_external`) wird nur
-   `ActivityNotFoundException` abgefangen. Vermutlich derselbe Auslöser wie bei Punkt 2 (Datei nicht mehr lesbar):
-   `SecurityException`/anderer Fehler beim `startActivity` bzw. in der Ziel-App. → Alle Ausnahmen abfangen, vorher
-   prüfen, ob der URI noch lesbar ist, und sonst eine Meldung („Datei nicht mehr verfügbar“) zeigen; betroffene Medien
-   beim nächsten Abgleich bereinigen. Den echten Absturz-Text per `adb logcat` bzw. Play-Konsole nachziehen.
+- **Tageszahlen im Kalender abgeschnitten:** Tageszellen haben jetzt eine Mindesthöhe statt festem Seitenverhältnis
+  (wachsen bei großer Schrift mit); der heutige Tag ist umrandet.
+- **Medien ohne Vorschau / Absturz beim Öffnen in anderer App:** Ursache waren Karteileichen – Dateien, die mit einer
+  anderen App gelöscht wurden, die der MediaStore aber noch listet. Sie werden jetzt aus der Datenbank entfernt (siehe
+  „Auf anderem Weg gelöschte Medien“ unten). `startActivity` fängt zusätzlich `SecurityException` ab.
+- **Neu:** Taste „Heute“ im Kalender (springt zum aktuellen Monat; im laufenden Monat ausgeblendet).
 
 ## Modulstruktur
 
@@ -129,8 +122,16 @@ Namen/API, Room 2.8.5 ist die etablierte stabile Linie.
   (+ `READ_MEDIA_VISUAL_USER_SELECTED` deklariert, Teilzugriff wird erkannt), darunter
   `READ_EXTERNAL_STORAGE` (maxSdk 32), da minSdk 30 ist. `ACCESS_MEDIA_LOCATION` für EXIF-GPS
   (`MediaStore.setRequireOriginal`). `INTERNET` nur für Kartenkacheln und Reverse-Geocoding.
-- **Sync-Sicherheit:** Medien nicht verfügbarer Volumes (ausgeworfene SD-Karte) werden nie zu
-  Tombstones; ein komplett leerer Scan löscht nichts (`SyncPlanner`).
+- **Sync-Sicherheit:** Medien nicht verfügbarer Volumes (ausgeworfene SD-Karte) werden nie entfernt;
+  ein komplett leerer Scan entfernt nichts (`SyncPlanner`).
+- **Auf anderem Weg gelöschte Medien:** Verschwindet ein Medium aus dem MediaStore (oder fehlt seine Datei trotz
+  Eintrag), wird seine Zeile aus der Datenbank **gelöscht** (`SyncPlan.removals`) – kein Tombstone mehr. Nur was die
+  App selbst löscht, bleibt als `GELOESCHT` in der Statistik („gelöscht“, „Speicher freigegeben“). Dateiprüfung:
+  `MediaStoreScanner.checkFiles` (Pfad `DATA`, `File.exists`) beim App-Start (höchstens alle 30 min, nur bei vollem
+  Zugriff); `MissingFileGuard` verwirft den Befund, wenn mehr als die Hälfte eines Volumes „fehlt“ (Speicher gerade
+  nicht lesbar). Zusätzlich löst jeder Ladefehler einer Vorschau (`MediaImage`) und „In anderer App öffnen“ die
+  Einzelprüfung `MissingMediaCleaner.purgeIfMissing` aus (öffnet den URI; nur eindeutiges „nicht vorhanden“ entfernt,
+  fehlende Rechte nie); die Sortieransicht lädt danach ihre Warteschlange neu.
 - **Ortsbildung:** Leader-Clustering mit Raster-Index (`GeoClusterer`, Standardradius 1 km,
   einstellbar). Namen pro Cluster (nicht pro Foto): Android-`Geocoder` → Nominatim (≤ 1 Anfrage/s,
   User-Agent, dauerhaft in Room gecacht) → Koordinaten-Bezeichnung. Läuft im WorkManager.
@@ -161,8 +162,8 @@ Namen/API, Room 2.8.5 ist die etablierte stabile Linie.
 - **Optimistische Oberfläche:** `SortViewModel.decide` entfernt die Karte sofort, schreibt dann der Reihe nach
   (Mutex) in Room und lädt die Warteschlange nach; noch nicht geschriebene Entscheidungen (`pending`) werden aus
   Nachladeergebnissen herausgefiltert.
-- **Teilzugriff (Android 14):** Der Sync darf bei `PARTIAL` keine Tombstones setzen (nicht freigegebene Medien
-  fehlen im Scan). Nur `FULL` vergibt Tombstones.
+- **Teilzugriff (Android 14):** Der Sync darf bei `PARTIAL` nichts als „verschwunden“ entfernen (nicht freigegebene
+  Medien fehlen im Scan) und prüft keine Dateien. Nur `FULL` entfernt Medien.
 - **Hintergrundarbeit:** `MediaSyncer` (Scan, schnell, bei Start + `ContentObserver` mit 2 s Ruhezeit),
   `LocationWorker` (EXIF/ISO-6709, 4 parallele Lesevorgänge, Stapel zu 200, ordnet nach jedem Stapel Orte zu),
   `GeocodeWorker` (nur mit Netz, Backoff 60 s). Fortschritt kommt aus der Datenbank (`observeLocationProgress`),
@@ -191,6 +192,8 @@ Namen/API, Room 2.8.5 ist die etablierte stabile Linie.
 - **Keine "eingefrorenen" Handler:** Handler, die den aktuellen Zustand brauchen (Aktionstasten der Sortieransicht,
   Reiterwechsel), lesen ihn über `rememberUpdatedState` – ein beim ersten Mal gemerktes Lambda bediente sonst die
   längst abgeflogene erste Karte (Tasten wirkten nur einmal).
+- **Kalender „Heute“:** `openToday(scope)` in `AppRoot` navigiert zu `month/<heute>` und räumt per `popUpTo(Routes.CALENDAR)`
+  die Ebenen darüber ab (Zurück → Jahresliste); der Ortsfilter bleibt erhalten.
 - **Navigation:** Untere Leiste (Start, Kalender, Orte, Ordner, Papierkorb), ab 600 dp Breite
   `NavigationRail`. Sortieren, Detail, Einführung und Einstellungen (Zahnrad auf der Startseite) sind Vollbild.
 - **Ordner:** Ein Ordner ist das Album (`album` = Bucket-Name); gleichnamige Ordner verschiedener Speicher werden
@@ -217,7 +220,7 @@ Namen/API, Room 2.8.5 ist die etablierte stabile Linie.
 ## Verifikation
 
 Ausgeführt und grün:
-- `./gradlew -Dfoto.coreOnly=true :core:test` – **145 Tests** (Statusaggregation, Zeitzonen/Tagesgrenzen/
+- `./gradlew -Dfoto.coreOnly=true :core:test` – **149 Tests** (Statusaggregation, Zeitzonen/Tagesgrenzen/
   Fallback, Sync-Planung, Clustering inkl. Performance mit 60 000 Punkten, Bildschirm-Clustering, Undo-Stapel,
   ISO-6709, Wischgeometrie und -belegung, Zoom-Rechnung, Filter-Codec, Monatsraster, Formate, Ortsnamen,
   Medien-Klassifizierer, Sicherungs-Zuordnung, alle SQL-Aggregationen/Warteschlangen gegen echtes SQLite via
@@ -226,7 +229,7 @@ Ausgeführt und grün:
   Android-Framework (API 37), Coil, osmdroid und Stubs für die nur auf Google Maven liegenden Bibliotheken.
   Das beweist Syntax, Typen und interne Konsistenz – nicht die Übereinstimmung der Stubs mit den echten
   Bibliotheken.
-- `tools/room-sql-check.py`: prüft alle 37 `@Query`-Texte der DAOs gegen echtes SQLite (gültiges SQL, Parameter
+- `tools/room-sql-check.py`: prüft alle 36 `@Query`-Texte der DAOs gegen echtes SQLite (gültiges SQL, Parameter
   ↔ Funktionsparameter, Ergebnisspalten ⊇ Konstruktorparameter der Ergebnisklasse) – Ersatz für die
   Compile-Zeit-Prüfung von Room.
 - XML-Ressourcen wohlgeformt; jede im Code verwendete `R.string`/`R.plurals` existiert.
