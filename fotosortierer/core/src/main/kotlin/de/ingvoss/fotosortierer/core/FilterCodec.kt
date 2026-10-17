@@ -19,6 +19,7 @@ object FilterCodec {
         filter.clusterIds?.let { ids -> parts += "cs=" + ids.sorted().joinToString(",") }
         if (filter.withoutPlace) parts += "np=1"
         filter.album?.let { parts += "a=" + URLEncoder.encode(it, "UTF-8") }
+        filter.pathPrefix?.let { parts += "p=" + URLEncoder.encode(it, "UTF-8") }
         filter.kind?.let { parts += "k=${it.code}" }
         filter.statuses?.let { set ->
             parts += "s=" + set.map { it.code }.sorted().joinToString(",")
@@ -46,6 +47,7 @@ object FilterCodec {
                     "cs" -> filter.copy(clusterIds = value.split(',').mapNotNull { it.toLongOrNull() }.toSet())
                     "np" -> filter.copy(withoutPlace = value == "1")
                     "a" -> filter.copy(album = URLDecoder.decode(value, "UTF-8"))
+                    "p" -> filter.copy(pathPrefix = URLDecoder.decode(value, "UTF-8"))
                     "k" -> filter.copy(kind = value.toIntOrNull()?.let { code -> MediaKind.entries.firstOrNull { it.code == code } })
                     "s" -> filter.copy(
                         statuses = value.split(',').mapNotNull { v ->

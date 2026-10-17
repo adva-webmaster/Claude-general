@@ -34,14 +34,15 @@ class MediaSqlTest {
         val kind: MediaKind = MediaKind.FOTO,
         val size: Long = 100,
         val changedAt: Long = 0,
-        val hidden: Boolean = false
+        val hidden: Boolean = false,
+        val path: String = "DCIM/Camera/"
     )
 
     private fun insert(r: Row) {
         db.prepareStatement(
             "INSERT INTO media_state (mediaStoreId, volume, takenAtUtc, localDate, localMonth, latitude, " +
                 "longitude, clusterId, album, kind, sizeBytes, status, statusChangedAt, displayName, durationMs, " +
-                "locationChecked, hidden) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+                "locationChecked, hidden, relativePath) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
         ).use { st ->
             st.setLong(1, r.id)
             st.setString(2, "external_primary")
@@ -60,6 +61,7 @@ class MediaSqlTest {
             st.setLong(15, 0)
             st.setInt(16, 1)
             st.setInt(17, if (r.hidden) 1 else 0)
+            st.setString(18, r.path)
             st.executeUpdate()
         }
     }
@@ -191,6 +193,41 @@ class MediaSqlTest {
         // Camera: ids 1-7 sichtbar (inkl. Tombstone id 7), id 8 ausgeblendet
         assertEquals(StatusCounts(unbearbeitet = 2, behalten = 2, papierkorb = 1, zurueckgestellt = 1, geloescht = 1), rows.getValue("Camera").counts())
         assertEquals(StatusCounts(behalten = 1), rows.getValue("WhatsApp").counts())
+    }
+
+    @Test
+    fun verzeichnisFilterUmfasstUnterverzeichnisseAberKeineNamensvettern() {
+        seed()
+        insert(Row(20, "2026-03-20", path = "Pictures/Urlaub/"))
+        insert(Row(21, "2026-03-20", path = "Pictures/Urlaub/2024/Strand/"))
+        insert(Row(22, "2026-03-20", path = "Pictures/Urlaub2/"))
+        insert(Row(23, "2026-03-20", path = "Pictures/"))
+        fun ids(prefix: String) = query(MediaSql.list(MediaFilter(pathPrefix = prefix))).map { (it["mediaStoreId"] as Number).toLong() }
+        assertEquals(listOf(20L, 21L), ids("Pictures/Urlaub/"))
+        assertEquals(listOf(20L, 21L), ids("/Pictures/Urlaub")) // wird vereinheitlicht
+        assertEquals(listOf(20L, 21L, 22L, 23L), ids("Pictures/"))
+        assertEquals(listOf(21L), ids("Pictures/Urlaub/2024/"))
+        assertTrue(ids("Pictures/Ur/").isEmpty())
+    }
+
+    @Test
+    fun verzeichnisFilterIstGegenSonderzeichenGeschuetzt() {
+        seed()
+        insert(Row(30, "2026-03-20", path = "Fotos 100%/a_b/"))
+        insert(Row(31, "2026-03-20", path = "Fotos 1000/axb/"))
+        val rows = query(MediaSql.list(MediaFilter(pathPrefix = "Fotos 100%/a_b/")))
+        assertEquals(listOf(30L), rows.map { (it["mediaStoreId"] as Number).toLong() })
+    }
+
+    @Test
+    fun verzeichnisListeZaehltSichtbareMedienJePfad() {
+        seed()
+        insert(Row(40, "2026-03-20", MediaStatus.BEHALTEN, path = "Pictures/Urlaub/"))
+        insert(Row(41, "2026-03-20", path = "Pictures/Urlaub/", hidden = true))
+        insert(Row(42, "2026-03-20", path = ""))
+        val rows = query(MediaSql.Q_DIRECTORIES, emptyList()).associateBy { it["groupKey"] }
+        assertEquals(setOf("DCIM/Camera/", "Pictures/Urlaub/"), rows.keys) // "" und Ausgeblendetes zählen nicht
+        assertEquals(StatusCounts(behalten = 1), rows.getValue("Pictures/Urlaub/").counts())
     }
 
     @Test

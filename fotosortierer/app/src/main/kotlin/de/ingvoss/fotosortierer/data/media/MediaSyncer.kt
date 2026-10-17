@@ -96,14 +96,14 @@ class MediaSyncer(
                     val s = u.scanned
                     dao.updateMeta(
                         u.uid, s.time.utcMillis, s.time.localDate, s.time.localMonth, s.album, s.kind.code,
-                        s.sizeBytes, s.durationMs, s.displayName, isHidden(current, s.kind, s.album)
+                        s.sizeBytes, s.durationMs, s.displayName, isHidden(current, s.kind, s.album), s.relativePath
                     )
                 }
                 for (r in plan.revivals) {
                     val s = r.scanned
                     dao.updateMeta(
                         r.uid, s.time.utcMillis, s.time.localDate, s.time.localMonth, s.album, s.kind.code,
-                        s.sizeBytes, s.durationMs, s.displayName, isHidden(current, s.kind, s.album)
+                        s.sizeBytes, s.durationMs, s.displayName, isHidden(current, s.kind, s.album), s.relativePath
                     )
                     dao.setStatus(r.uid, MediaStatus.UNBEARBEITET.code, now)
                 }
@@ -152,7 +152,8 @@ class MediaSyncer(
         displayName = displayName,
         durationMs = durationMs,
         locationChecked = false,
-        hidden = isHidden(s, kind, album)
+        hidden = isHidden(s, kind, album),
+        relativePath = relativePath
     )
 
     private fun isHidden(s: AppSettings, kind: MediaKind, album: String): Boolean =
@@ -170,7 +171,8 @@ class MediaSyncer(
         durationMs = durationMs,
         takenAtUtc = takenAtUtc,
         localDate = localDate,
-        localMonth = localMonth
+        localMonth = localMonth,
+        relativePath = relativePath
     )
 
     private companion object {

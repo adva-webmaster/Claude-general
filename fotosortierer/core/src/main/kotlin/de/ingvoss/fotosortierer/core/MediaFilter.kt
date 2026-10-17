@@ -16,6 +16,8 @@ data class MediaFilter(
     /** Nur Medien ohne GPS-Position ("Ohne Ort"). */
     val withoutPlace: Boolean = false,
     val album: String? = null,
+    /** Verzeichnis samt allen Unterverzeichnissen, z. B. "Pictures/Urlaub/" (nicht "Pictures/Ur"). */
+    val pathPrefix: String? = null,
     val kind: MediaKind? = null,
     /** Einschränkung auf bestimmte Status; null = alle. */
     val statuses: Set<MediaStatus>? = null

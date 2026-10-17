@@ -8,6 +8,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.material3.FilterChip
+import de.ingvoss.fotosortierer.core.DirectoryNode
+import de.ingvoss.fotosortierer.core.DirectoryRow
+import de.ingvoss.fotosortierer.core.DirectoryTree
+import de.ingvoss.fotosortierer.ui.components.StateMark
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -76,6 +82,10 @@ class FoldersViewModel(private val container: AppContainer) : ViewModel() {
     val overview: StateFlow<FolderOverview?> =
         container.folders.overview.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
+    /** Verzeichnisbaum (relative Pfade der Medien); null solange nicht geladen. */
+    val directories: StateFlow<List<DirectoryNode>?> =
+        container.folders.directories.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
     fun setFavorite(name: String, favorite: Boolean) {
         container.appScope.launch { container.folders.setFavorite(name, favorite) }
     }
@@ -100,8 +110,12 @@ fun FoldersScreen(onOpenFolder: (MediaFilter) -> Unit) {
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val resources = LocalResources.current
+    val directories by viewModel.directories.collectAsStateWithLifecycle()
     var query by rememberSaveable { mutableStateOf("") }
     var hiddenExpanded by rememberSaveable { mutableStateOf(false) }
+    // false = Alben (Ordner nach Name), true = Verzeichnisbaum (beliebiges Verzeichnis samt Unterverzeichnissen)
+    var showDirectories by rememberSaveable { mutableStateOf(false) }
+    var expandedDirs by rememberSaveable { mutableStateOf(emptySet<String>()) }
 
     fun hide(entry: FolderEntry) {
         viewModel.setHidden(entry.name, true)
@@ -131,27 +145,64 @@ fun FoldersScreen(onOpenFolder: (MediaFilter) -> Unit) {
         topBar = { AppTopBar(stringResource(R.string.nav_folders)) },
         snackbarHost = { SnackbarHost(snackbar) }
     ) { padding ->
-        val data = overview
-        when {
-            data == null -> Box(Modifier.fillMaxSize().padding(padding))
-            data.visible.isEmpty() && data.hidden.isEmpty() -> EmptyState(
-                stringResource(R.string.folders_empty_title),
-                stringResource(R.string.folders_empty_message),
-                Modifier.padding(padding)
-            )
-            else -> FolderList(
-                data = data,
-                query = query,
-                onQueryChange = { query = it },
-                hiddenExpanded = hiddenExpanded,
-                onToggleHidden = { hiddenExpanded = !hiddenExpanded },
-                onOpenFolder = { onOpenFolder(MediaFilter(album = it.name)) },
-                onToggleFavorite = { viewModel.setFavorite(it.name, !it.favorite) },
-                onHide = ::hide,
-                onUnhide = ::unhide,
-                modifier = Modifier.padding(padding)
-            )
+        Column(Modifier.fillMaxSize().padding(padding)) {
+            ModeChips(showDirectories) { showDirectories = it }
+            if (showDirectories) {
+                val roots = directories
+                when {
+                    roots == null -> Box(Modifier.fillMaxSize())
+                    roots.isEmpty() -> EmptyState(
+                        stringResource(R.string.directories_empty_title),
+                        stringResource(R.string.directories_empty_message)
+                    )
+                    else -> DirectoryList(
+                        roots = roots,
+                        query = query,
+                        onQueryChange = { query = it },
+                        expanded = expandedDirs,
+                        onToggle = { path -> expandedDirs = if (path in expandedDirs) expandedDirs - path else expandedDirs + path },
+                        onOpen = { onOpenFolder(MediaFilter(pathPrefix = it.path)) }
+                    )
+                }
+            } else {
+                val data = overview
+                when {
+                    data == null -> Box(Modifier.fillMaxSize())
+                    data.visible.isEmpty() && data.hidden.isEmpty() -> EmptyState(
+                        stringResource(R.string.folders_empty_title),
+                        stringResource(R.string.folders_empty_message)
+                    )
+                    else -> FolderList(
+                        data = data,
+                        query = query,
+                        onQueryChange = { query = it },
+                        hiddenExpanded = hiddenExpanded,
+                        onToggleHidden = { hiddenExpanded = !hiddenExpanded },
+                        onOpenFolder = { onOpenFolder(MediaFilter(album = it.name)) },
+                        onToggleFavorite = { viewModel.setFavorite(it.name, !it.favorite) },
+                        onHide = ::hide,
+                        onUnhide = ::unhide
+                    )
+                }
+            }
         }
+    }
+}
+
+/** Umschalter zwischen Alben (Ordner nach Name) und Verzeichnisbaum. */
+@Composable
+private fun ModeChips(showDirectories: Boolean, onChange: (Boolean) -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FilterChip(
+            selected = !showDirectories,
+            onClick = { onChange(false) },
+            label = { Text(stringResource(R.string.folders_mode_albums)) }
+        )
+        FilterChip(
+            selected = showDirectories,
+            onClick = { onChange(true) },
+            label = { Text(stringResource(R.string.folders_mode_directories)) }
+        )
     }
 }
 
@@ -242,14 +293,112 @@ private fun FolderList(
     }
 }
 
+/** Verzeichnisbaum: ein Tipp wählt das Verzeichnis samt allen Unterverzeichnissen, der Pfeil klappt es auf. */
 @Composable
-private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
+private fun DirectoryList(
+    roots: List<DirectoryNode>,
+    query: String,
+    onQueryChange: (String) -> Unit,
+    expanded: Set<String>,
+    onToggle: (String) -> Unit,
+    onOpen: (DirectoryNode) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val searching = query.isNotBlank()
+    val rows = if (searching) {
+        DirectoryTree.search(roots, query).map { DirectoryRow(it, 0, false) }
+    } else {
+        DirectoryTree.flatten(roots, expanded)
+    }
+    val totalNodes = remember(roots) { countNodes(roots) }
+    LazyColumn(
+        modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        if (totalNodes >= SEARCH_FROM || query.isNotEmpty()) {
+            item("search") { SearchField(query, onQueryChange, stringResource(R.string.directories_search)) }
+        }
+        item("hint") {
+            Text(
+                stringResource(R.string.directories_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        if (rows.isEmpty()) {
+            item("nomatch") { Text(stringResource(R.string.folders_no_match), style = MaterialTheme.typography.bodyMedium) }
+        }
+        items(rows, key = { it.node.path }) { row ->
+            DirectoryCard(row, flat = searching, onToggle = onToggle, onOpen = onOpen)
+        }
+    }
+}
+
+private fun countNodes(nodes: List<DirectoryNode>): Int = nodes.sumOf { 1 + countNodes(it.children) }
+
+@Composable
+private fun DirectoryCard(row: DirectoryRow, flat: Boolean, onToggle: (String) -> Unit, onOpen: (DirectoryNode) -> Unit) {
+    val node = row.node
+    val counts = node.counts
+    val expandable = node.children.isNotEmpty() && !flat
+    val title = if (flat) node.path.trim('/') else node.name
+    val progress = stringResource(R.string.progress_x_of_y, counts.processed, counts.total)
+    val description = title + ", " + pluralText(R.plurals.media_count, counts.total) + ", " + progress
+    Card(Modifier.fillMaxWidth()) {
+        Row(
+            Modifier.padding(start = (minOf(row.depth, MAX_INDENT_LEVELS) * 14).dp + 4.dp, end = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (expandable) {
+                IconButton(onClick = { onToggle(node.path) }) {
+                    Icon(
+                        AppIcons.Chevron,
+                        contentDescription = stringResource(if (row.expanded) R.string.directories_collapse else R.string.directories_expand),
+                        modifier = Modifier.rotate(if (row.expanded) 90f else 0f)
+                    )
+                }
+            } else {
+                Spacer(Modifier.size(48.dp))
+            }
+            Row(
+                Modifier
+                    .weight(1f)
+                    .clickable(onClick = { onOpen(node) })
+                    .semantics(mergeDescendants = true) { contentDescription = description }
+                    .padding(vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                StateMark(counts.state, counts.fraction, markSize = 28.dp, hasDeferred = counts.hasDeferred)
+                Column(Modifier.weight(1f)) {
+                    Text(title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        pluralText(R.plurals.media_count, counts.total) + " · " + progress,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Icon(AppIcons.Chevron, contentDescription = null, modifier = Modifier.size(20.dp))
+            }
+        }
+    }
+}
+
+private const val MAX_INDENT_LEVELS = 6
+
+@Composable
+private fun SearchField(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    label: String = stringResource(R.string.folders_search)
+) {
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
-        label = { Text(stringResource(R.string.folders_search)) },
+        label = { Text(label) },
         trailingIcon = if (query.isEmpty()) null else {
             {
                 IconButton(onClick = { onQueryChange("") }) {

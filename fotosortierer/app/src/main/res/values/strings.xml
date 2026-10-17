@@ -37,6 +37,15 @@
     <string name="nav_settings">Einstellungen</string>
 
     <!-- Ordner -->
+    <string name="folders_mode_albums">Alben</string>
+    <string name="folders_mode_directories">Verzeichnisse</string>
+    <string name="directories_hint">Verzeichnis antippen: alle Medien darin samt Unterverzeichnissen. Pfeil: Unterverzeichnisse zeigen.</string>
+    <string name="directories_search">Verzeichnis suchen</string>
+    <string name="directories_empty_title">Noch keine Verzeichnisse</string>
+    <string name="directories_empty_message">Die Verzeichnisse werden beim Abgleich erfasst. Nach einem Update dauert das beim ersten Start einen Moment.</string>
+    <string name="directories_expand">Unterverzeichnisse zeigen</string>
+    <string name="directories_collapse">Unterverzeichnisse verbergen</string>
+    <string name="label_directory">Verzeichnis: %1$s</string>
     <string name="folders_hint">Ordner lange antippen: als Favorit markieren oder ausblenden.</string>
     <string name="folders_search">Ordner suchen</string>
     <string name="folders_search_clear">Suche löschen</string>

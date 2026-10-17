@@ -129,7 +129,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                 SwitchRow(stringResource(R.string.settings_info_line), settings.showInfoLine, viewModel::setInfoLine)
 
                 Section(stringResource(R.string.settings_section_data))
-                OutlinedButton(onClick = { exportLauncher.launch("fotosortierer-sicherung.json") }, modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(onClick = { exportLauncher.launch("pixelsweeper-sicherung.json") }, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.settings_export))
                 }
                 OutlinedButton(onClick = { importLauncher.launch(arrayOf("*/*")) }, modifier = Modifier.fillMaxWidth()) {

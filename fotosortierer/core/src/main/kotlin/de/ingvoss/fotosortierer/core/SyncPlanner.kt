@@ -12,7 +12,9 @@ data class ScannedMedia(
     val album: String,
     val sizeBytes: Long,
     val durationMs: Long,
-    val time: ResolvedTime
+    val time: ResolvedTime,
+    /** Verzeichnis relativ zum Volume, z. B. "Pictures/Urlaub/" (siehe [MediaClassifier.normalizePath]); "" = unbekannt. */
+    val relativePath: String = ""
 ) {
     val key: MediaKey get() = MediaKey(volume, mediaStoreId)
 }
@@ -30,7 +32,8 @@ data class KnownMedia(
     val durationMs: Long,
     val takenAtUtc: Long,
     val localDate: String,
-    val localMonth: String
+    val localMonth: String,
+    val relativePath: String = ""
 ) {
     val key: MediaKey get() = MediaKey(volume, mediaStoreId)
 }
@@ -103,6 +106,7 @@ object SyncPlanner {
             k.localDate != s.time.localDate ||
             k.localMonth != s.time.localMonth ||
             k.album != s.album ||
+            k.relativePath != s.relativePath ||
             k.kind != s.kind ||
             k.sizeBytes != s.sizeBytes ||
             k.durationMs != s.durationMs ||

@@ -110,7 +110,8 @@ class MediaStoreScanner(private val context: Context) {
                         album = MediaClassifier.albumOf(cursor.getString(iBucket), path),
                         sizeBytes = cursor.getLong(iSize),
                         durationMs = if (iDuration >= 0) cursor.getLong(iDuration) else 0L,
-                        time = time
+                        time = time,
+                        relativePath = MediaClassifier.normalizePath(path)
                     )
                 )
                 if (result.size % PROGRESS_STEP == 0) onProgress(result.size)

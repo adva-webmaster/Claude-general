@@ -7,6 +7,7 @@ import kotlin.reflect.KClass
 annotation class Entity(val tableName: String = "", val indices: Array<Index> = [])
 annotation class Index(val value: Array<String> = [], val name: String = "", val unique: Boolean = false)
 annotation class PrimaryKey(val autoGenerate: Boolean = false)
+annotation class ColumnInfo(val name: String = "[field-name]", val defaultValue: String = "[value-not-set]")
 annotation class Dao
 annotation class Query(val value: String)
 annotation class RawQuery(val observedEntities: Array<KClass<*>> = [])
@@ -21,6 +22,7 @@ object OnConflictStrategy {
 
 abstract class RoomDatabase {
     class Builder<T : RoomDatabase> {
+        fun addMigrations(vararg migrations: androidx.room.migration.Migration): Builder<T> = this
         fun build(): T = error("stub")
     }
 }
@@ -31,3 +33,4 @@ object Room {
 }
 
 suspend fun <R> RoomDatabase.withTransaction(block: suspend () -> R): R = block()
+

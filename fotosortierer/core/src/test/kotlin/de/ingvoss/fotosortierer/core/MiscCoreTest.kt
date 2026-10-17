@@ -25,6 +25,16 @@ class MediaClassifierTest {
     }
 
     @Test
+    fun verzeichnisWirdVereinheitlicht() {
+        assertEquals("DCIM/Camera/", MediaClassifier.normalizePath("DCIM/Camera/"))
+        assertEquals("DCIM/Camera/", MediaClassifier.normalizePath("/DCIM/Camera"))
+        assertEquals("Pictures/", MediaClassifier.normalizePath(" Pictures "))
+        assertEquals("", MediaClassifier.normalizePath(null))
+        assertEquals("", MediaClassifier.normalizePath("/"))
+        assertEquals("", MediaClassifier.normalizePath(""))
+    }
+
+    @Test
     fun albumnameFallbacks() {
         assertEquals("Camera", MediaClassifier.albumOf("Camera", "DCIM/Other/"))
         assertEquals("Other", MediaClassifier.albumOf(null, "DCIM/Other/"))

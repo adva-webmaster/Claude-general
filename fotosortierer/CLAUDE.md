@@ -1,4 +1,4 @@
-# CLAUDE.md – PixelSweeper (Ordner/Branch: fotosortierer)
+# CLAUDE.md – PixelSweeper (Ordner/Branch/Paket bleiben „fotosortierer“)
 
 Native Android-App (Kotlin, Jetpack Compose, Material 3) zum schnellen Aussortieren von Fotos und
 Videos per Wischgesten (Vorbild: „Slidebox"). UI-Sprache Deutsch (Standardsprache `de`, alle Texte in
@@ -8,6 +8,19 @@ Videos per Wischgesten (Vorbild: „Slidebox"). UI-Sprache Deutsch (Standardspra
 > (`.github/workflows/fotosortierer-apk.yml`; Lauf auf Branch `fotosortierer`: Build, Tests, Lint ohne Fehler).
 > In der ursprünglichen Entwicklungsumgebung war `dl.google.com` gesperrt, daher entstanden zusätzlich die
 > Hilfsmittel in `tools/` (Kompilier-Prüfstand, Room-SQL-Prüfung). Auf einem Gerät wurde die App noch nicht getestet.
+
+## Neu in 1.3.0
+
+- **Verzeichnisbaum:** Spalte `media_state.relativePath` (MediaStore `RELATIVE_PATH`, normalisiert wie `Pictures/Urlaub/`;
+  Room-Version 2, `MIGRATION_1_2` = `ALTER TABLE … ADD COLUMN … DEFAULT ''`; der nächste Abgleich füllt sie, weil
+  `SyncPlanner.changed` den Pfad vergleicht). `MediaFilter.pathPrefix` = Verzeichnis samt Unterverzeichnissen
+  (`substr(relativePath,1,len) = prefix`, kein LIKE → keine Sonderzeichenprobleme; Token `p=` im `FilterCodec`).
+  Baum, Aufklappen und Suche: `core/DirectoryTree` (getestet); Anzeige als zweiter Modus (`FilterChip`) in `ui/folders`.
+  Bewusst einfach: Verzeichnisse mit gleichem Pfad auf verschiedenen Volumes (Telefon/SD) werden zusammengefasst.
+- **Umbenennung:** Die App heißt überall PixelSweeper (Anzeigename, Texte, Export-Datei `pixelsweeper-sicherung.json`,
+  Sicherungskennung – alte Sicherungen mit „Fotosortierer“ bleiben importierbar, Theme, Workflow-/Artefaktname, APK-Datei
+  `PixelSweeper-<Version>-debug.apk`). Unverändert bleiben technische Namen: Ordner/Branch, Paket und Application-ID
+  `de.ingvoss.fotosortierer`, Datenbankdatei `fotosortierer.db`, Workflow-Dateiname.
 
 ## Behoben in 1.2.0 (gemeldet beim Test auf dem Handy mit 1.1.0)
 
@@ -199,7 +212,8 @@ Namen/API, Room 2.8.5 ist die etablierte stabile Linie.
 - **Ordner:** Ein Ordner ist das Album (`album` = Bucket-Name); gleichnamige Ordner verschiedener Speicher werden
   zusammengefasst (bewusst einfach gehalten, kein voller Pfad). Favoriten (`favoriteAlbums`) und Ausblenden
   (`excludedAlbums`, setzt `hidden`) liegen in den Einstellungen und im JSON-Export; Ausblenden entfernt den
-  Favoritenstatus. Reihenfolge/Suche/Aufbau der Liste: `core/FolderOrder` (getestet), Datenstrom: `FolderRepository`.
+  Favoritenstatus (Alben sind nur der Ordnername; für beliebige Verzeichnisse samt Unterverzeichnissen gibt es den
+  Verzeichnisbaum, siehe „Neu in 1.3.0“). Reihenfolge/Suche/Aufbau der Liste: `core/FolderOrder` (getestet), Datenstrom: `FolderRepository`.
   Langtipp-Menü per `combinedClickable` + `DropdownMenu` in `ui/folders/FoldersScreen.kt`.
 - **Design:** Markenfarben Dunkelrot (`BrandRed` #8E1B20 / hell #E4575C) und Anthrazit (#2B3035) stecken nur in den Material-Farbschemata (`ui/theme/Theme.kt`, auch Formen und Typografie). Die Statusfarben (Okabe–Ito) bleiben davon unberührt. Die Webseite des Nutzers war aus der Sandbox nicht erreichbar; exakte Hex-Werte lassen sich dort an einer Stelle tauschen.
 - **Karten-Kopfzeile:** Info-Leiste liegt als Überlagerung (`PlacesInfo`) über der Karte, damit sich die Kartenhöhe beim Bewegen nie ändert.
@@ -220,7 +234,7 @@ Namen/API, Room 2.8.5 ist die etablierte stabile Linie.
 ## Verifikation
 
 Ausgeführt und grün:
-- `./gradlew -Dfoto.coreOnly=true :core:test` – **149 Tests** (Statusaggregation, Zeitzonen/Tagesgrenzen/
+- `./gradlew -Dfoto.coreOnly=true :core:test` – **160 Tests** (Statusaggregation, Zeitzonen/Tagesgrenzen/
   Fallback, Sync-Planung, Clustering inkl. Performance mit 60 000 Punkten, Bildschirm-Clustering, Undo-Stapel,
   ISO-6709, Wischgeometrie und -belegung, Zoom-Rechnung, Filter-Codec, Monatsraster, Formate, Ortsnamen,
   Medien-Klassifizierer, Sicherungs-Zuordnung, alle SQL-Aggregationen/Warteschlangen gegen echtes SQLite via
@@ -229,7 +243,7 @@ Ausgeführt und grün:
   Android-Framework (API 37), Coil, osmdroid und Stubs für die nur auf Google Maven liegenden Bibliotheken.
   Das beweist Syntax, Typen und interne Konsistenz – nicht die Übereinstimmung der Stubs mit den echten
   Bibliotheken.
-- `tools/room-sql-check.py`: prüft alle 36 `@Query`-Texte der DAOs gegen echtes SQLite (gültiges SQL, Parameter
+- `tools/room-sql-check.py`: prüft alle 37 `@Query`-Texte der DAOs gegen echtes SQLite (gültiges SQL, Parameter
   ↔ Funktionsparameter, Ergebnisspalten ⊇ Konstruktorparameter der Ergebnisklasse) – Ersatz für die
   Compile-Zeit-Prüfung von Room.
 - XML-Ressourcen wohlgeformt; jede im Code verwendete `R.string`/`R.plurals` existiert.

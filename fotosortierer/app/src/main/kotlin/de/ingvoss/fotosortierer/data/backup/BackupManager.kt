@@ -90,7 +90,7 @@ class BackupManager(
                     }
                 }
                 json.endObject()
-                if (appId != APP_ID) throw InvalidBackupException("Keine Fotosortierer-Sicherung")
+                if (appId != APP_ID && appId != LEGACY_APP_ID) throw InvalidBackupException("Keine PixelSweeper-Sicherung")
             }
         } catch (e: IllegalStateException) {
             throw InvalidBackupException("Ungültiges Dateiformat", e)
@@ -219,7 +219,10 @@ class BackupManager(
     }
 
     private companion object {
-        const val APP_ID = "Fotosortierer"
+        const val APP_ID = "PixelSweeper"
+
+        /** So hieß die App vor der Umbenennung; ältere Sicherungen bleiben lesbar. */
+        const val LEGACY_APP_ID = "Fotosortierer"
         const val FORMAT_VERSION = 1
     }
 }

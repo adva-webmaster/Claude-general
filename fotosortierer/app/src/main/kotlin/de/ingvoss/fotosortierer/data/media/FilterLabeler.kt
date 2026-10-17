@@ -61,6 +61,7 @@ class FilterLabeler(private val context: Context, private val db: AppDatabase) {
         }
         if (filter.withoutPlace) parts += context.getString(R.string.places_no_place)
         filter.album?.let { parts += it }
+        filter.pathPrefix?.let { parts += context.getString(R.string.label_directory, it.trim('/')) }
         filter.kind?.let {
             parts += context.getString(
                 when (it) {

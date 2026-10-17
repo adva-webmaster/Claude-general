@@ -3,6 +3,7 @@ package de.ingvoss.fotosortierer.data.db
 import android.net.Uri
 import android.content.ContentUris
 import android.provider.MediaStore
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -44,7 +45,9 @@ data class MediaStateEntity(
     val displayName: String,
     val durationMs: Long,
     val locationChecked: Boolean,
-    val hidden: Boolean
+    val hidden: Boolean,
+    /** Verzeichnis relativ zum Volume, z. B. "Pictures/Urlaub/"; "" solange noch nicht gelesen (Update von Version 1). */
+    @ColumnInfo(defaultValue = "''") val relativePath: String = ""
 ) {
     val mediaStatus: MediaStatus get() = MediaStatus.fromCode(status)
     val mediaKind: MediaKind get() = MediaKind.fromCode(kind)

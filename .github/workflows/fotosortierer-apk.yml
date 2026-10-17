@@ -1,4 +1,4 @@
-name: Fotosortierer – APK bauen
+name: PixelSweeper – APK bauen
 
 on:
   push:
@@ -43,10 +43,16 @@ jobs:
           f=$(find app/build -name 'lint-results-debug.txt' | head -1)
           echo "Datei: $f"
           [ -n "$f" ] && sed -n '1,400p' "$f" || true
+      - name: APK umbenennen
+        run: |
+          VERSION=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          mkdir -p dist
+          cp app/build/outputs/apk/debug/app-debug.apk "dist/PixelSweeper-${VERSION}-debug.apk"
+          ls -l dist
       - uses: actions/upload-artifact@v4
         with:
-          name: fotosortierer-debug-apk
-          path: fotosortierer/app/build/outputs/apk/debug/*.apk
+          name: PixelSweeper-debug-apk
+          path: fotosortierer/dist/*.apk
       - uses: actions/upload-artifact@v4
         if: always()
         with:

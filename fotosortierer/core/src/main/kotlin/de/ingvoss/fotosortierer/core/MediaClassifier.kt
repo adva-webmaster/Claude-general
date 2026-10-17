@@ -30,5 +30,14 @@ object MediaClassifier {
         return if (folder.isNullOrBlank()) UNKNOWN_ALBUM else folder
     }
 
+    /**
+     * Vereinheitlicht ein Verzeichnis (MediaStore `RELATIVE_PATH`): ohne führenden Schrägstrich, mit abschließendem,
+     * z. B. "Pictures/Urlaub/". Null oder leer → "" (unbekannt).
+     */
+    fun normalizePath(relativePath: String?): String {
+        val trimmed = relativePath?.trim()?.trim('/') ?: return ""
+        return if (trimmed.isEmpty()) "" else "$trimmed/"
+    }
+
     const val UNKNOWN_ALBUM = "Unbekannt"
 }

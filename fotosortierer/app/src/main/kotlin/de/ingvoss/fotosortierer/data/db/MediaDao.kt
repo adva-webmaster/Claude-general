@@ -27,6 +27,10 @@ interface MediaDao {
     @Query(MediaSql.Q_FOLDERS)
     fun observeFolders(): Flow<List<GroupCountsRow>>
 
+    /** Verzeichnisse (relativer Pfad) mit Zählern der direkt darin liegenden sichtbaren Medien. */
+    @Query(MediaSql.Q_DIRECTORIES)
+    fun observeDirectories(): Flow<List<GroupCountsRow>>
+
     @Query(MediaSql.Q_TRASH_BYTES)
     fun observeTrashBytes(): Flow<Long>
 
@@ -93,7 +97,7 @@ interface MediaDao {
 
     @Query(
         "SELECT uid, volume, mediaStoreId, status, kind, displayName, album, sizeBytes, durationMs, " +
-            "takenAtUtc, localDate, localMonth FROM media_state"
+            "takenAtUtc, localDate, localMonth, relativePath FROM media_state"
     )
     suspend fun allKnown(): List<KnownRow>
 
@@ -103,7 +107,7 @@ interface MediaDao {
     @Query(
         "UPDATE media_state SET takenAtUtc = :takenAt, localDate = :localDate, localMonth = :localMonth, " +
             "album = :album, kind = :kind, sizeBytes = :size, durationMs = :duration, displayName = :name, " +
-            "hidden = :hidden WHERE uid = :uid"
+            "hidden = :hidden, relativePath = :relativePath WHERE uid = :uid"
     )
     suspend fun updateMeta(
         uid: Long,
@@ -115,7 +119,8 @@ interface MediaDao {
         size: Long,
         duration: Long,
         name: String,
-        hidden: Boolean
+        hidden: Boolean,
+        relativePath: String
     )
 
     /** Blendet Medien aus, deren Typ oder Album per Einstellung ausgeschlossen ist. */

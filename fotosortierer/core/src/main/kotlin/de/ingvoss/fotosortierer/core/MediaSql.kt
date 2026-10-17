@@ -45,7 +45,8 @@ object MediaTable {
             displayName TEXT NOT NULL,
             durationMs INTEGER NOT NULL,
             locationChecked INTEGER NOT NULL,
-            hidden INTEGER NOT NULL
+            hidden INTEGER NOT NULL,
+            relativePath TEXT NOT NULL DEFAULT ''
         )
     """
 }
@@ -119,6 +120,11 @@ object MediaSql {
     const val Q_FOLDERS =
         "SELECT album AS groupKey, $COUNT_COLUMNS FROM media_state WHERE hidden = 0 GROUP BY album"
 
+    /** Verzeichnisse (relativer Pfad, z. B. "Pictures/Urlaub/") mit Zählern der direkt darin liegenden sichtbaren Medien. */
+    const val Q_DIRECTORIES =
+        "SELECT relativePath AS groupKey, $COUNT_COLUMNS FROM media_state " +
+            "WHERE hidden = 0 AND relativePath != '' GROUP BY relativePath"
+
     /** Summe der Dateigrößen aller Medien im App-Papierkorb. */
     const val Q_TRASH_BYTES =
         "SELECT COALESCE(SUM(sizeBytes), 0) FROM media_state WHERE status = 2 AND hidden = 0"
@@ -147,6 +153,13 @@ object MediaSql {
         }
         if (filter.withoutPlace) parts += "latitude IS NULL"
         filter.album?.let { parts += "album = ?"; args += it }
+        filter.pathPrefix?.let { prefix ->
+            // Verzeichnis samt allen Unterverzeichnissen: exakter Präfixvergleich (ohne LIKE-Sonderzeichen).
+            val normalized = MediaClassifier.normalizePath(prefix)
+            parts += "substr(relativePath, 1, ?) = ?"
+            args += normalized.length
+            args += normalized
+        }
         filter.kind?.let { parts += "kind = ?"; args += it.code }
         val statusSet = filter.statuses
         if (statusSet != null) {

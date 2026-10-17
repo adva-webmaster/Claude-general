@@ -1,6 +1,6 @@
 # PixelSweeper
 
-_(Ordnername und Branch heißen weiterhin „fotosortierer“.)_
+_(Technische Namen bleiben aus Kompatibilitätsgründen „fotosortierer“: Ordner, Branch, Paket/Application-ID `de.ingvoss.fotosortierer`, Datenbankdatei – sonst ließe sich die App nicht über eine ältere Version installieren.)_
 
 Android-App zum schnellen Aussortieren von Fotos und Videos per Wischgeste (Vorbild: „Slidebox“).
 Kotlin · Jetpack Compose · Material 3 · Room · WorkManager · osmdroid (OpenStreetMap). Oberfläche komplett
@@ -13,12 +13,12 @@ auf Deutsch. **Keine Werbung, keine Statistik, kein Tracking.**
 > | Prüfung | Ergebnis |
 > |---|---|
 > | `./gradlew assembleDebug` (Debug-APK) | ✅ erfolgreich |
-> | `./gradlew test` (Unit-Tests `:core` und `:app`) | ✅ erfolgreich (149 Tests im Kern) |
+> | `./gradlew test` (Unit-Tests `:core` und `:app`) | ✅ erfolgreich (160 Tests im Kern) |
 > | `./gradlew lint` | ✅ 0 Fehler, 2 Hinweise (Framework-ExifInterface, `allowBackup`) |
 > | Test auf einem echten Gerät, Compose-Wischtest (`connectedDebugAndroidTest`) | ❌ nicht ausgeführt |
 >
-> **APK herunterladen:** GitHub → Reiter **Actions** → „Fotosortierer – APK bauen“ (Name des Workflows) → letzter grüner Lauf auf dem Branch
-> `fotosortierer` → unten bei **Artifacts** `fotosortierer-debug-apk` (ZIP mit `app-debug.apk`). Dafür muss man bei GitHub angemeldet sein.
+> **APK herunterladen:** GitHub → Reiter **Actions** → „PixelSweeper – APK bauen“ → letzter grüner Lauf auf dem Branch
+> `fotosortierer` → unten bei **Artifacts** `PixelSweeper-debug-apk` (ZIP mit `PixelSweeper-<Version>-debug.apk`). Dafür muss man bei GitHub angemeldet sein.
 > Den Bau kann man dort auch selbst per „Run workflow“ neu starten.
 >
 > Die App wurde noch nicht auf einem Gerät ausprobiert – Fehler im Zusammenspiel (z. B. Berechtigungsdialog, Karte,
@@ -54,6 +54,10 @@ auf Deutsch. **Keine Werbung, keine Statistik, kein Tracking.**
   Schnellwahl auf der Startseite), *Ausblenden* (mit „Rückgängig“; ausgeblendete Ordner stehen eingeklappt am Ende und
   lassen sich dort wieder einblenden). Ein Tipp öffnet die Ordneransicht mit Sortieren, Ansehen und erneutem Sortieren.
   Einstellungen erreicht man über das Symbol oben rechts auf der Startseite.
+- **Verzeichnisse:** Im Reiter *Ordner* zeigt der Umschalter „Verzeichnisse“ den Verzeichnisbaum aller Medien
+  (z. B. `Pictures/Urlaub/2024/Strand`), aufklappbar, mit Zählern und Fortschritt je Verzeichnis. Ein Tipp wählt ein
+  beliebiges Verzeichnis **samt allen Unterverzeichnissen** zum Sortieren, Ansehen oder erneuten Sortieren; die Suche
+  findet Verzeichnisse auf jeder Ebene.
 - **Korrektur:** Raster mit Statusrahmen je Tag/Monat/Ort, Status ändern per Antippen oder Mehrfachauswahl
   (langer Druck), mit „Rückgängig“.
 - **App-Papierkorb:** nur eine Markierung. Endgültig gelöscht wird **ausschließlich** über
@@ -141,8 +145,8 @@ Teilzugriff nichts als extern gelöscht markiert.
   (z. B. Google Fotos) kann das Löschen dort ebenfalls ankommen.
 - Nicht umgesetzt, aber vorbereitet: Duplikat-/Serienerkennung per Perceptual Hash (zusätzliche Spalte/Tabelle
   im Schema möglich), Favoriten, konfigurierbarer Tagesbeginn.
-- Datenbank-Version 1; Migrationen kommen mit der ersten Schemaänderung (Room exportiert das Schema nach
-  `app/schemas/`).
+- Datenbank-Version 2 (neu: Verzeichnis je Medium); `MIGRATION_1_2` übernimmt bestehende Daten. Room exportiert das
+  Schema nach `app/schemas/` (nicht eingecheckt). Künftige Schemaänderungen brauchen jeweils eine Migration.
 
 ## Praxistest mit vielen Fotos (Empfehlung)
 

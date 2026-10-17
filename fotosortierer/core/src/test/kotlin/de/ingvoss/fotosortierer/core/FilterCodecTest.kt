@@ -30,6 +30,13 @@ class FilterCodecTest {
     }
 
     @Test
+    fun verzeichnisMitSonderzeichenUeberlebtDenRundlauf() {
+        val f = MediaFilter(pathPrefix = "Pictures/Urlaub 2024/Köln; Dom = schön & 100%/", statuses = setOf(MediaStatus.BEHALTEN))
+        assertEquals(f, roundTrip(f))
+        assertTrue(FilterCodec.encode(f).all { it.isLetterOrDigit() || it == '_' || it == '-' })
+    }
+
+    @Test
     fun einzelneFelder() {
         for (f in listOf(
             MediaFilter(localDate = "2026-01-01"),

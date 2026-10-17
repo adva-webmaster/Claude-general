@@ -57,7 +57,8 @@ data class KnownRow(
     val durationMs: Long,
     val takenAtUtc: Long,
     val localDate: String,
-    val localMonth: String
+    val localMonth: String,
+    val relativePath: String
 )
 
 /** Medium, dessen EXIF-/Video-Standort noch gelesen werden muss. */
