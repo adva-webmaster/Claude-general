@@ -20,9 +20,11 @@ android {
         applicationId = appId
         minSdk = 30
         targetSdk = 37
-        versionCode = 6
-        versionName = "1.4.0"
+        versionCode = 7
+        versionName = "1.5.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // libvlc bringt Bibliotheken für alle Prozessorarten mit (~90 MB). Heutige Handys sind arm64; das hält die APK klein.
+        ndk { abiFilters += "arm64-v8a" }
     }
 
     signingConfigs {
@@ -113,6 +115,9 @@ dependencies {
 
     implementation(libs.coil.compose)
     implementation(libs.coil.video)
+
+    // Abspieler-Reserve für AVI & Co. (Bild fehlt bei ExoPlayer); nur arm64 eingebunden (siehe ndk.abiFilters)
+    implementation(libs.libvlc)
 
     implementation(libs.osmdroid.android)
     implementation(libs.kotlinx.coroutines.android)

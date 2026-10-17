@@ -9,6 +9,22 @@ Videos per Wischgesten (Vorbild: „Slidebox"). UI-Sprache Deutsch (Standardspra
 > In der ursprünglichen Entwicklungsumgebung war `dl.google.com` gesperrt, daher entstanden zusätzlich die
 > Hilfsmittel in `tools/` (Kompilier-Prüfstand, Room-SQL-Prüfung). Auf einem Gerät wurde die App noch nicht getestet.
 
+## Neu in 1.5.0
+
+- **Laufbalken** (`VideoSeekBar`, `VideoControl` in `ui/sort/VideoControl.kt`): Zeit links/rechts, Tippen springt, Ziehen spult
+  (Material-`Slider`). Er liegt als eigene Ebene über der Karte (in `CardStack`, links von der Ton-Taste), nicht in der
+  Karte: Der Wisch-Handler der Karte beobachtet alle Zeiger in ihrem Bereich, Ziehen am Balken würde sonst wischen.
+  `VideoControl` verbindet Abspieler (meldet Position/Länge, setzt `seeker`) und Balken – unabhängig vom Abspieler.
+- **AVI & Co. mit Ton, aber schwarzem Bild:** ExoPlayer nutzt nur Android-Decoder; fehlt der Decoder für die Bildspur
+  (typisch: AVI mit Motion-JPEG/DivX-Varianten), wird die Spur ignoriert und nur der Ton spielt. `VideoSurface` startet
+  ExoPlayer und wechselt selbstständig zur Reserve **libvlc** (`VlcVideoSurface`, `org.videolan.android:libvlc-all`,
+  LGPL), wenn (a) `Tracks` eine nicht unterstützte Bildspur melden, (b) ExoPlayer einen Fehler meldet oder (c) 2 s lang
+  „bereit“ ohne Bildgröße. libvlc öffnet die Datei über einen Dateideskriptor. Wegen ~90 MB für alle Prozessorarten ist
+  `ndk.abiFilters` auf `arm64-v8a` gesetzt (auf 32-Bit-/x86-Geräten läuft die App dann nicht).
+  Der libvlc-Code ist **nur gegen eigene Stubs** (`tools/compile-check/stubs/LibVlc*.kt`) geprüft, nicht gegen die echte API.
+- **Vorschau-Platzhalter:** Lädt ein Vorschaubild nicht (z. B. AVI-Kachel), zeigt `MediaImage` ein Foto-/Video-Symbol statt
+  einer leeren Fläche. Existiert die Datei, wird sie dabei nicht entfernt (`purgeIfMissing` prüft die Datei).
+
 ## Neu in 1.4.0
 
 - **Standorte-Lesen hängt nicht mehr:** Medien, deren Position sich nicht lesen ließ (`LocationReader.Result.Failed`),

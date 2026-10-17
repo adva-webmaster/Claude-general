@@ -38,6 +38,8 @@ Neuinstallation wieder importieren.
   Karte zurück. Farbige Rückmeldung, Symbol und Text beim Ziehen, haptisches Signal, Schaltflächen als
   Alternative, **Rückgängig** (mind. 50 Schritte). Pinch- und Doppeltipp-Zoom. Videos laufen stumm in
   Endlosschleife (Tippen = Pause, Lautsprecher-Taste = Ton, Fortschrittsbalken).
+- **Videos:** Laufbalken wie bei jedem Player (Tippen oder Ziehen springt). Formate, die Android nicht darstellt
+  (z. B. AVI mit Motion-JPEG), spielt automatisch der eingebaute VLC-Abspieler (libvlc); dadurch ist die APK größer.
 - **Reihenfolge:** zuerst Unbearbeitete (älteste zuerst, umschaltbar), danach auf Wunsch die Zurückgestellten.
   Zusammenfassung am Ende mit „Papierkorb jetzt leeren“ und „Zurückgestellte jetzt durchgehen“. Jede
   Entscheidung wird sofort gespeichert; nach einem Neustart geht es genau dort weiter.

@@ -23,7 +23,6 @@ import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -33,8 +32,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -132,8 +129,8 @@ private fun SortingContent(ui: SortUiState, settings: AppSettings, viewModel: So
 
     var soundOn by remember(top?.uid) { mutableStateOf(settings.videoSoundDefault) }
     var paused by remember(top?.uid) { mutableStateOf(false) }
-    // Als State-Objekt weitergereicht: nur der Fortschrittsbalken liest den Wert, nicht der ganze Kartenstapel.
-    val progress = remember(top?.uid) { mutableFloatStateOf(0f) }
+    // Verbindet Abspieler und Laufbalken der obersten Karte (Position, Länge, Springen).
+    val videoControl = remember(top?.uid) { VideoControl(top?.durationMs ?: 0L) }
 
     // Die Schaltflächen müssen immer die AKTUELLE Karte bedienen. Würde der Handler beim ersten Mal "eingefroren"
     // (Compose merkt sich Lambdas/Funktionsverweise), träfe jeder weitere Tipp die längst abgeflogene erste Karte
@@ -165,10 +162,9 @@ private fun SortingContent(ui: SortUiState, settings: AppSettings, viewModel: So
                 settings = settings,
                 soundOn = soundOn,
                 paused = paused,
-                progress = progress,
+                videoControl = videoControl,
                 onToggleSound = { soundOn = !soundOn },
                 onTogglePause = { paused = !paused },
-                onProgress = { progress.floatValue = it },
                 onDecision = viewModel::decide,
                 modifier = modifier
             )
@@ -206,10 +202,9 @@ private fun CardStack(
     settings: AppSettings,
     soundOn: Boolean,
     paused: Boolean,
-    progress: State<Float>,
+    videoControl: VideoControl,
     onToggleSound: () -> Unit,
     onTogglePause: () -> Unit,
-    onProgress: (Float) -> Unit,
     onDecision: (SwipeAction) -> Unit,
     modifier: Modifier
 ) {
@@ -219,7 +214,7 @@ private fun CardStack(
             val card = cards[index]
             key(card.uid) {
                 if (index == 0) {
-                    TopCard(card, cardState, settings, soundOn, paused, progress, onToggleSound, onTogglePause, onProgress, onDecision)
+                    TopCard(card, cardState, settings, soundOn, paused, videoControl, onToggleSound, onTogglePause, onDecision)
                 } else {
                     BackCard(card, depth = index)
                 }
@@ -227,6 +222,14 @@ private fun CardStack(
         }
         if (cards.isEmpty()) {
             CircularProgressIndicator(Modifier.align(Alignment.Center))
+        }
+        // Laufbalken als eigene Ebene über der Karte (links von der Ton-Taste), damit Ziehen am Balken nicht wischt.
+        val top = cards.firstOrNull()
+        if (top != null && top.isVideo && !cardState.exiting) {
+            VideoSeekBar(
+                videoControl,
+                Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 12.dp, end = 68.dp, bottom = 10.dp)
+            )
         }
     }
 }
@@ -238,10 +241,9 @@ private fun TopCard(
     settings: AppSettings,
     soundOn: Boolean,
     paused: Boolean,
-    progress: State<Float>,
+    videoControl: VideoControl,
     onToggleSound: () -> Unit,
     onTogglePause: () -> Unit,
-    onProgress: (Float) -> Unit,
     onDecision: (SwipeAction) -> Unit
 ) {
     SwipeCard(
@@ -252,12 +254,12 @@ private fun TopCard(
         onTap = { if (card.isVideo) onTogglePause() },
         modifier = Modifier.fillMaxSize(),
         overlay = {
-            if (card.isVideo) VideoOverlay(soundOn, paused, progress, onToggleSound)
+            if (card.isVideo) VideoOverlay(soundOn, paused, onToggleSound)
         }
     ) { zoomed ->
         MediaImage(card, Modifier.fillMaxSize(), ContentScale.Fit, highRes = zoomed)
         if (card.isVideo) {
-            VideoSurface(card.contentUri(), soundOn, paused, onProgress)
+            VideoSurface(card.contentUri(), soundOn, paused, videoControl)
         }
     }
 }
@@ -287,7 +289,6 @@ private fun BackCard(card: MediaStateEntity, depth: Int) {
 private fun BoxScope.VideoOverlay(
     soundOn: Boolean,
     paused: Boolean,
-    progress: State<Float>,
     onToggleSound: () -> Unit
 ) {
     if (paused) {
@@ -315,12 +316,6 @@ private fun BoxScope.VideoOverlay(
             tint = Color.White
         )
     }
-    LinearProgressIndicator(
-        progress = { progress.value },
-        modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(4.dp),
-        color = Color.White,
-        trackColor = Color.Black.copy(alpha = 0.4f)
-    )
 }
 
 @Composable

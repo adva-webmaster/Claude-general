@@ -6,3 +6,7 @@
 
 # Worker werden von WorkManager per Klassenname instanziiert.
 -keep class de.ingvoss.fotosortierer.work.** extends androidx.work.ListenableWorker { *; }
+
+# libvlc ruft Java-Methoden aus nativem Code auf.
+-keep class org.videolan.libvlc.** { *; }
+-dontwarn org.videolan.**
